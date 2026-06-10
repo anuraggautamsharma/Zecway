@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { ai } from "@/lib/ai";
+import { extractMarkdown } from "@/lib/extract";
 import { chunkMarkdown, titleFromMarkdown, WORKSPACE_PRINCIPAL } from "@/lib/ingest";
 import { createClient } from "@/lib/supabase/server";
 
 // Runs under the logged-in user's own session: RLS verifies workspace
 // membership on every insert, so no service key is needed.
-const MAX_FILE_BYTES = 1_000_000;
+const MAX_FILE_BYTES = 10_000_000;
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -24,14 +25,26 @@ export async function POST(request: Request) {
   }
   if (file.size > MAX_FILE_BYTES) {
     return NextResponse.json(
-      { error: "File is too large (1 MB max for now)" },
+      { error: "File is too large (10 MB max for now)" },
       { status: 400 },
     );
   }
 
-  const markdown = (await file.text()).trim();
+  let markdown: string;
+  try {
+    markdown = await extractMarkdown(file);
+  } catch (e) {
+    console.error("ingest: extraction failed:", e);
+    return NextResponse.json(
+      { error: "Couldn't read this file — is it a valid PDF/Word/text document?" },
+      { status: 400 },
+    );
+  }
   if (!markdown) {
-    return NextResponse.json({ error: "File is empty" }, { status: 400 });
+    return NextResponse.json(
+      { error: "No readable text found in this file (scanned PDFs aren't supported yet)" },
+      { status: 400 },
+    );
   }
 
   // Re-uploading the same file replaces it (unique on workspace/source/source_id)
