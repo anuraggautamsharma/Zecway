@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { inviteMember, revokeInvite } from "./actions";
 
 type Doc = { id: string; title: string; source: string; created_at: string };
+type Member = { user_id: string; email: string; role: string };
+type OpenInvite = { id: string; email: string; role: string };
 type Citation = { n: number; title: string; url: string | null };
 type Result = {
   document_id: string;
@@ -36,10 +39,16 @@ export default function Workspace({
   workspaceId,
   workspaceName,
   documents,
+  members,
+  openInvites,
+  isAdmin,
 }: {
   workspaceId: string;
   workspaceName: string;
   documents: Doc[];
+  members: Member[];
+  openInvites: OpenInvite[];
+  isAdmin: boolean;
 }) {
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -275,6 +284,72 @@ export default function Workspace({
           />
         </div>
         {uploadStatus && <p className="mt-3 text-xs text-mist">{uploadStatus}</p>}
+      </section>
+
+      {/* Team */}
+      <section>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-mist">Team</h2>
+        <ul className="mt-3 divide-y divide-line rounded-xl border border-line bg-white">
+          {members.map((m) => (
+            <li key={m.user_id} className="flex items-center justify-between px-5 py-3">
+              <span className="truncate text-sm text-ink">{m.email}</span>
+              <span className="ml-4 shrink-0 rounded-md border border-line px-2 py-0.5 text-xs text-mist">
+                {m.role}
+              </span>
+            </li>
+          ))}
+          {openInvites.map((inv) => (
+            <li key={inv.id} className="flex items-center justify-between px-5 py-3">
+              <span className="truncate text-sm text-mist">{inv.email}</span>
+              <span className="ml-4 flex shrink-0 items-center gap-2">
+                <span className="rounded-md border border-dashed border-line px-2 py-0.5 text-xs text-mist">
+                  invited · {inv.role}
+                </span>
+                {isAdmin && (
+                  <form action={revokeInvite}>
+                    <input type="hidden" name="invite_id" value={inv.id} />
+                    <button className="text-xs text-mist transition hover:text-red-500">
+                      Revoke
+                    </button>
+                  </form>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        {isAdmin && (
+          <div className="mt-3">
+            <form
+              action={inviteMember}
+              className="flex flex-wrap items-center gap-2"
+            >
+              <input type="hidden" name="workspace_id" value={workspaceId} />
+              <input
+                type="email"
+                name="email"
+                required
+                placeholder="teammate@company.com"
+                className="min-w-0 flex-1 rounded-lg border border-line bg-white px-3.5 py-2 text-sm text-ink placeholder:text-mist focus:border-ink/30 focus:outline-none"
+              />
+              <select
+                name="role"
+                defaultValue="member"
+                className="rounded-lg border border-line bg-white px-2.5 py-2 text-sm text-mist focus:outline-none"
+              >
+                <option value="member">Member</option>
+                <option value="admin">Admin</option>
+              </select>
+              <button className="rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-accent">
+                Invite
+              </button>
+            </form>
+            <p className="mt-2 text-xs text-mist">
+              Until invite emails ship: ask them to sign in at zecway.com/login with
+              this email — the invite appears automatically.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Documents */}
