@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY;
+// Defaults are the Zecway Supabase project's publishable credentials — safe to
+// ship publicly; row-level security only allows inserts, never reads.
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://huwyqieadhssdnrqrblx.supabase.co";
+const SUPABASE_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_KEY ?? "sb_publishable_bwy_MkoFBVkzMQCbjHt5PQ_Lw_WsUHy";
 
 export async function POST(request: Request) {
   let body: { email?: string; company?: string };
