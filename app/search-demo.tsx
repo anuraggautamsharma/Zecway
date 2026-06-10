@@ -58,40 +58,40 @@ export default function SearchDemo() {
   const current = DEMOS[demo];
 
   return (
-    <div className="dot-grid relative mx-auto w-full max-w-2xl rounded-3xl border border-line bg-cream/60 p-5 shadow-[0_24px_70px_-30px_rgba(240,89,10,0.35)] sm:p-8">
+    <div className="relative mx-auto w-full max-w-2xl rounded-2xl border border-line bg-white p-4 shadow-[0_1px_2px_rgba(23,21,19,0.04),0_12px_32px_-16px_rgba(23,21,19,0.12)] sm:p-6">
       {/* Search bar */}
-      <div className="flex items-center gap-3 rounded-2xl border border-line bg-white px-5 py-4 shadow-sm">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0 text-accent">
+      <div className="flex items-center gap-3 rounded-xl border border-line bg-cream px-4 py-3">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0 text-mist">
           <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
           <path d="m20 20-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
-        <span className={`min-h-6 text-sm text-ink sm:text-base ${phase === "typing" ? "caret" : ""}`}>
+        <span className={`min-h-6 text-sm text-ink ${phase === "typing" ? "caret" : ""}`}>
           {typed}
         </span>
       </div>
 
-      {/* Answer card */}
-      <div className={`mt-4 ${phase === "answer" ? "animate-pop" : "invisible"}`}>
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-sm">
+      {/* Answer */}
+      <div className={`${phase === "answer" ? "animate-pop" : "invisible"}`}>
+        <div className="mt-4 border-t border-line pt-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
-            <span className="inline-block h-2 w-2 rounded-full bg-accent" />
-            Zecway answer
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
+            Answer
           </div>
-          <p className="mt-3 text-sm leading-relaxed text-ink sm:text-base">{current.answer}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <p className="mt-2.5 text-sm leading-relaxed text-ink">{current.answer}</p>
+          <div className="mt-3.5 flex flex-wrap gap-2">
             {current.sources.map((s) => (
               <span
                 key={s.label}
-                className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-medium text-accent-deep"
+                className="inline-flex items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-mist"
               >
                 <span>{s.icon}</span> {s.label}
               </span>
             ))}
           </div>
+          <p className="mt-4 text-xs text-mist">
+            Only from documents <em>you</em> are allowed to see — always.
+          </p>
         </div>
-        <p className="mt-3 text-center text-xs text-mist">
-          Only from documents <em>you</em> are allowed to see — always.
-        </p>
       </div>
     </div>
   );
