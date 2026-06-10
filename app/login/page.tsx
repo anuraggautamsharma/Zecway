@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import SearchDemo from "../search-demo";
 
 function LoginForm() {
   const router = useRouter();
@@ -90,15 +91,15 @@ function LoginForm() {
   }
 
   return (
-    <div className="animate-pop w-full rounded-2xl border border-line bg-paper p-8 shadow-[0_1px_2px_rgba(23,21,19,0.04),0_16px_40px_-20px_rgba(23,21,19,0.15)]">
-      <h1 className="font-display text-2xl text-ink">
+    <div className="animate-pop w-full">
+      <h1 className="font-display text-3xl text-ink">
         {mode === "signin"
           ? "Sign in to Zecway"
           : mode === "signup"
             ? "Create your account"
             : "Reset your password"}
       </h1>
-      <p className="mt-1 text-sm text-mist">
+      <p className="mt-1.5 text-sm text-mist">
         {mode === "signin"
           ? "Your team's knowledge is waiting."
           : mode === "signup"
@@ -106,25 +107,36 @@ function LoginForm() {
             : "We'll email you a link to set a new one."}
       </p>
 
-      <form onSubmit={submit} className="mt-6 space-y-3">
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Work email"
-          className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-mist focus:border-accent/50 focus:outline-none"
-        />
-        <div className={mode === "forgot" ? "hidden" : "relative"}>
+      <form onSubmit={submit} className="mt-8 space-y-4">
+        <div>
+          <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-ink">
+            Work email
+          </label>
           <input
-            type={showPassword ? "text" : "password"}
-            required={mode !== "forgot"}
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={mode === "signup" ? "Password (8+ characters)" : "Password"}
-            className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 pr-11 text-sm text-ink placeholder:text-mist focus:border-accent/50 focus:outline-none"
+            id="email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@company.com"
+            className="w-full rounded-lg border border-line bg-paper px-3.5 py-2.5 text-sm text-ink placeholder:text-mist-soft focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/15"
           />
+        </div>
+        <div className={mode === "forgot" ? "hidden" : ""}>
+          <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-ink">
+            Password
+          </label>
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              required={mode !== "forgot"}
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={mode === "signup" ? "8+ characters" : "••••••••"}
+              className="w-full rounded-lg border border-line bg-paper px-3.5 py-2.5 pr-11 text-sm text-ink placeholder:text-mist-soft focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/15"
+            />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
@@ -144,12 +156,13 @@ function LoginForm() {
                 <circle cx="12" cy="12" r="3" />
               </svg>
             )}
-          </button>
+            </button>
+          </div>
         </div>
         <button
           type="submit"
           disabled={status === "busy"}
-          className="w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-deep disabled:opacity-60"
+          className="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent-deep disabled:opacity-60"
         >
           {status === "busy"
             ? "One moment…"
@@ -197,15 +210,37 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-cream px-4">
-      <Link href="/" className="mb-8 text-2xl font-bold tracking-tight text-ink">
-        zecway<span className="text-accent">.</span>
-      </Link>
-      <div className="w-full max-w-sm">
-        <Suspense>
-          <LoginForm />
-        </Suspense>
-      </div>
+    <main className="flex min-h-screen">
+      {/* Left: the pitch + live product demo */}
+      <aside className="hidden w-1/2 flex-col items-center justify-center bg-cream px-10 lg:flex xl:px-16">
+        <div className="w-full max-w-xl">
+          <h2 className="text-center font-display text-4xl leading-[1.1] text-ink">
+            Answers from your company&apos;s own knowledge
+          </h2>
+          <p className="mx-auto mt-4 max-w-md text-center text-sm leading-relaxed text-body">
+            One search bar across every tool your team uses — every answer cited,
+            permissions always respected.
+          </p>
+          <div className="mt-10">
+            <SearchDemo />
+          </div>
+        </div>
+      </aside>
+
+      {/* Right: the form */}
+      <section className="flex min-h-screen flex-1 flex-col items-center justify-center bg-paper px-6 py-12">
+        <div className="w-full max-w-sm">
+          <Link
+            href="/"
+            className="mb-10 block text-center text-2xl font-bold tracking-tight text-ink"
+          >
+            zecway<span className="text-accent">.</span>
+          </Link>
+          <Suspense>
+            <LoginForm />
+          </Suspense>
+        </div>
+      </section>
     </main>
   );
 }
