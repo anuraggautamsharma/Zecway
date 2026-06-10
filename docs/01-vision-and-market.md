@@ -62,6 +62,14 @@ requires SOC 2, security review, and references — so the path is:
 2. **Phase 3:** Convert departmental wins into company-wide contracts once compliance
    (SOC 2 Type II, SSO, audit logs) is in place. See [05 — Enterprise Readiness](05-enterprise-readiness.md).
 
+## Positioning note (June 2026)
+
+We lead with the **assistant**, not the search bar. Glean's own 2026 site headlines
+Assistant + Agents and calls Search "the foundation of enterprise AI" — the market's
+budgets are labeled AI, not search. Zecway's headline promise: *"Ask anything — your
+company already knows the answer."* Search and permissions are the trust story
+underneath the promise, not the headline.
+
 ## Success metrics
 
 - **North star:** weekly queries per active user (are people *living* in it?)
