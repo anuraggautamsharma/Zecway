@@ -7,64 +7,61 @@ demoable. Timeboxes are estimates — ship on exit criteria, not the calendar.
 Brand, launch landing page with waitlist, live on **zecway.com**, auto-deploy pipeline,
 Supabase + Vercel + GitHub wired.
 
-## Phase 1 — The graph (5–7 weeks)
-The foundation everything else stands on: real company content, converted to one
-markdown graph, with permissions, and cited answers over it.
+## Phase 1 — The loop ✅ mostly done
+Sign in → workspace → feed it documents → cited answers, permissions enforced in the
+database.
 
-1. Workspace + auth (Supabase Auth); invite the operator persona.
-2. **Google Drive connector** (docs, PDFs, sheets) with sharing rules — then **Slack**.
-3. Markdown conversion pipeline: per-format extractors → one normalizer → graph
-   documents with provenance + permissions → chunks + embeddings.
-4. **Ask**: plain-language questions answered only from permitted graph content, every
-   claim cited (Claude API). Honest "the graph doesn't contain this" fallback.
-5. Graph browser: see your company's knowledge as one legible, searchable corpus.
-6. Permission leak tests in CI from day one — two users, different access, provably
-   different answers.
+1. ✅ Auth (email + password), session handling, protected app
+2. ✅ Workspace creation
+3. ✅ Upload: PDF, Word, markdown, text → markdown graph → chunks + embeddings
+4. ✅ Ask: cited answers from permitted content only; honest "not in the graph"
+   fallback; transient-AI-failure resilience
+5. Remaining: **search results view** (today only Ask exists), graph browser
+   (read documents in-app), team invites, password reset, transactional email
+   (Resend), permission-leak tests in CI
 
-**Exit:** connect a real workspace; ask a real question; get a cited answer in
-seconds that respects permissions. The "wow" demo exists.
+**Exit:** a small team uses it daily on uploaded documents.
 
-## Phase 2 — The map + first investigations (6–8 weeks)
-1. Entity extraction: people, teams, tools, vendors from graph content (cartographer
-   agent v1).
-2. **Systems map UI** — the flagship visual: the company as a living network.
-3. **Investigation v1 (single analyst agent):** decision-grade question → evidence
-   assembly → structured brief with citations, confidence, and gaps. Trust-ladder
-   stage 1–2.
-4. Email + meeting-notes connectors with per-source/per-mailbox opt-in (the admin gate
-   gets real controls here).
-5. **2–3 design-partner pilots** — founders/execs we know, free, one real decision each.
+## Phase 2 — Connectors (4–6 weeks)
+The product becomes real: the graph fills itself.
 
-**Exit:** a real executive acts on a Zecway brief and asks a second question.
+1. **Google Drive connector** — content + sharing rules, continuous re-sync. The
+   single most important build of the company.
+2. **Slack connector** — channels with membership-based permissions.
+3. Onboarding tuned to the activation metric: signup → connected → first answered
+   question in under 10 minutes, solo.
+4. The scope panel: what's connected, what Zecway can see, disconnect + hard delete.
 
-## Phase 3 — Agent teams + sellable (8–12 weeks)
-1. **Multi-agent investigations:** lead decomposes, specialists run in parallel,
-   reviewer verifies claims against sources, lead synthesizes. Visible-while-running UI.
-2. **Watchdogs v1** (trust-ladder stage 3): handoff-delay and duplicate-work signals,
-   shipped only where the graph is rich enough to be right.
-3. Remaining connectors by pilot demand (Teams, Notion, Confluence, Jira, Salesforce).
-4. Enterprise table stakes: SSO/SAML (WorkOS), SCIM, audit logs, retention controls.
-5. Billing + pricing page; **start SOC 2 Type II** (clock runs on the observation
-   window — start early).
+**Exit:** a real company connects Drive + Slack and employees find things without
+asking each other.
 
-**Exit:** first paying customers; pass a mid-size security questionnaire unmodified.
+## Phase 3 — Self-serve business (6–8 weeks)
+1. Per-seat billing (Stripe), public pricing page, free tier.
+2. Team management: roles, seat counts, usage view for the buyer.
+3. Search quality pass: hybrid keyword + semantic ranking, filters, speed budget.
+4. Surfaces where work happens: Slack bot (`/zecway who owns onboarding?`) and/or
+   browser extension — by user demand.
+5. Connectors by demand: Notion, Confluence, Gmail.
 
-## Phase 4 — Scale (ongoing)
-- Company-wide expansion: everyday ask/search for all employees (the Glean surface,
-  now trivial on top of the graph).
-- Action-taking agents with per-action human approval.
-- SOC 2 report in hand; pen test; per-tenant isolation for the largest contracts;
-  re-platform search/graph for hundred-million-document tenants.
-- First hires: senior engineer (connectors/infra), founding GTM.
+**Exit:** strangers sign up, connect, invite their team, and pay — without ever
+talking to us.
+
+## Phase 4 — Upmarket (ongoing)
+- SSO/SAML (WorkOS), SCIM, audit logs, retention controls
+- **SOC 2 Type II** — start the observation window early (Vanta/Drata)
+- Big-company connectors: Teams, Jira, Salesforce
+- Scale work: dedicated search infrastructure, tenant isolation for largest customers
+- First hires: senior engineer (connectors/infra), founding GTM
+- Future bets unlocked by a rich graph: systems map, executive investigations
 
 ## Risks and honest mitigations
 
 | Risk | Mitigation |
 |---|---|
-| Permission leak destroys trust | Two-layer enforcement + cross-user leak tests in CI from Phase 1 day one; agents inherit requester permissions |
-| Bad recommendation fires us like a bad consultant | Trust ladder: evidence assembly → investigations → proactive inference; citations mandatory; confidence + gaps stated |
-| Multi-agent errors compound | Reviewer agents verify claims against sources before synthesis; no citation, no claim |
-| Email/meeting-notes privacy backlash | Opt-in per source and mailbox, visible ingestion scope, hard-delete propagation |
-| Markdown conversion quality (PDFs, sheets are messy) | Per-format extractors as isolated modules; quality metrics per format; humans can inspect the graph directly — legibility is the debugging tool |
-| LLM cost per investigation | Model tiering; investigations are priced events (consulting reference price absorbs dollars of compute) |
+| Glean/Copilot move down-market | Our segment is unprofitable for sales-led incumbents; win on self-serve speed, design, and transparent pricing — and stay faster |
+| Permission leak destroys trust | Two-layer enforcement + cross-user leak tests in CI; every connector ships with its own leak tests |
+| Hallucinated answers | Citations mandatory; answer only from retrieved content; honest "not written down" fallback |
+| Connector quality (sync drift, messy formats) | One interface, one connector at a time, per-format quality metrics; the markdown graph is human-inspectable — legibility is the debugging tool |
+| LLM cost per seat at scale | Model tiering behind the swappable AI layer; cache common queries; per-seat pricing covers marginal cost with wide margin |
+| Free-tier AI limits bite during development | Swappable provider interface; move to paid keys before launch |
 | Solo-founder breadth | Managed services everywhere; one connector at a time, well; the out-of-scope list is load-bearing |

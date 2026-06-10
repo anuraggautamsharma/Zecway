@@ -4,22 +4,21 @@ import { useEffect, useState } from "react";
 
 const DEMOS = [
   {
-    query: "Where are handoffs breaking between sales and delivery?",
+    query: "Where's the latest pricing deck?",
     answer:
-      "Handoff time tripled since March — 9 deals are stalled at contract review between Sales and Legal, all waiting on one approver.",
+      "Pricing v4.2, updated Tuesday by Marcus — here's the deck, and the thread explaining what changed for annual plans.",
     sources: [
-      { icon: "📊", label: "Pipeline · Salesforce" },
-      { icon: "💬", label: "#deal-desk · Slack" },
-      { icon: "📄", label: "SLA tracker · Sheets" },
+      { icon: "📁", label: "Pricing v4.2 · Drive" },
+      { icon: "💬", label: "#go-to-market · Slack" },
     ],
   },
   {
-    query: "Should we renew the Acme logistics contract?",
+    query: "Who owns customer onboarding?",
     answer:
-      "Acme missed 4 of 12 SLAs this quarter and costs rose 18%. Two vetted alternatives are already in procurement notes.",
+      "Priya has owned onboarding since the March reorg. The runbook, checklist, and handoff doc are all linked from the team page.",
     sources: [
-      { icon: "📄", label: "Vendor scorecard · Drive" },
-      { icon: "📝", label: "Procurement · Notion" },
+      { icon: "📝", label: "Onboarding runbook · Notion" },
+      { icon: "💬", label: "#announcements · Slack" },
     ],
   },
   {

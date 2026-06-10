@@ -27,8 +27,8 @@ const PILLARS = [
         <path d="m3 17 9 5 9-5" />
       </svg>
     ),
-    title: "Every tool, one brain",
-    body: "Documents, PDFs, emails, chats, spreadsheets, meeting notes — everything your company produces, unified into a single living knowledge graph.",
+    title: "Every tool, one search bar",
+    body: "Documents, PDFs, emails, chats, spreadsheets, meeting notes — everything your company produces, searchable from one place.",
   },
   {
     icon: (
@@ -59,13 +59,13 @@ const STEPS = [
   },
   {
     step: "02",
-    title: "Zecway builds the brain",
-    body: "Everything is converted into one living knowledge graph — content, people, processes, and who's allowed to see what.",
+    title: "Zecway learns everything",
+    body: "Your content becomes one living, searchable knowledge graph — including who's allowed to see what, mirrored from every source.",
   },
   {
     step: "03",
-    title: "Decisions in minutes",
-    body: "Ask the questions that used to take weeks of analysis. Get evidence-backed answers that stay current as the company evolves.",
+    title: "Everyone finds anything",
+    body: "One search bar for the whole team. Ask in plain language, get cited answers in seconds — instead of interrupting a colleague.",
   },
 ];
 
@@ -131,7 +131,7 @@ export default function Home() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
             </span>
-            The company brain · Launching 2026
+            AI workplace search · Launching 2026
           </p>
 
           <h1 className="max-w-5xl text-6xl font-extrabold leading-[1.02] tracking-tight sm:text-8xl">
@@ -144,9 +144,9 @@ export default function Home() {
             className="animate-fade-up mt-8 max-w-2xl text-lg leading-relaxed text-mist sm:text-xl"
             style={{ animationDelay: "900ms" }}
           >
-            Zecway turns everything your company produces into one living brain —
-            so the decisions that take consultants weeks take you minutes,
-            with evidence attached.
+            Zecway connects every tool your company uses and gives your whole team
+            one search bar — instant, cited answers from everything you
+            already know.
           </p>
 
           <div
@@ -198,7 +198,7 @@ export default function Home() {
             See it think
           </p>
           <h2 className="mt-4 text-center text-4xl font-extrabold tracking-tight sm:text-5xl">
-            The questions that used to take weeks
+            The questions your team asks every day
           </h2>
         </Reveal>
         <Reveal delay={150} className="mt-12">
@@ -210,14 +210,14 @@ export default function Home() {
       <section className="border-y border-line bg-cream/40 px-6 py-32 text-center">
         <Reveal>
           <p className="mx-auto max-w-4xl text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
-            Today that work is done by consultants.{" "}
-            <span className="gradient-flow">Slow, expensive, and stale on arrival.</span>
+            Today the answer lives in someone&apos;s head.{" "}
+            <span className="gradient-flow">Or in a doc nobody can find.</span>
           </p>
         </Reveal>
         <Reveal delay={150}>
           <p className="mx-auto mt-8 max-w-2xl text-lg text-mist">
-            Zecway produces the same answers in minutes, at a fraction of the cost —
-            and keeps them alive as your company changes.
+            Zecway finds it in seconds — cited, current, and only for the people
+            allowed to see it.
           </p>
         </Reveal>
       </section>
@@ -281,7 +281,8 @@ export default function Home() {
         <div className="relative">
           <Reveal>
             <h2 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight sm:text-6xl">
-              Be first inside the <span className="gradient-flow">company brain</span>
+              Give your team <span className="gradient-flow">one search bar</span> for
+              everything
             </h2>
           </Reveal>
           <Reveal delay={120}>
@@ -301,7 +302,7 @@ export default function Home() {
           <span className="text-lg font-extrabold tracking-tight text-ink">
             zec<span className="text-accent">way</span>
           </span>
-          <span>The company brain · © {new Date().getFullYear()} Zecway</span>
+          <span>AI workplace search · © {new Date().getFullYear()} Zecway</span>
           <span>Enterprise-grade security from day one</span>
         </div>
       </footer>

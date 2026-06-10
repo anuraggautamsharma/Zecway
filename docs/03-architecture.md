@@ -7,38 +7,32 @@ infrastructure at every decision point.
 ## How it works, in plain language
 
 ```
- Company tools            Zecway — the company brain                Executive
+ Company tools            Zecway — AI workplace search             Every employee
 ┌──────────────┐   ┌──────────────────────────────────────┐   ┌──────────────────┐
-│ Drive, Slack │   │ 1. CONNECTORS                        │   │ 5. THE APP       │
-│ Email, Teams ├──▶│    pull content + access rules       │   │  ask · map ·     │
-│ Notion, Jira │   │ 2. MARKDOWN KNOWLEDGE GRAPH          │◀──┤  investigations  │
-│ Sheets, CRM  │   │    one uniform, living, permissioned │   └──────────────────┘
+│ Drive, Slack │   │ 1. CONNECTORS                        │   │ 4. THE APP       │
+│ Email, Notion├──▶│    pull content + access rules       │   │  one search bar  │
+│ Uploads      │   │ 2. MARKDOWN KNOWLEDGE GRAPH          │◀──┤  + the assistant │
+│ (PDF, docs)  │   │    one uniform, living, permissioned │   └──────────────────┘
 └──────────────┘   │    copy of everything                │
-                   │ 3. SYSTEMS MAP                       │
-                   │    people · processes · tools, and   │
-                   │    the connections between them      │
-                   │ 4. AGENT RUNTIME (Claude)            │
-                   │    librarians · cartographers ·      │
-                   │    investigation teams · watchdogs   │
+                   │ 3. ANSWER PIPELINE                   │
+                   │    permission-filtered retrieval →   │
+                   │    ranked results / cited answers    │
                    └──────────────────────────────────────┘
 ```
 
 1. **Connectors** authorize into each tool (OAuth) and continuously copy two things:
    the *content* and the *access rules*. Webhooks + scheduled re-sync keep it fresh.
-2. **The markdown knowledge graph** converts every format — PDF, email, thread,
-   spreadsheet, transcript — into markdown documents with structure, metadata,
-   provenance, and per-item permissions. One medium for humans *and* agents. Each
-   document also gets embeddings (meaning-fingerprints) for semantic retrieval.
-3. **The systems map** is a set of entities (people, teams, processes, tools, vendors)
-   and edges (works-with, hands-off-to, depends-on) extracted from the graph by
-   cartographer agents.
-4. **The agent runtime** runs the workers: librarians (ingestion hygiene),
-   cartographers (map upkeep), investigation teams (lead → specialists → reviewer →
-   synthesis), and later watchdogs. Agents read only what the requesting user may see,
-   write their findings back into the graph as documents, and must cite sources for
-   every claim.
-5. **The app**: ask a question, browse the map, watch an investigation run, read the
-   brief.
+   Direct upload covers files outside any connected tool.
+2. **The markdown knowledge graph** converts every format — PDF, Word, email, thread,
+   page — into markdown documents with structure, metadata, provenance, and per-item
+   permissions. Each document is chunked and embedded (meaning-fingerprints) for
+   semantic retrieval alongside keyword search.
+3. **The answer pipeline** serves both surfaces from the same permission-filtered
+   retrieval: **search** returns ranked results; **ask** feeds the top results to an
+   LLM that must answer only from them, citing every claim, or say the answer isn't
+   in the graph.
+4. **The app**: search, ask, browse what's in the graph, manage the team and the
+   connected sources.
 
 ## The thing we must never get wrong: permissions
 
@@ -46,48 +40,41 @@ Two enforcement layers, so one bug can't leak data:
 
 - **At ingestion**, every graph document stores its allowed users/groups from the
   source system.
-- **At query time**, every read — by a human *or an agent acting for them* — is
-  filtered by the requester's identity, enforced in the database itself (Postgres
-  row-level security), not just app code.
+- **At query time**, every read is filtered by the requester's identity, enforced in
+  the database itself (Postgres row-level security + a permission-checking search
+  function), not just app code.
 
-Email and meeting notes raise the bar further: per-source and per-mailbox opt-in,
-admin-visible ingestion scope, and hard-delete propagation.
+Email raises the bar further: per-mailbox opt-in, admin-visible ingestion scope, and
+hard-delete propagation.
 
 ## Technology choices
 
 | Layer | Choice | Why |
 |---|---|---|
 | Web app | **Next.js on Vercel** | Already live (zecway.com); instant deploys |
-| Graph store | **Supabase** (Postgres + pgvector) | Documents, embeddings, entities/edges, auth, and row-level security in one managed system |
-| Markdown conversion | Per-format extractors (PDF, email, chat, sheets) feeding one normalizer | The uniform-medium bet; each format is an isolated module |
-| Agent runtime | **Claude API** — Sonnet for investigation/synthesis, Haiku for extraction and classification | Quality + cost tiering; provider swappable behind one interface |
-| Background jobs | Supabase Edge Functions + scheduled jobs → dedicated queue (Inngest/Trigger.dev) as volume grows | Syncs and investigations are long-running; need retries |
-| Embeddings | Managed embedding API | No model hosting |
+| Graph store | **Supabase** (Postgres + pgvector) | Documents, embeddings, auth, and row-level security in one managed system |
+| Markdown conversion | Per-format extractors (PDF via unpdf, DOCX via mammoth, text) feeding one pipeline | The uniform-medium bet; each format is an isolated module |
+| LLM + embeddings | **Gemini free tier during development**, behind a one-file swappable interface (`lib/ai.ts`) | Zero cost while building; revisit model quality and rate limits before paid launch |
+| Background jobs | Supabase Edge Functions + scheduled jobs → dedicated queue (Inngest/Trigger.dev) as connector volume grows | Syncs are long-running; need retries |
 | Auth | Supabase Auth → SSO/SAML via WorkOS when deals require | Don't build SAML ourselves |
 
-**Honest scaling note:** this serves pilots and mid-size customers (millions of
-documents) comfortably. Hundred-million-document Fortune 500 tenants will need
-dedicated search/graph infrastructure and stronger tenant isolation — a problem revenue
-pays for; the data model is designed to port cleanly.
+**Honest scaling note:** this serves our segment (10–500 person companies, up to
+millions of documents) comfortably. Very large tenants will need dedicated search
+infrastructure and stronger isolation — a problem revenue pays for; the data model is
+designed to port cleanly.
 
 ## Data model (core tables)
 
 - `workspaces` — one per customer; everything scoped by `workspace_id`
-- `users`, `groups`, `group_members` — identities mirrored from source systems
+- `workspace_members` — seats and roles; the billing unit
 - `connections` — configured connector instances (tokens encrypted, sync state)
 - `documents` — graph nodes: markdown content, source, provenance, permissions
 - `chunks` — retrieval units: text + embedding + `permitted_principals[]`
-- `entities`, `edges` — the systems map (people/process/tool nodes and their relations)
-- `investigations`, `agent_runs`, `findings` — every agent workstream, its sources,
-  and its verified claims
-- `feedback` — was the brief useful; did the exec act on it
+- `queries` — every search/ask, its answer and citations (quality metrics + usage view)
 
-## Connector & agent design
+## Connector design
 
-- All connectors implement one interface — `full_sync()`, `incremental_sync(since)`,
-  `fetch_permissions(item)`, `handle_webhook(event)` — so each new source is
-  incremental work.
-- All agents implement one contract: declared inputs, read scope (the requesting
-  user's permissions), required citations on every output claim, and a written
-  artifact in the graph. Reviewer agents check claims before synthesis; failures send
-  workstreams back, not forward.
+All connectors implement one interface — `full_sync()`, `incremental_sync(since)`,
+`fetch_permissions(item)`, `handle_webhook(event)` — so each new source is
+incremental work, not a rebuild. Connector quality (freshness, permission fidelity,
+format conversion) is the product; each one ships with its own leak tests.
