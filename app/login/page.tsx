@@ -90,8 +90,8 @@ function LoginForm() {
   }
 
   return (
-    <div className="animate-pop w-full rounded-2xl border border-line bg-white p-8 shadow-[0_1px_2px_rgba(23,21,19,0.04),0_16px_40px_-20px_rgba(23,21,19,0.15)]">
-      <h1 className="text-xl font-semibold text-ink">
+    <div className="animate-pop w-full rounded-2xl border border-line bg-paper p-8 shadow-[0_1px_2px_rgba(23,21,19,0.04),0_16px_40px_-20px_rgba(23,21,19,0.15)]">
+      <h1 className="font-display text-2xl text-ink">
         {mode === "signin"
           ? "Sign in to Zecway"
           : mode === "signup"

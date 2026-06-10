@@ -57,7 +57,7 @@ export default function Home() {
           </span>
           <a
             href="#waitlist"
-            className="rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-accent"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-deep"
           >
             Get early access
           </a>
@@ -72,7 +72,7 @@ export default function Home() {
         </p>
 
         <h1
-          className="animate-fade-up text-4xl font-semibold leading-[1.1] tracking-tight sm:text-6xl"
+          className="animate-fade-up font-display text-5xl leading-[1.05] text-ink sm:text-7xl"
           style={{ animationDelay: "80ms" }}
         >
           Ask your company anything.
@@ -127,13 +127,13 @@ export default function Home() {
       {/* Features */}
       <section className="border-t border-line">
         <div className="mx-auto max-w-5xl px-6 py-16 sm:py-24">
-          <div className="grid gap-10 sm:grid-cols-3 sm:gap-8">
+          <div className="grid gap-5 sm:grid-cols-3">
             {FEATURES.map((f, i) => (
               <Reveal key={f.title} delay={i * 100}>
-                <div>
+                <div className="h-full rounded-xl bg-card p-8">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-                  <h3 className="mt-3 text-base font-semibold">{f.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-mist">{f.body}</p>
+                  <h3 className="mt-3 text-lg font-medium text-ink">{f.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-body">{f.body}</p>
                 </div>
               </Reveal>
             ))}
@@ -145,7 +145,7 @@ export default function Home() {
       <section className="border-t border-line bg-cream">
         <div className="mx-auto max-w-5xl px-6 py-16 sm:py-24">
           <Reveal>
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            <h2 className="font-display text-3xl text-ink sm:text-4xl">
               Live in a day, not a quarter
             </h2>
           </Reveal>
@@ -153,7 +153,7 @@ export default function Home() {
             {STEPS.map((s, i) => (
               <Reveal key={s.step} delay={i * 100}>
                 <div>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-line bg-white text-xs font-semibold text-mist">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-line bg-paper text-xs font-semibold text-mist">
                     {s.step}
                   </span>
                   <h3 className="mt-4 text-base font-semibold">{s.title}</h3>
@@ -165,25 +165,25 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="border-t border-line">
-        <div className="mx-auto max-w-3xl px-6 py-20 text-center sm:py-28">
-          <Reveal>
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+      {/* Final CTA — coral callout band */}
+      <section className="px-6 py-16 sm:py-24">
+        <Reveal>
+          <div className="mx-auto max-w-5xl rounded-xl bg-accent px-6 py-14 text-center sm:px-12 sm:py-20">
+            <h2 className="font-display text-3xl text-white sm:text-5xl">
               Give your team one search bar
               <br className="hidden sm:block" /> for everything.
             </h2>
-          </Reveal>
-          <Reveal delay={120} className="mt-8 flex w-full justify-center">
-            <WaitlistForm compact />
-          </Reveal>
-        </div>
+            <div className="mt-8 flex w-full justify-center">
+              <WaitlistForm compact />
+            </div>
+          </div>
+        </Reveal>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-6 py-10 text-xs text-mist sm:flex-row">
-          <span className="text-sm font-bold tracking-tight text-ink">
+      {/* Footer — dark, never inverts */}
+      <footer className="bg-dark">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-6 py-12 text-xs text-on-dark-soft sm:flex-row">
+          <span className="text-sm font-bold tracking-tight text-on-dark">
             zecway<span className="text-accent">.</span>
           </span>
           <span>AI workplace search · © {new Date().getFullYear()} Zecway</span>

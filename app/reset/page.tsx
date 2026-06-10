@@ -40,7 +40,7 @@ export default function ResetPage() {
       </Link>
       <div className="w-full max-w-sm">
         {ready === "no-session" ? (
-          <div className="animate-pop rounded-2xl border border-line bg-white p-8 text-center">
+          <div className="animate-pop rounded-2xl border border-line bg-paper p-8 text-center">
             <p className="text-sm text-mist">
               This reset link is invalid or expired.{" "}
               <Link href="/login" className="font-semibold text-accent">
@@ -49,8 +49,8 @@ export default function ResetPage() {
             </p>
           </div>
         ) : (
-          <div className="animate-pop w-full rounded-2xl border border-line bg-white p-8 shadow-[0_1px_2px_rgba(23,21,19,0.04),0_16px_40px_-20px_rgba(23,21,19,0.15)]">
-            <h1 className="text-xl font-semibold text-ink">Set a new password</h1>
+          <div className="animate-pop w-full rounded-2xl border border-line bg-paper p-8 shadow-[0_1px_2px_rgba(23,21,19,0.04),0_16px_40px_-20px_rgba(23,21,19,0.15)]">
+            <h1 className="font-display text-2xl text-ink">Set a new password</h1>
             <form onSubmit={submit} className="mt-6 space-y-3">
               <div className="relative">
                 <input
@@ -86,7 +86,7 @@ export default function ResetPage() {
               <button
                 type="submit"
                 disabled={status === "busy" || ready === "checking"}
-                className="w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent disabled:opacity-60"
+                className="w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent-deep disabled:opacity-60"
               >
                 {status === "busy" ? "Saving…" : "Save new password"}
               </button>

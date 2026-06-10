@@ -108,7 +108,7 @@ export default function SearchAsk({
     <div>
       <form
         onSubmit={ask}
-        className="flex items-center gap-2 rounded-xl border border-line bg-white p-1.5 shadow-[0_1px_2px_rgba(23,21,19,0.04)] transition focus-within:border-ink/30"
+        className="flex items-center gap-2 rounded-xl border border-line bg-paper p-1.5 shadow-[0_1px_2px_rgba(23,21,19,0.04)] transition focus-within:border-ink/30"
       >
         <svg
           width="16"
@@ -130,7 +130,7 @@ export default function SearchAsk({
         <button
           type="submit"
           disabled={asking || !hasDocuments || !query.trim()}
-          className="shrink-0 rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-accent disabled:opacity-40"
+          className="shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-deep disabled:opacity-40"
         >
           {asking ? "Thinking…" : "Ask AI"}
         </button>
@@ -139,7 +139,7 @@ export default function SearchAsk({
       {askError && <p className="mt-3 text-xs text-red-500">{askError}</p>}
 
       {answer && (
-        <div className="animate-pop mt-4 rounded-xl border border-line bg-white p-5">
+        <div className="animate-pop mt-4 rounded-xl border border-line bg-paper p-5">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
             Answer
@@ -171,7 +171,7 @@ export default function SearchAsk({
       {showResults && (
         <div className="mt-4">
           {results.length > 0 ? (
-            <ul className="divide-y divide-line rounded-xl border border-line bg-white">
+            <ul className="divide-y divide-line rounded-xl border border-line bg-paper">
               {results.map((r) => (
                 <li key={r.document_id} className="px-5 py-3.5">
                   <div className="flex items-baseline justify-between gap-3">

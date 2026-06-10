@@ -29,13 +29,13 @@ export default async function TeamPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-ink">Team</h1>
+        <h1 className="font-display text-2xl text-ink">Team</h1>
         <p className="mt-1 text-sm text-mist">
           {team.length} member{team.length === 1 ? "" : "s"} in {workspace.name}.
         </p>
       </div>
 
-      <ul className="divide-y divide-line rounded-xl border border-line bg-white">
+      <ul className="divide-y divide-line rounded-xl border border-line bg-paper">
         {team.map((m) => (
           <li key={m.user_id} className="flex items-center justify-between px-5 py-3">
             <span className="truncate text-sm text-ink">{m.email}</span>
@@ -76,17 +76,17 @@ export default async function TeamPage() {
               name="email"
               required
               placeholder="teammate@company.com"
-              className="min-w-0 flex-1 rounded-lg border border-line bg-white px-3.5 py-2 text-sm text-ink placeholder:text-mist focus:border-ink/30 focus:outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-line bg-paper px-3.5 py-2 text-sm text-ink placeholder:text-mist focus:border-ink/30 focus:outline-none"
             />
             <select
               name="role"
               defaultValue="member"
-              className="rounded-lg border border-line bg-white px-2.5 py-2 text-sm text-mist focus:outline-none"
+              className="rounded-lg border border-line bg-paper px-2.5 py-2 text-sm text-mist focus:outline-none"
             >
               <option value="member">Member</option>
               <option value="admin">Admin</option>
             </select>
-            <button className="rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-accent">
+            <button className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-deep">
               Invite
             </button>
           </form>
