@@ -53,8 +53,8 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
             className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition ${
               active
-                ? "bg-white font-medium text-ink shadow-[0_1px_2px_rgba(23,21,19,0.06)]"
-                : "text-mist hover:bg-white/60 hover:text-ink"
+                ? "bg-card font-medium text-ink"
+                : "text-mist hover:bg-paper/60 hover:text-ink"
             }`}
           >
             <span className={active ? "text-accent" : ""}>{item.icon}</span>
@@ -127,7 +127,7 @@ export default function Shell({
       </aside>
 
       {/* Mobile top bar + drawer */}
-      <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-line bg-white/80 px-4 py-3 backdrop-blur md:hidden">
+      <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-line bg-paper/80 px-4 py-3 backdrop-blur md:hidden">
         <button
           onClick={() => setOpen(true)}
           aria-label="Open menu"

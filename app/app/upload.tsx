@@ -52,7 +52,7 @@ export default function Upload({ workspaceId }: { workspaceId: string }) {
           accept=".md,.markdown,.txt,.pdf,.docx"
           onChange={(e) => uploadFiles(e.target.files)}
           disabled={uploading}
-          className="text-xs text-mist file:mr-3 file:rounded-lg file:border-0 file:bg-ink file:px-4 file:py-2 file:text-xs file:font-medium file:text-white hover:file:bg-accent"
+          className="text-xs text-mist file:mr-3 file:rounded-lg file:border-0 file:bg-accent file:px-4 file:py-2 file:text-xs file:font-medium file:text-white hover:file:bg-accent-deep"
         />
       </div>
       {status && <p className="mt-3 text-xs text-mist">{status}</p>}

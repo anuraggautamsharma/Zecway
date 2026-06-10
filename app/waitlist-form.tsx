@@ -41,7 +41,7 @@ export default function WaitlistForm({ compact = false }: { compact?: boolean })
     <div className={`w-full ${compact ? "max-w-md" : "max-w-md"}`}>
       <form
         onSubmit={submit}
-        className="flex gap-2 rounded-xl border border-line bg-white p-1.5 transition focus-within:border-ink/30"
+        className="flex gap-2 rounded-xl border border-line bg-paper p-1.5 transition focus-within:border-ink/30"
       >
         <input
           type="email"
@@ -54,7 +54,7 @@ export default function WaitlistForm({ compact = false }: { compact?: boolean })
         <button
           type="submit"
           disabled={status === "sending"}
-          className="shrink-0 rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent disabled:opacity-60"
+          className="shrink-0 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent-deep disabled:opacity-60"
         >
           {status === "sending" ? "Joining…" : "Get early access"}
         </button>

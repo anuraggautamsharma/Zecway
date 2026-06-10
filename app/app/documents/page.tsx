@@ -19,7 +19,7 @@ export default async function DocumentsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-ink">Library</h1>
+        <h1 className="font-display text-2xl text-ink">Library</h1>
         <p className="mt-1 text-sm text-mist">
           {docs.length === 0
             ? "Nothing here yet — add the first documents below."
@@ -30,7 +30,7 @@ export default async function DocumentsPage() {
       <Upload workspaceId={workspace.id} />
 
       {docs.length > 0 && (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-white">
+        <ul className="divide-y divide-line rounded-xl border border-line bg-paper">
           {docs.map((d) => (
             <li key={d.id} className="flex items-center justify-between px-5 py-3">
               <span className="truncate text-sm text-ink">{d.title}</span>

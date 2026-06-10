@@ -29,7 +29,7 @@ export default async function AppHome() {
                 </p>
                 <form action={acceptInvite}>
                   <input type="hidden" name="invite_id" value={inv.id} />
-                  <button className="shrink-0 rounded-lg bg-ink px-4 py-2 text-xs font-medium text-white transition hover:bg-accent">
+                  <button className="shrink-0 rounded-lg bg-accent px-4 py-2 text-xs font-medium text-white transition hover:bg-accent-deep">
                     Join
                   </button>
                 </form>
@@ -37,8 +37,8 @@ export default async function AppHome() {
             ))}
           </div>
         )}
-        <div className="animate-pop mx-auto max-w-md rounded-2xl border border-line bg-white p-8 shadow-[0_1px_2px_rgba(23,21,19,0.04),0_16px_40px_-20px_rgba(23,21,19,0.15)]">
-          <h1 className="text-xl font-semibold text-ink">Name your workspace</h1>
+        <div className="animate-pop mx-auto max-w-md rounded-2xl border border-line bg-paper p-8 shadow-[0_1px_2px_rgba(23,21,19,0.04),0_16px_40px_-20px_rgba(23,21,19,0.15)]">
+          <h1 className="font-display text-2xl text-ink">Name your workspace</h1>
           <p className="mt-1 text-sm text-mist">
             Usually your company name — this is where your knowledge lives.
           </p>
@@ -49,7 +49,7 @@ export default async function AppHome() {
               placeholder="Acme Inc"
               className="min-w-0 flex-1 rounded-xl border border-line bg-cream px-4 py-2.5 text-sm text-ink placeholder:text-mist focus:border-accent/50 focus:outline-none"
             />
-            <button className="shrink-0 rounded-xl bg-ink px-5 py-2.5 text-sm font-medium text-white transition hover:bg-accent">
+            <button className="shrink-0 rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white transition hover:bg-accent-deep">
               Create
             </button>
           </form>
@@ -66,7 +66,7 @@ export default async function AppHome() {
 
   return (
     <div className="pt-4 md:pt-16">
-      <h1 className="text-center text-2xl font-semibold tracking-tight text-ink">
+      <h1 className="text-center font-display text-3xl text-ink sm:text-4xl">
         Ask {workspace.name} anything
       </h1>
       <p className="mb-8 mt-2 text-center text-sm text-mist">
