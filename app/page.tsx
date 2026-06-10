@@ -1,6 +1,9 @@
-import Reveal from "./reveal";
+import dynamic from "next/dynamic";
 import SearchDemo from "./search-demo";
 import WaitlistForm from "./waitlist-form";
+import { RiseIn, ScatterToBar } from "./scroll-story";
+
+const GraphField = dynamic(() => import("./graph-field"));
 
 const SOURCES = [
   "Google Drive",
@@ -11,6 +14,17 @@ const SOURCES = [
   "GitHub",
   "Email",
   "PDFs",
+  "Meeting notes",
+  "Spreadsheets",
+];
+
+const TICKER = [
+  "where's the latest pricing deck?",
+  "who owns customer onboarding?",
+  "what's our parental leave policy?",
+  "what did we decide about the rebrand?",
+  "is the API contract signed?",
+  "which vendor handles logistics?",
 ];
 
 const FEATURES = [
@@ -28,27 +42,9 @@ const FEATURES = [
   },
 ];
 
-const STEPS = [
-  {
-    step: "1",
-    title: "Connect your tools",
-    body: "Authorize the apps your company already uses. No migration, no IT project.",
-  },
-  {
-    step: "2",
-    title: "Zecway learns everything",
-    body: "Your content becomes one searchable knowledge graph — including who's allowed to see what.",
-  },
-  {
-    step: "3",
-    title: "Everyone finds anything",
-    body: "Cited answers in seconds, instead of interrupting a colleague.",
-  },
-];
-
 export default function Home() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen overflow-x-clip">
       {/* Nav */}
       <nav className="nav-blur fixed inset-x-0 top-0 z-50 border-b border-line">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3.5">
@@ -64,64 +60,82 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <header className="mx-auto max-w-3xl px-6 pb-20 pt-36 text-center sm:pb-28 sm:pt-44">
-        <p className="animate-fade-up mx-auto mb-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-mist">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-          AI workplace search · Launching 2026
-        </p>
+      {/* Hero — the field of scattered knowledge that organizes around answers */}
+      <header className="relative flex min-h-svh flex-col items-center justify-center px-6 pb-16 pt-28 text-center">
+        <GraphField />
 
-        <h1
-          className="animate-fade-up font-display text-5xl leading-[1.05] text-ink sm:text-7xl"
-          style={{ animationDelay: "80ms" }}
-        >
-          Ask your company anything.
-        </h1>
+        <div className="relative z-10 flex w-full flex-col items-center">
+          <p className="animate-fade-up mx-auto mb-6 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-mist">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+            ai workplace search · launching 2026
+          </p>
 
-        <p
-          className="animate-fade-up mx-auto mt-5 max-w-xl text-base leading-relaxed text-mist sm:text-lg"
-          style={{ animationDelay: "160ms" }}
-        >
-          One search bar across every tool your team uses. Instant answers with
-          sources — only from what each person is allowed to see.
-        </p>
+          <h1
+            className="animate-fade-up max-w-3xl font-display text-5xl leading-[1.04] text-ink sm:text-7xl"
+            style={{ animationDelay: "80ms" }}
+          >
+            Ask your company anything.
+          </h1>
 
-        <div
-          className="animate-fade-up mt-8 flex w-full justify-center"
-          style={{ animationDelay: "240ms" }}
-          id="waitlist"
-        >
-          <WaitlistForm />
+          <p
+            className="animate-fade-up mx-auto mt-5 max-w-xl text-base leading-relaxed text-body sm:text-lg"
+            style={{ animationDelay: "160ms" }}
+          >
+            Every dot behind this sentence is a piece of company knowledge,
+            scattered. Watch what happens when someone asks.
+          </p>
+
+          <div
+            className="animate-fade-up mt-9 w-full max-w-2xl"
+            style={{ animationDelay: "260ms" }}
+          >
+            <SearchDemo />
+          </div>
+
+          <div
+            className="animate-fade-up mt-9 flex w-full justify-center"
+            style={{ animationDelay: "340ms" }}
+            id="waitlist"
+          >
+            <WaitlistForm />
+          </div>
+          <p
+            className="animate-fade-up mt-3 font-mono text-[11px] text-mist"
+            style={{ animationDelay: "400ms" }}
+          >
+            early access is limited · no credit card
+          </p>
         </div>
-        <p
-          className="animate-fade-up mt-3 text-xs text-mist"
-          style={{ animationDelay: "300ms" }}
-        >
-          Early access is limited · No credit card
-        </p>
       </header>
 
-      {/* Demo */}
-      <section className="mx-auto max-w-2xl px-6">
-        <Reveal>
-          <SearchDemo />
-        </Reveal>
-      </section>
-
-      {/* Sources */}
-      <section className="mx-auto max-w-3xl px-6 py-16 sm:py-24">
-        <Reveal>
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.16em] text-mist">
-            Works with
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-x-6 gap-y-2.5">
-            {SOURCES.map((s) => (
-              <span key={s} className="text-sm font-medium text-mist">
-                {s}
+      {/* Question ticker — the everyday questions, in the receipt voice */}
+      <section className="border-y border-line bg-cream py-3.5">
+        <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+          <div className="animate-ticker flex w-max items-center gap-8">
+            {[...TICKER, ...TICKER].map((q, i) => (
+              <span
+                key={`${q}-${i}`}
+                className="flex items-center gap-8 font-mono text-xs text-mist"
+              >
+                {q}
+                <span className="inline-block h-1 w-1 rounded-full bg-accent" />
               </span>
             ))}
           </div>
-        </Reveal>
+        </div>
+      </section>
+
+      {/* Scatter → one bar (scroll-performed) */}
+      <section className="mx-auto max-w-4xl px-6 py-24 sm:py-36">
+        <RiseIn>
+          <h2 className="mx-auto max-w-2xl text-center font-display text-3xl leading-tight text-ink sm:text-5xl">
+            Your company already knows the answer. It&apos;s just scattered
+            across ten tools.
+          </h2>
+        </RiseIn>
+        <div className="mt-16">
+          <ScatterToBar tools={SOURCES} />
+        </div>
       </section>
 
       {/* Features */}
@@ -129,45 +143,43 @@ export default function Home() {
         <div className="mx-auto max-w-5xl px-6 py-16 sm:py-24">
           <div className="grid gap-5 sm:grid-cols-3">
             {FEATURES.map((f, i) => (
-              <Reveal key={f.title} delay={i * 100}>
+              <RiseIn key={f.title} delay={i * 0.12} className="h-full">
                 <div className="h-full rounded-xl bg-card p-8">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
                   <h3 className="mt-3 text-lg font-medium text-ink">{f.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-body">{f.body}</p>
                 </div>
-              </Reveal>
+              </RiseIn>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="border-t border-line bg-cream">
-        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-24">
-          <Reveal>
-            <h2 className="font-display text-3xl text-ink sm:text-4xl">
-              Live in a day, not a quarter
-            </h2>
-          </Reveal>
-          <div className="mt-10 grid gap-10 sm:grid-cols-3 sm:gap-8">
-            {STEPS.map((s, i) => (
-              <Reveal key={s.step} delay={i * 100}>
-                <div>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-line bg-paper text-xs font-semibold text-mist">
-                    {s.step}
-                  </span>
-                  <h3 className="mt-4 text-base font-semibold">{s.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-mist">{s.body}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+      {/* The receipts moment */}
+      <section className="border-t border-line bg-dark">
+        <div className="mx-auto max-w-3xl px-6 py-20 text-center sm:py-32">
+          <RiseIn>
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent">
+              ● every claim, cited
+            </p>
+            <p className="mx-auto mt-6 max-w-2xl font-display text-2xl leading-relaxed text-on-dark sm:text-4xl">
+              &ldquo;Full-time employees receive 18 weeks of fully paid parental
+              leave, extendable by 4 unpaid weeks.&rdquo;
+            </p>
+            <p className="mt-6 font-mono text-xs text-on-dark-soft">
+              [1] HR Policy 2026 · Google Drive&nbsp;&nbsp;&nbsp;[2] #people-ops · Slack
+            </p>
+            <p className="mt-10 text-sm leading-relaxed text-on-dark-soft">
+              And when the answer isn&apos;t written down anywhere, Zecway says
+              so — instead of making something up.
+            </p>
+          </RiseIn>
         </div>
       </section>
 
-      {/* Final CTA — coral callout band */}
+      {/* Final CTA — ember band */}
       <section className="px-6 py-16 sm:py-24">
-        <Reveal>
+        <RiseIn>
           <div className="mx-auto max-w-5xl rounded-xl bg-accent px-6 py-14 text-center sm:px-12 sm:py-20">
             <h2 className="font-display text-3xl text-white sm:text-5xl">
               Give your team one search bar
@@ -177,7 +189,7 @@ export default function Home() {
               <WaitlistForm compact />
             </div>
           </div>
-        </Reveal>
+        </RiseIn>
       </section>
 
       {/* Footer — dark, never inverts */}
@@ -186,8 +198,10 @@ export default function Home() {
           <span className="text-sm font-bold tracking-tight text-on-dark">
             zecway<span className="text-accent">.</span>
           </span>
-          <span>AI workplace search · © {new Date().getFullYear()} Zecway</span>
-          <span>Permissions enforced on every result</span>
+          <span className="font-mono text-[11px]">
+            ai workplace search · © {new Date().getFullYear()} zecway
+          </span>
+          <span className="font-mono text-[11px]">permissions enforced on every result</span>
         </div>
       </footer>
     </main>
