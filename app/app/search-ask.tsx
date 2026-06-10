@@ -108,7 +108,7 @@ export default function SearchAsk({
     <div>
       <form
         onSubmit={ask}
-        className="flex items-center gap-2 rounded-xl border border-line bg-paper p-1.5 shadow-[0_1px_2px_rgba(23,21,19,0.04)] transition focus-within:border-ink/30"
+        className="flex items-center gap-2 rounded-xl border border-line bg-paper p-1.5 transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10"
       >
         <svg
           width="16"
@@ -130,7 +130,7 @@ export default function SearchAsk({
         <button
           type="submit"
           disabled={asking || !hasDocuments || !query.trim()}
-          className="shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-deep disabled:opacity-40"
+          className="shrink-0 rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-dark-elevated active:scale-[0.97] disabled:opacity-40"
         >
           {asking ? "Thinking…" : "Ask AI"}
         </button>
@@ -139,17 +139,17 @@ export default function SearchAsk({
       {askError && <p className="mt-3 text-xs text-red-500">{askError}</p>}
 
       {answer && (
-        <div className="animate-pop mt-4 rounded-xl border border-line bg-paper p-5">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
+        <div className="animate-pop mt-4 rounded-xl border border-line bg-paper p-5 shadow-[0_1px_1px_rgba(20,20,19,0.03),0_12px_24px_-16px_rgba(20,20,19,0.25)]">
+          <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-accent">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
             Answer
           </div>
-          <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed text-ink">{answer}</p>
+          <p className="mt-3 whitespace-pre-wrap font-display text-lg leading-relaxed text-ink">{answer}</p>
           {citations.length > 0 && (
             <div className="mt-4 border-t border-line pt-3">
               <ul className="space-y-1">
                 {citations.map((c) => (
-                  <li key={c.n} className="text-xs text-mist">
+                  <li key={c.n} className="font-mono text-[11px] text-mist">
                     <span className="mr-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-accent-soft text-[10px] font-semibold text-accent-deep">
                       {c.n}
                     </span>
@@ -171,7 +171,7 @@ export default function SearchAsk({
       {showResults && (
         <div className="mt-4">
           {results.length > 0 ? (
-            <ul className="divide-y divide-line rounded-xl border border-line bg-paper">
+            <ul className="divide-y divide-line rounded-xl border border-line bg-paper shadow-[0_1px_1px_rgba(20,20,19,0.03),0_12px_24px_-16px_rgba(20,20,19,0.25)]">
               {results.map((r) => (
                 <li key={r.document_id} className="px-5 py-3.5">
                   <div className="flex items-baseline justify-between gap-3">
@@ -184,7 +184,7 @@ export default function SearchAsk({
                         r.title
                       )}
                     </span>
-                    <span className="shrink-0 text-xs text-mist">{r.source}</span>
+                    <span className="shrink-0 font-mono text-[11px] text-mist">{r.source}</span>
                   </div>
                   <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-mist">
                     <Snippet text={r.snippet} />

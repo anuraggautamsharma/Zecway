@@ -29,7 +29,7 @@ export default async function TeamPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-2xl text-ink">Team</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-ink">Team</h1>
         <p className="mt-1 text-sm text-mist">
           {team.length} member{team.length === 1 ? "" : "s"} in {workspace.name}.
         </p>
@@ -39,7 +39,7 @@ export default async function TeamPage() {
         {team.map((m) => (
           <li key={m.user_id} className="flex items-center justify-between px-5 py-3">
             <span className="truncate text-sm text-ink">{m.email}</span>
-            <span className="ml-4 shrink-0 rounded-md border border-line px-2 py-0.5 text-xs text-mist">
+            <span className="ml-4 shrink-0 rounded-md border border-line px-2 py-0.5 font-mono text-[11px] text-mist">
               {m.role}
             </span>
           </li>
@@ -48,7 +48,7 @@ export default async function TeamPage() {
           <li key={inv.id} className="flex items-center justify-between px-5 py-3">
             <span className="truncate text-sm text-mist">{inv.email}</span>
             <span className="ml-4 flex shrink-0 items-center gap-2">
-              <span className="rounded-md border border-dashed border-line px-2 py-0.5 text-xs text-mist">
+              <span className="rounded-md border border-dashed border-line px-2 py-0.5 font-mono text-[11px] text-mist">
                 invited · {inv.role}
               </span>
               {isAdmin && (
@@ -86,7 +86,7 @@ export default async function TeamPage() {
               <option value="member">Member</option>
               <option value="admin">Admin</option>
             </select>
-            <button className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-deep">
+            <button className="rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-dark-elevated active:scale-[0.97]">
               Invite
             </button>
           </form>

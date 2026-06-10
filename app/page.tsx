@@ -57,7 +57,7 @@ export default function Home() {
           </span>
           <a
             href="#waitlist"
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-deep"
+            className="rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-dark-elevated active:scale-[0.97]"
           >
             Get early access
           </a>
