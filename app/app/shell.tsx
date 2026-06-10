@@ -70,7 +70,7 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
           <path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z" />
         </svg>
         Connectors
-        <span className="ml-auto rounded-md border border-line px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
+        <span className="ml-auto rounded-md border border-line px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide">
           soon
         </span>
       </span>

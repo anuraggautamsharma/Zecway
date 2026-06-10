@@ -50,7 +50,7 @@ export default function ResetPage() {
           </div>
         ) : (
           <div className="animate-pop w-full rounded-2xl border border-line bg-paper p-8 shadow-[0_1px_2px_rgba(23,21,19,0.04),0_16px_40px_-20px_rgba(23,21,19,0.15)]">
-            <h1 className="font-display text-2xl text-ink">Set a new password</h1>
+            <h1 className="text-lg font-semibold tracking-tight text-ink">Set a new password</h1>
             <form onSubmit={submit} className="mt-6 space-y-3">
               <div className="relative">
                 <input
@@ -86,7 +86,7 @@ export default function ResetPage() {
               <button
                 type="submit"
                 disabled={status === "busy" || ready === "checking"}
-                className="w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent-deep disabled:opacity-60"
+                className="w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent-deep active:scale-[0.97] disabled:opacity-60"
               >
                 {status === "busy" ? "Saving…" : "Save new password"}
               </button>

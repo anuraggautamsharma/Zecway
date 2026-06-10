@@ -73,16 +73,16 @@ export default function SearchDemo() {
       {/* Answer */}
       <div className={`${phase === "answer" ? "animate-pop" : "invisible"}`}>
         <div className="mt-4 border-t border-white/10 pt-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
+          <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-accent">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
             Answer
           </div>
-          <p className="mt-2.5 text-sm leading-relaxed text-on-dark">{current.answer}</p>
+          <p className="mt-3 font-display text-lg leading-relaxed text-on-dark">{current.answer}</p>
           <div className="mt-3.5 flex flex-wrap gap-2">
             {current.sources.map((s) => (
               <span
                 key={s.label}
-                className="inline-flex items-center gap-1.5 rounded-md bg-dark-elevated px-2.5 py-1 text-xs text-on-dark-soft"
+                className="inline-flex items-center gap-1.5 rounded-md bg-dark-elevated px-2.5 py-1 font-mono text-[11px] text-on-dark-soft"
               >
                 <span>{s.icon}</span> {s.label}
               </span>

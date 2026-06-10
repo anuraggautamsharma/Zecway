@@ -92,7 +92,7 @@ function LoginForm() {
 
   return (
     <div className="animate-pop w-full">
-      <h1 className="font-display text-3xl text-ink">
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">
         {mode === "signin"
           ? "Sign in to Zecway"
           : mode === "signup"
@@ -162,7 +162,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={status === "busy"}
-          className="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent-deep disabled:opacity-60"
+          className="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent-deep active:scale-[0.97] disabled:opacity-60"
         >
           {status === "busy"
             ? "One moment…"

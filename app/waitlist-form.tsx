@@ -54,7 +54,7 @@ export default function WaitlistForm({ compact = false }: { compact?: boolean })
         <button
           type="submit"
           disabled={status === "sending"}
-          className="shrink-0 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent-deep disabled:opacity-60"
+          className="shrink-0 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent-deep active:scale-[0.97] disabled:opacity-60"
         >
           {status === "sending" ? "Joining…" : "Get early access"}
         </button>
