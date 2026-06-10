@@ -2,78 +2,67 @@
 
 ## Personas
 
-1. **The executive sponsor (primary buyer & user).** CEO, COO, functional VP. Has
-   decisions queued that each justify the product alone: restructure, vendor renewal,
-   why-is-this-team-slow. Wants an evidence-backed brief in minutes, not a project.
-2. **The chief of staff / ops lead (power operator).** Runs Zecway day to day: frames
-   questions, reviews investigation briefs before they reach the exec, curates what
-   gets connected.
-3. **The IT/security admin (the gate).** Approves what Zecway may ingest. Needs
-   per-source controls, audit trails, and certainty that permissions can't leak —
-   especially with email and meeting notes in scope.
-4. **Employees (later beneficiaries).** Once the graph exists, everyday search/ask for
-   everyone is a natural expansion — but it is the expansion, not the wedge.
+1. **The employee (primary user).** Needs the policy, the deck, the decision, the
+   "who owns this?" — fifty times a week. Today they interrupt a colleague or give up.
+   Zecway is their one search bar and assistant.
+2. **The founder / ops lead (the buyer at our segment).** Feels the company's
+   knowledge chaos personally. Signs up, connects the tools, invites the team, pays
+   with a credit card. Wants value before the first invite, not after a rollout.
+3. **The IT/security admin (the gate, as customers grow).** Approves what Zecway may
+   ingest. Needs per-source controls, a visible "what Zecway can see" panel, audit
+   trails, and certainty that permissions can't leak.
 
 ## Core product
 
-### 1. Ingestion → the markdown knowledge graph
-- Connectors pull every kind of content: documents, PDFs, emails, Slack/Teams messages,
-  spreadsheets, meeting notes, tickets, CRM records.
-- Everything is converted to **markdown** — one uniform medium, readable by humans and
-  natively workable by agents. Tables, threads, and slides all become legible text with
-  structure and metadata preserved.
-- Every item carries its **permissions** from the source system, plus provenance
-  (where it came from, when, who wrote it).
+### 1. Connectors → the markdown knowledge graph
+- Connectors pull content **and access rules** from each source: Google Drive, Slack,
+  Notion, email, and onward by customer demand. Direct upload (PDF, Word, markdown,
+  text) for everything else.
+- Everything converts to **markdown** — one uniform medium with structure, metadata,
+  and provenance preserved. Every item carries its permissions from the source system.
 - The graph is *living*: continuous re-sync, hard deletes propagated.
 
-### 2. The systems map
-- Entities: people, teams, processes, tools, vendors, customers — extracted from the
-  graph's content and activity.
-- Edges: who works with whom, which process crosses which teams and tools, where
-  handoffs occur. Built by **cartographer agents**, refreshed as the company changes.
-- Rendered visually: the map is a flagship UI surface, not just internal plumbing.
+### 2. Search: everything, instantly
+- One search bar over every connected source: ranked results combining keyword and
+  semantic matching, filterable by source, author, date.
+- Results show enough context to click confidently; clicking opens the original in
+  its source tool.
+- Only ever returns what the searcher could open in the source system.
 
 ### 3. Ask: answers with receipts
 - Plain-language questions; answers grounded only in permitted graph content.
 - **Every claim cites its source.** No citation, no claim. When the graph doesn't
-  contain the answer, Zecway says so.
+  contain the answer, Zecway says so plainly.
+- Follow-up questions keep context; answers link into search for going deeper.
 
-### 4. Investigations (the consulting engagement, compressed)
-- For decision-grade questions, a **lead agent** decomposes the question into
-  workstreams; **specialist agents** investigate each in parallel inside the graph;
-  a **reviewer agent** verifies every claim against sources; the lead synthesizes a
-  brief: recommendation, evidence, confidence, and what would change the answer.
-- Output is a document in the graph — reusable, shareable, citable by later
-  investigations.
-
-### 5. Standing agents
-- **Librarians** — keep ingestion clean, deduplicated, current.
-- **Cartographers** — maintain the systems map.
-- **Watchdogs** (trust-ladder stage 3) — surface anomalies proactively: a handoff
-  slowing, duplicated work, a vendor drifting out of SLA.
+### 4. Workspace & admin
+- Teams: invite by email, roles (owner/admin/member), per-seat billing.
+- The scope panel: exactly what's connected, what Zecway can see, per-source
+  disconnect, hard-delete propagation.
+- Usage view: are people actually finding things (the renewal argument, visible).
 
 ## The two non-negotiables
 
-1. **Permissions.** A user only ever sees — and an agent acting for a user only ever
-   reads — what that user could open in the source system. Enforced at ingestion and
-   again at query time, in the database itself.
-2. **Citations.** Agents may not assert what they cannot cite. This is the survival
-   mechanism against compounding multi-agent error, not a feature.
+1. **Permissions.** A user only ever sees what they could open in the source system.
+   Enforced at ingestion and again at query time, in the database itself.
+2. **Citations.** The assistant may not assert what it cannot cite. This is the
+   survival mechanism against hallucination, not a feature.
 
 ## Experience principles
 
-1. **Boardroom-grade output.** Every brief should look like the best deck the best
-   consultant ever delivered — because that's the comparison the buyer is making.
-2. **Minutes, visibly.** Show the investigation working: workstreams spawning,
-   sources being read, claims being verified. The theater is honest *and* persuasive.
-3. **Honest uncertainty.** Confidence levels and gaps stated plainly. Trust compounds;
-   bluffing kills.
-4. **Read first, act later.** Analysis agents are read-only. Agents that take actions
-   in external systems require explicit per-action human approval — and come later.
+1. **Fast like a reflex.** Search is used dozens of times a day; results must feel
+   instant. Speed *is* the design.
+2. **Consumer-grade calm.** One bar, obvious results, zero training required. The
+   product should feel closer to Google than to enterprise software.
+3. **Honest uncertainty.** "Your company hasn't written this down" is a feature.
+   Trust compounds; bluffing kills.
+4. **Value before the team arrives.** The buyer must hit a real answered question
+   during onboarding, alone, before inviting anyone.
 
 ## Deliberately out of scope (for now)
 
-- Action-taking agents without human approval gates
-- Company-wide every-employee rollout as the initial motion (it's the expansion)
+- Systems map and multi-agent executive investigations (future bets — the graph
+  supports them when we're ready to climb upmarket)
+- Action-taking agents in external systems
 - On-premise deployment; building our own LLM
-- Real-time conversational voice — text briefs first
+- Real-time conversational voice

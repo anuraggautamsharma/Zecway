@@ -73,8 +73,8 @@ function LoginForm() {
       </h1>
       <p className="mt-1 text-sm text-mist">
         {mode === "signin"
-          ? "Your company brain is waiting."
-          : "Start building your company brain."}
+          ? "Your team's knowledge is waiting."
+          : "Give your company one search bar."}
       </p>
 
       <form onSubmit={submit} className="mt-6 space-y-3">

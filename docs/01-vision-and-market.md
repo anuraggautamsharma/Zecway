@@ -1,75 +1,74 @@
 # 01 — Vision & Market
 
-## Vision: the company brain
+## Vision: ask your company anything
 
-Every company already contains the answers to its own hardest questions — scattered
-across documents, PDFs, emails, Slack threads, spreadsheets, and meeting notes. Zecway
-turns all of it into one living brain, in three layers:
+Every employee loses hours a week hunting for things their company already knows —
+a policy, a decision, a deck, "who owns this?" — scattered across Drive, Slack,
+email, Notion, and a dozen other tools. Zecway connects all of them and gives every
+employee one place to ask:
 
-1. **The knowledge graph.** Every kind of file the company produces is converted into a
-   single uniform medium — markdown — that humans can read and AI agents can natively
-   work inside. Not just an index for retrieval: a legible, living copy of everything
-   the company knows, with permissions attached to every piece.
-2. **The systems map.** On top of the content, Zecway maps the company *as a system*:
-   the people, processes, and tools that make up real workflows, and the connections
-   between them — who hands off to whom, which process flows through which tool.
-3. **Decisions.** From the graph and the map, agent teams answer the questions
-   executives act on: how to restructure a team, whether to keep a vendor, where
-   handoffs between teams are breaking. Evidence-backed, cited, current — in minutes.
+1. **The knowledge graph.** Every connected source is converted into one uniform,
+   permissioned medium — markdown — continuously re-synced. Not just an index: a
+   legible, living copy of everything the company knows, with access rules attached
+   to every piece.
+2. **Search.** One search bar across everything the company uses. Instant, ranked,
+   filtered — and the searcher only ever sees what they could open in the source tool.
+3. **The assistant.** Plain-language questions, answers grounded only in permitted
+   content, every claim cited. When the company hasn't written the answer down,
+   Zecway says so instead of guessing.
 
-## Who we actually compete with
+This is the product Glean proved at a $7B valuation. We are building it for the
+companies Glean will never serve.
 
-The budget Zecway targets is not the software budget. It's the **analysis budget**.
+## The market: proven at the top, abandoned at the bottom
 
-| Today's alternative | Their weakness |
+| Player | What they prove / where they fail |
 |---|---|
-| **Management consultants** | A single engagement costs more than a year of any software; takes weeks; samples ~20 interviews instead of reading everything; goes stale on delivery |
-| **Internal analysts / BI teams** | Backlogged, limited to structured data, every question is a project |
-| **The executive asking around** | Fast but anecdotal, politically filtered, partial |
-| **Glean / Copilot (adjacent)** | Built for every employee's daily search, not for executive decisions; no systems map, no inference |
+| **Glean** | Proves enterprises pay for AI over company knowledge. But: sales-led, quote-only pricing (reportedly $40K+/yr minimums), weeks-long IT deployments. A 40-person company can't even get a demo. |
+| **Microsoft Copilot** | Bundled and cheap, but mediocre outside the Microsoft estate — and most modern small companies live in Google Workspace, Slack, and Notion. |
+| **ChatGPT Enterprise** | Adding connectors, but search/permissions are an afterthought, not the spine. |
+| **Notion AI / Slack AI** | Each searches only its own silo. The problem is *across* tools. |
 
-Glean's $7B valuation proves enterprises pay for AI over company knowledge. We borrow
-that proof but sell a different product to a different buyer with a much bigger
-reference price: a $50K consulting *week*, not a $30/user/month seat.
+**The wedge: the 10–500 person company.** They feel the scattered-knowledge pain
+acutely, they'll never pass a Glean procurement cycle, and nobody sells them this
+product self-serve. That's our beachhead — land there, grow upmarket with our
+customers.
 
 ## How Zecway wins
 
-1. **Agent-native architecture.** Competitors bolt agents onto APIs and a dozen data
-   formats. Zecway's agents live inside one uniform markdown graph — they read it like
-   humans do and leave findings in it for humans and other agents. Structural, not
-   cosmetic, differentiation.
-2. **A sharper buyer.** One executive sponsor with a real decision beats convincing IT
-   to roll out another tool to 5,000 seats. Fewer users, higher value per answer,
-   faster sales motion.
-3. **Design-led trust.** Founder is a product designer. A tool that briefs CEOs must
-   *feel* like it belongs in the boardroom — every answer with receipts, presented
-   impeccably.
-4. **Always current.** Consulting answers decay; the graph re-syncs continuously. The
-   moat compounds: the longer Zecway runs inside a company, the better its map.
+1. **Self-serve speed.** Sign up, connect Google Drive, get your first cited answer —
+   inside ten minutes, no sales call. Incumbents *can't* serve this segment profitably
+   with a sales team; we don't have one to feed.
+2. **Transparent pricing.** Public per-seat pricing on the website, in deliberate
+   contrast to Glean's quote-only opacity.
+3. **Design-led trust.** Founder is a product designer. Search you use fifty times a
+   day must feel consumer-grade — fast, calm, obvious. That bar is rarely met in
+   enterprise software and never in this category at this price.
+4. **The trust spine.** Permissions enforced in the database itself, citations on
+   every claim, honest "we don't have this" answers. Small companies get the same
+   guarantees Glean sells to the Fortune 500.
 
-## The trust ladder (how we earn the inference claim)
+**Honest risk:** incumbents drifting down-market. Defense: speed of a solo
+founder + AI engineering, obsessive focus on one segment, and an experience quality
+that bundled products don't attempt.
 
-"Zecway infers where operations are inefficient" is the hardest promise in the vision —
-tools, like consultants, get fired for bad recommendations. We climb in order:
+## Future bets (parked, not dead)
 
-1. **Evidence assembly** — "here is everything relevant to your vendor decision,
-   organized, sourced, current." Low risk, immediately valuable.
-2. **Investigations** — agent teams decompose a question, investigate in parallel,
-   verify claims against sources, and synthesize a recommendation with confidence
-   levels and what-would-change-the-answer.
-3. **Proactive inference** — watchdog agents flag breaking workflows before anyone
-   asks. Only shipped once the graph is rich enough to support being right.
+The graph we build for search can later support a systems map of the company and
+agent-run investigations for executives — a different buyer and a harder trust
+problem. Those ideas live in the appendix of our heads until search wins its market.
 
 ## Naming rule
 
-**Zecway** is the product and trademark. **"The company brain"** is the category
-descriptor — lowercase, preceded by "the," never used as the product's name. Spoken
-formula: *"Zecway, the company brain."* Descriptors can be retired; names can't.
+**Zecway** is the product and trademark. Category descriptor: **AI workplace
+search** — lowercase, generic, replaceable. Spoken formula: *"Zecway — ask your
+company anything."* Descriptors can be retired; names can't.
 
 ## Success metrics
 
-- **North star: decisions supported per customer per month** (an investigation an
-  executive actually acted on)
-- Time-to-answer for a decision question (target: minutes; baseline: weeks)
-- % of investigation claims with a verifiable citation (target: 100%)
-- Sponsor retention: does the executive ask a second question? A tenth?
+- **North star: questions answered per workspace per week** (searches + asks that
+  ended in a click or a cited answer)
+- Activation: signup → first connector synced → first answered question in **< 10
+  minutes**
+- Weekly active searchers as % of seats (target: it becomes a habit, not a tool)
+- Seat retention and expansion: does the 20-seat workspace become 60?
