@@ -5,7 +5,7 @@
 1. **The employee (daily user).** Anyone at the company with a question: "What's our
    parental leave policy?", "Who owns the Acme account?", "Is there a deck about the
    Q3 launch?" Wants one place to ask, instant trustworthy answers, zero training.
-2. **The knowledge worker (power user).** PMs, sales, support, engineers. Uses Outvo
+2. **The knowledge worker (power user).** PMs, sales, support, engineers. Uses Zecway
    to assemble context: summarize a thread, compare docs, draft from sources.
 3. **The IT admin (buyer's operator).** Connects data sources, manages users and
    permissions, watches usage. Needs confidence nothing leaks and clear audit trails.
@@ -22,7 +22,7 @@
 - Instant results as you type; full-text + semantic (meaning-based) matching combined.
 
 ### 2. AI assistant (chat)
-- Ask in plain language; Outvo retrieves the most relevant permitted content and the
+- Ask in plain language; Zecway retrieves the most relevant permitted content and the
   LLM composes an answer **with citations** — every claim links to its source.
 - Follow-up questions keep context ("…and who wrote that?").
 - Honest fallback: when the answer isn't in company knowledge, say so clearly rather

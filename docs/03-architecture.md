@@ -7,7 +7,7 @@ services over self-run infrastructure at every decision point.
 ## How it works, in plain language
 
 ```
- Company tools                Outvo                          Employee
+ Company tools                Zecway                          Employee
 ┌──────────────┐   ┌────────────────────────────┐   ┌─────────────────────┐
 │ Google Drive │   │ 1. CONNECTORS              │   │ 4. SEARCH UI / CHAT │
 │ Slack        ├──▶│    pull content + who-can- │   │    one search bar,  │
@@ -29,7 +29,7 @@ services over self-run infrastructure at every decision point.
    *embedding* — a numerical fingerprint of its meaning (for "find things about X even
    if they don't contain the word X"). Each chunk carries its permission list.
 3. **Answering** (RAG — retrieval-augmented generation): when someone asks a question,
-   Outvo first finds the most relevant chunks *that this user is allowed to see*, then
+   Zecway first finds the most relevant chunks *that this user is allowed to see*, then
    hands only those to the LLM, which writes an answer citing them. The LLM never
    answers from its own memory about the company.
 4. **The app** is a fast web interface: search bar, results, chat, admin console.

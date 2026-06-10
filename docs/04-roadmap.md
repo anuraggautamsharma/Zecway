@@ -10,7 +10,7 @@ ship when the exit criteria are met, not when the calendar says.
 - **Exit:** prototype a stranger can use to "find an answer" without instruction.
 
 ## Phase 1 — Searchable core (4–6 weeks)
-The smallest thing that is genuinely Outvo: real company data, permissions-aware
+The smallest thing that is genuinely Zecway: real company data, permissions-aware
 search, cited AI answers.
 
 1. Workspace + auth: sign up, create a workspace, invite teammates (Supabase Auth).
@@ -34,7 +34,7 @@ answers, in under 2 seconds for search and streaming chat.
    fully self-serve.
 6. Run **3–5 design-partner pilots** (friendly teams; free in exchange for feedback).
 
-**Exit criteria:** a pilot team uses Outvo weekly without hand-holding; ≥60% of AI
+**Exit criteria:** a pilot team uses Zecway weekly without hand-holding; ≥60% of AI
 answers rated helpful; zero permission incidents.
 
 ## Phase 3 — Sellable product (8–12 weeks)

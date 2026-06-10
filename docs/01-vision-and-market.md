@@ -7,7 +7,7 @@ enterprise uses 100+ SaaS tools; the answer to almost any question an employee h
 already exists *somewhere* — in a doc, a Slack thread, a ticket, a CRM note — but
 finding it is so painful that people ask colleagues, reinvent work, or give up.
 
-**Outvo is the company brain.** Connect your tools once, and every employee gets:
+**Zecway is the company brain.** Connect your tools once, and every employee gets:
 
 1. **Search** across everything, ranked by relevance to *them*, showing only what
    they're permitted to see.
@@ -36,7 +36,7 @@ finding it is so painful that people ask colleagues, reinvent work, or give up.
 | **Onyx (ex-Danswer)** | Open-source, self-hostable, $20/user/mo cloud | Engineering-led product; weaker polish and admin experience |
 | **GoSearch, Guru, Coveo, Elastic, Dust** | Various niches | Fragmented; none combine Glean-level depth with consumer-grade design |
 
-## How Outvo wins
+## How Zecway wins
 
 Being honest: we will not out-connector Glean (100+ connectors) or out-distribute
 Microsoft on day one. We win on three axes where incumbents are weakest:
