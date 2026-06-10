@@ -126,7 +126,7 @@ export default function Home() {
         />
 
         <div className="relative z-10 flex flex-col items-center">
-          <p className="animate-fade-up mb-8 inline-flex items-center gap-2.5 rounded-full border border-accent/25 bg-paper/80 px-5 py-2 text-xs font-bold uppercase tracking-[0.18em] text-accent-deep backdrop-blur">
+          <p className="animate-fade-up mb-6 inline-flex items-center gap-2.5 rounded-full border border-accent/25 bg-paper/80 px-5 py-2 text-xs font-bold uppercase tracking-[0.18em] text-accent-deep backdrop-blur sm:mb-8">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
@@ -134,14 +134,14 @@ export default function Home() {
             AI workplace search · Launching 2026
           </p>
 
-          <h1 className="max-w-5xl text-6xl font-extrabold leading-[1.02] tracking-tight sm:text-8xl">
+          <h1 className="max-w-5xl text-[2.6rem] font-extrabold leading-[1.05] tracking-tight sm:text-7xl sm:leading-[1.02] lg:text-8xl">
             <StaggeredWords text={HEADLINE_1} />
             <br />
             <StaggeredWords text={HEADLINE_2} startDelay={250} wordClass="gradient-flow" />
           </h1>
 
           <p
-            className="animate-fade-up mt-8 max-w-2xl text-lg leading-relaxed text-mist sm:text-xl"
+            className="animate-fade-up mt-6 max-w-2xl text-base leading-relaxed text-mist sm:mt-8 sm:text-xl"
             style={{ animationDelay: "900ms" }}
           >
             Zecway connects every tool your company uses and gives your whole team
@@ -192,12 +192,12 @@ export default function Home() {
       </section>
 
       {/* Demo */}
-      <section id="demo" className="mx-auto max-w-6xl px-6 py-28">
+      <section id="demo" className="mx-auto max-w-6xl px-6 py-16 sm:py-28">
         <Reveal>
           <p className="text-center text-xs font-bold uppercase tracking-[0.22em] text-accent">
             See it think
           </p>
-          <h2 className="mt-4 text-center text-4xl font-extrabold tracking-tight sm:text-5xl">
+          <h2 className="mt-4 text-center text-3xl font-extrabold tracking-tight sm:text-5xl">
             The questions your team asks every day
           </h2>
         </Reveal>
@@ -207,9 +207,9 @@ export default function Home() {
       </section>
 
       {/* Statement */}
-      <section className="border-y border-line bg-cream/40 px-6 py-32 text-center">
+      <section className="border-y border-line bg-cream/40 px-6 py-20 text-center sm:py-32">
         <Reveal>
-          <p className="mx-auto max-w-4xl text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
+          <p className="mx-auto max-w-4xl text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
             Today the answer lives in someone&apos;s head.{" "}
             <span className="gradient-flow">Or in a doc nobody can find.</span>
           </p>
@@ -223,20 +223,20 @@ export default function Home() {
       </section>
 
       {/* Pillars */}
-      <section className="mx-auto max-w-6xl px-6 py-28">
+      <section className="mx-auto max-w-6xl px-6 py-16 sm:py-28">
         <Reveal>
           <p className="text-center text-xs font-bold uppercase tracking-[0.22em] text-accent">
             The platform
           </p>
-          <h2 className="mt-4 text-center text-4xl font-extrabold tracking-tight sm:text-5xl">
+          <h2 className="mt-4 text-center text-3xl font-extrabold tracking-tight sm:text-5xl">
             Built like infrastructure. <br className="hidden sm:block" />
             Designed like a flagship.
           </h2>
         </Reveal>
-        <div className="mt-16 grid gap-6 sm:grid-cols-3">
+        <div className="mt-10 grid gap-5 sm:mt-16 sm:grid-cols-3 sm:gap-6">
           {PILLARS.map((p, i) => (
             <Reveal key={p.title} delay={i * 130}>
-              <div className="group h-full rounded-3xl border border-line bg-white p-9 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-accent/40 hover:shadow-[0_30px_60px_-25px_rgba(240,89,10,0.45)]">
+              <div className="group h-full rounded-3xl border border-line bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-accent/40 hover:shadow-[0_30px_60px_-25px_rgba(240,89,10,0.45)] sm:p-9">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft text-accent transition duration-300 group-hover:scale-110 group-hover:bg-accent group-hover:text-white">
                   {p.icon}
                 </div>
@@ -249,21 +249,21 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section className="border-t border-line bg-gradient-to-b from-cream/60 to-paper px-6 py-28">
+      <section className="border-t border-line bg-gradient-to-b from-cream/60 to-paper px-6 py-16 sm:py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <p className="text-center text-xs font-bold uppercase tracking-[0.22em] text-accent">
               How it works
             </p>
-            <h2 className="mt-4 text-center text-4xl font-extrabold tracking-tight sm:text-5xl">
+            <h2 className="mt-4 text-center text-3xl font-extrabold tracking-tight sm:text-5xl">
               Live in a day, <span className="gradient-flow">not a quarter</span>
             </h2>
           </Reveal>
-          <div className="mt-16 grid gap-12 sm:grid-cols-3">
+          <div className="mt-10 grid gap-8 sm:mt-16 sm:grid-cols-3 sm:gap-12">
             {STEPS.map((s, i) => (
               <Reveal key={s.step} delay={i * 150}>
                 <div>
-                  <span className="text-7xl font-extrabold tracking-tight text-accent/15">
+                  <span className="text-6xl font-extrabold tracking-tight text-accent/15 sm:text-7xl">
                     {s.step}
                   </span>
                   <h3 className="-mt-5 text-xl font-bold">{s.title}</h3>
@@ -276,11 +276,11 @@ export default function Home() {
       </section>
 
       {/* Final CTA */}
-      <section className="relative overflow-hidden px-6 py-36 text-center">
+      <section className="relative overflow-hidden px-6 py-24 text-center sm:py-36">
         <div className="animate-orb pointer-events-none absolute left-1/2 top-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-3xl" />
         <div className="relative">
           <Reveal>
-            <h2 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight sm:text-6xl">
+            <h2 className="mx-auto max-w-3xl text-3xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
               Give your team <span className="gradient-flow">one search bar</span> for
               everything
             </h2>
