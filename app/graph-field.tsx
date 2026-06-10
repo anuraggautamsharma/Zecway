@@ -1,9 +1,10 @@
 "use client";
 
-// The signature moment: every dot is a piece of company knowledge drifting in
-// chaos. When the hero demo's answer lands, the field organizes — particles
-// pull into glowing orbital rings around the answer. Driven by the
-// "zecway-demo-phase" events the SearchDemo dispatches.
+// The signature moment, v2: every dot is a piece of company knowledge drifting
+// in chaos. While a question types, the field agitates. The instant the cited
+// answer lands, particles pull into orbital rings, a pulse rolls through, and
+// neighbors CONNECT — the scattered company becomes a glowing knowledge graph.
+// Driven by "zecway-demo-phase" events from the SearchDemo.
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
@@ -36,7 +37,6 @@ export default function GraphField() {
     renderer.setSize(mount.clientWidth, mount.clientHeight);
     mount.appendChild(renderer.domElement);
 
-    // Per particle: a chaotic home and an orbital target on one of 3 rings
     const scatter = new Float32Array(COUNT * 3);
     const target = new Float32Array(COUNT * 3);
     const positions = new Float32Array(COUNT * 3);
@@ -61,7 +61,6 @@ export default function GraphField() {
       positions.set(scatter.slice(i * 3, i * 3 + 3), i * 3);
       seeds[i] = Math.random() * Math.PI * 2;
 
-      // ~one in seven runs ember; the rest are warm ink
       const c = i % 7 === 0 ? EMBER : INK;
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
@@ -82,15 +81,34 @@ export default function GraphField() {
     });
     scene.add(new THREE.Points(geo, mat));
 
-    // Convergence state: 0 = chaos, 1 = orbit. Eased toward `goal`.
+    // Constellation: connect ring-neighbors (i -> i+3 shares the same ring).
+    // Visible only as the field organizes — the graph revealing itself.
+    const STEP = isMobile ? 4 : 2; // connect every other particle pair
+    const pairs: number[] = [];
+    for (let i = 0; i < COUNT - 3; i += STEP) pairs.push(i, i + 3);
+    const linePositions = new Float32Array(pairs.length * 3);
+    const lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute("position", new THREE.BufferAttribute(linePositions, 3));
+    const lineMat = new THREE.LineBasicMaterial({
+      color: EMBER,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+    });
+    scene.add(new THREE.LineSegments(lineGeo, lineMat));
+
+    // 0 = chaos, 1 = orbit; pulse rolls through when an answer lands
     let t = 0;
     let goal = 0;
+    let pulse = 0;
     const onPhase = (e: Event) => {
-      goal = (e as CustomEvent).detail === "answer" ? 1 : 0;
+      const phase = (e as CustomEvent).detail;
+      const next = phase === "answer" ? 1 : 0;
+      if (next === 1 && goal === 0) pulse = 1;
+      goal = next;
     };
     window.addEventListener("zecway-demo-phase", onPhase);
 
-    // Gentle pointer parallax (desktop only)
     let px = 0;
     let py = 0;
     const onMove = (e: PointerEvent) => {
@@ -108,14 +126,16 @@ export default function GraphField() {
       if (!running) return;
       const time = clock.getElapsedTime();
       t += (goal - t) * 0.035;
+      pulse *= 0.962;
+
+      // while the question types, the chaos gets restless
+      const agitation = goal === 0 ? 1.5 : 1 - t * 0.85;
 
       const pos = geo.attributes.position.array as Float32Array;
       for (let i = 0; i < COUNT; i++) {
         const s = seeds[i];
-        // drift noise, calmed as the field organizes
-        const drift = 1 - t * 0.85;
-        const dx = Math.sin(time * 0.35 + s) * 0.45 * drift;
-        const dy = Math.cos(time * 0.28 + s * 1.7) * 0.45 * drift;
+        const dx = Math.sin(time * 0.35 * agitation + s) * 0.45 * (1 - t * 0.85);
+        const dy = Math.cos(time * 0.28 * agitation + s * 1.7) * 0.45 * (1 - t * 0.85);
         const orbit = t > 0.02 ? time * 0.12 : 0;
         const tx = target[i * 3] * Math.cos(orbit) - target[i * 3 + 2] * Math.sin(orbit);
         const tz = target[i * 3] * Math.sin(orbit) + target[i * 3 + 2] * Math.cos(orbit);
@@ -125,7 +145,19 @@ export default function GraphField() {
       }
       geo.attributes.position.needsUpdate = true;
 
+      // graph edges follow their endpoints; visible only when organized
+      const lp = lineGeo.attributes.position.array as Float32Array;
+      for (let k = 0; k < pairs.length; k++) {
+        const i = pairs[k];
+        lp[k * 3] = pos[i * 3];
+        lp[k * 3 + 1] = pos[i * 3 + 1];
+        lp[k * 3 + 2] = pos[i * 3 + 2];
+      }
+      lineGeo.attributes.position.needsUpdate = true;
+      lineMat.opacity = Math.max(0, t - 0.45) * 0.5 + pulse * 0.25;
+
       mat.opacity = 0.7 + t * 0.3;
+      mat.size = (isMobile ? 0.1 : 0.085) * (1 + pulse * 0.9);
       camera.position.x += (px - camera.position.x) * 0.04;
       camera.position.y += (-py - camera.position.y) * 0.04;
       camera.lookAt(0, 0, 0);
@@ -153,6 +185,8 @@ export default function GraphField() {
       window.removeEventListener("resize", onResize);
       geo.dispose();
       mat.dispose();
+      lineGeo.dispose();
+      lineMat.dispose();
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };

@@ -1,7 +1,8 @@
 import dynamic from "next/dynamic";
 import SearchDemo from "./search-demo";
 import WaitlistForm from "./waitlist-form";
-import { RiseIn, ScatterToBar } from "./scroll-story";
+import { RiseIn, ScatterToBar, WordsRise } from "./scroll-story";
+import { AssistantDemo, AgentsDemo, PermissionsDemo } from "./climb-demos";
 
 const GraphField = dynamic(() => import("./graph-field"));
 
@@ -27,48 +28,35 @@ const TICKER = [
   "which vendor handles logistics?",
 ];
 
-const FEATURES = [
-  {
-    title: "Every tool, one search bar",
-    body: "Documents, chats, emails, meeting notes — everything your company produces, searchable from one place.",
-  },
-  {
-    title: "Answers with receipts",
-    body: "Ask in plain language. Every claim cites its source, and when the answer isn't written down anywhere, Zecway says so.",
-  },
-  {
-    title: "Leak nothing",
-    body: "Permissions from every source tool are enforced on every result. People only ever see what they could already open.",
-  },
-];
+function Lockup({ dark = false }: { dark?: boolean }) {
+  return (
+    <span className="flex items-center gap-2.5">
+      <img src="/zecway-mark.svg" alt="" className="h-6 w-auto" />
+      <span
+        className={`font-display text-2xl leading-none ${dark ? "text-on-dark" : "text-ink"}`}
+      >
+        Zecway
+      </span>
+    </span>
+  );
+}
 
 export default function Home() {
   return (
     <main className="min-h-screen overflow-x-clip">
-      {/* Nav */}
-      <nav className="nav-blur fixed inset-x-0 top-0 z-50 border-b border-line">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3.5">
-          <span className="flex items-center gap-2.5 text-lg font-bold tracking-tight">
-            <img src="/zecway-mark.svg" alt="" className="h-5 w-auto" />
-            zecway<span className="text-accent">.</span>
-          </span>
-          <a
-            href="#waitlist"
-            className="rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-dark-elevated active:scale-[0.97]"
-          >
-            Get early access
-          </a>
-        </div>
-      </nav>
-
       {/* Hero — the field of scattered knowledge that organizes around answers */}
-      <header className="relative flex min-h-svh flex-col items-center justify-center px-6 pb-16 pt-28 text-center">
+      <header className="relative flex min-h-svh flex-col items-center justify-center px-6 pb-16 pt-20 text-center">
         <GraphField />
+
+        {/* brand, floating — no nav, no chrome */}
+        <div className="absolute left-6 top-6 z-20 sm:left-10 sm:top-8">
+          <Lockup />
+        </div>
 
         <div className="relative z-10 flex w-full flex-col items-center">
           <p className="animate-fade-up mx-auto mb-6 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-mist">
             <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-            ai workplace search · launching 2026
+            the company brain · launching 2026
           </p>
 
           <h1
@@ -109,7 +97,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Question ticker — the everyday questions, in the receipt voice */}
+      {/* Question ticker */}
       <section className="border-y border-line bg-cream py-3.5">
         <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
           <div className="animate-ticker flex w-max items-center gap-8">
@@ -128,58 +116,141 @@ export default function Home() {
 
       {/* Scatter → one bar (scroll-performed) */}
       <section className="mx-auto max-w-4xl px-6 py-24 sm:py-36">
-        <RiseIn>
-          <h2 className="mx-auto max-w-2xl text-center font-display text-3xl leading-tight text-ink sm:text-5xl">
-            Your company already knows the answer. It&apos;s just scattered
-            across ten tools.
-          </h2>
-        </RiseIn>
+        <WordsRise
+          text="Your company already knows the answer. It's just scattered across ten tools."
+          className="mx-auto max-w-2xl text-center font-display text-3xl leading-tight text-ink sm:text-5xl"
+        />
         <div className="mt-16">
           <ScatterToBar tools={SOURCES} />
         </div>
       </section>
 
-      {/* Features */}
-      <section className="border-t border-line">
-        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-24">
-          <div className="grid gap-5 sm:grid-cols-3">
-            {FEATURES.map((f, i) => (
-              <RiseIn key={f.title} delay={i * 0.12} className="h-full">
-                <div className="h-full rounded-xl bg-card p-8">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-                  <h3 className="mt-3 text-lg font-medium text-ink">{f.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-body">{f.body}</p>
-                </div>
-              </RiseIn>
-            ))}
-          </div>
+      {/* THE CLIMB — search is day one */}
+      <section className="border-t border-line bg-cream">
+        <div className="mx-auto max-w-4xl px-6 py-20 text-center sm:py-28">
+          <RiseIn>
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent">
+              ● search is day one
+            </p>
+            <h2 className="mx-auto mt-5 max-w-2xl font-display text-3xl leading-tight text-ink sm:text-5xl">
+              Zecway is building the company brain. In three layers.
+            </h2>
+          </RiseIn>
         </div>
       </section>
 
-      {/* The receipts moment */}
-      <section className="border-t border-line bg-dark">
-        <div className="mx-auto max-w-3xl px-6 py-20 text-center sm:py-32">
+      {/* 01 · Search */}
+      <section className="border-t border-line">
+        <div className="mx-auto max-w-4xl px-6 py-20 text-center sm:py-28">
+          <RiseIn>
+            <p className="font-mono text-xs text-mist">01 · search</p>
+            <h3 className="mt-3 font-display text-2xl text-ink sm:text-4xl">
+              Find anything, instantly.
+            </h3>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-body">
+              One bar across everything your company uses. Results as you
+              type — only ever from what you&apos;re allowed to see.
+            </p>
+          </RiseIn>
+          <RiseIn delay={0.15} className="mt-10">
+            <div className="mx-auto w-full max-w-xl rounded-2xl border border-line bg-paper p-2 text-left shadow-[0_1px_1px_rgba(20,20,19,0.03),0_12px_24px_-16px_rgba(20,20,19,0.25)]">
+              <div className="flex items-center gap-2.5 rounded-xl bg-cream px-4 py-2.5">
+                <span className="font-mono text-xs text-mist">⌕</span>
+                <span className="text-sm text-ink">parental leave</span>
+              </div>
+              <div className="divide-y divide-line px-4">
+                {[
+                  ["HR Policy 2026", "drive"],
+                  ["Parental leave FAQ", "notion"],
+                  ["#people-ops thread", "slack"],
+                ].map(([title, src]) => (
+                  <div key={title} className="flex items-baseline justify-between py-2.5">
+                    <span className="text-sm text-ink">{title}</span>
+                    <span className="font-mono text-[11px] text-mist">{src}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </RiseIn>
+        </div>
+      </section>
+
+      {/* 02 · Assistant */}
+      <section className="bg-dark">
+        <div className="mx-auto max-w-4xl px-6 py-20 text-center sm:py-28">
+          <RiseIn>
+            <p className="font-mono text-xs text-on-dark-soft">02 · assistant</p>
+            <h3 className="mt-3 font-display text-2xl text-on-dark sm:text-4xl">
+              An expert by your side.
+            </h3>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-on-dark-soft">
+              Not just finding — doing. Drafts, summaries, and decisions
+              grounded in your company&apos;s real knowledge, in your voice.
+            </p>
+          </RiseIn>
+          <RiseIn delay={0.15} className="mt-10">
+            <AssistantDemo />
+          </RiseIn>
+        </div>
+      </section>
+
+      {/* 03 · Agents */}
+      <section className="bg-cream">
+        <div className="mx-auto max-w-4xl px-6 py-20 text-center sm:py-28">
+          <RiseIn>
+            <p className="font-mono text-xs text-mist">03 · agents — the destination</p>
+            <h3 className="mt-3 font-display text-2xl text-ink sm:text-4xl">
+              Describe a chore. Get a worker.
+            </h3>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-body">
+              AI teammates that take on real work across your company&apos;s
+              knowledge — every action permission-checked, every claim cited.
+            </p>
+          </RiseIn>
+          <RiseIn delay={0.15} className="mt-10">
+            <AgentsDemo />
+          </RiseIn>
+        </div>
+      </section>
+
+      {/* Permissions theater */}
+      <section className="bg-dark">
+        <div className="mx-auto max-w-4xl px-6 py-20 text-center sm:py-32">
           <RiseIn>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent">
-              ● every claim, cited
+              ● the part everyone asks about
             </p>
-            <p className="mx-auto mt-6 max-w-2xl font-display text-2xl leading-relaxed text-on-dark sm:text-4xl">
-              &ldquo;Full-time employees receive 18 weeks of fully paid parental
-              leave, extendable by 4 unpaid weeks.&rdquo;
-            </p>
-            <p className="mt-6 font-mono text-xs text-on-dark-soft">
-              [1] HR Policy 2026 · Google Drive&nbsp;&nbsp;&nbsp;[2] #people-ops · Slack
-            </p>
-            <p className="mt-10 text-sm leading-relaxed text-on-dark-soft">
-              And when the answer isn&apos;t written down anywhere, Zecway says
-              so — instead of making something up.
+            <h2 className="mx-auto mt-5 max-w-2xl font-display text-3xl leading-tight text-on-dark sm:text-5xl">
+              Same question. Different clearance.
+            </h2>
+          </RiseIn>
+          <RiseIn delay={0.15} className="mt-12">
+            <PermissionsDemo />
+          </RiseIn>
+          <RiseIn delay={0.25}>
+            <p className="mx-auto mt-10 max-w-md text-sm leading-relaxed text-on-dark-soft">
+              Permissions are enforced in the database — before anything ever
+              reaches an AI. People only see what they could already open.
             </p>
           </RiseIn>
         </div>
       </section>
 
+      {/* Receipts statement */}
+      <section className="mx-auto max-w-3xl px-6 py-24 text-center sm:py-36">
+        <RiseIn>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent">
+            ● no confident fiction
+          </p>
+        </RiseIn>
+        <WordsRise
+          text="Every claim cites its source. And when the answer isn't written down anywhere, Zecway says so."
+          className="mx-auto mt-6 max-w-2xl font-display text-2xl leading-relaxed text-ink sm:text-4xl"
+        />
+      </section>
+
       {/* Final CTA — ember band */}
-      <section className="px-6 py-16 sm:py-24">
+      <section className="px-6 pb-20">
         <RiseIn>
           <div className="mx-auto max-w-5xl rounded-xl bg-accent px-6 py-14 text-center sm:px-12 sm:py-20">
             <h2 className="font-display text-3xl text-white sm:text-5xl">
@@ -195,15 +266,14 @@ export default function Home() {
 
       {/* Footer — dark, never inverts */}
       <footer className="bg-dark">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-6 py-12 text-xs text-on-dark-soft sm:flex-row">
-          <span className="flex items-center gap-2 text-sm font-bold tracking-tight text-on-dark">
-            <img src="/zecway-mark.svg" alt="" className="h-4 w-auto" />
-            zecway<span className="text-accent">.</span>
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 py-12 sm:flex-row">
+          <Lockup dark />
+          <span className="font-mono text-[11px] text-on-dark-soft">
+            the company brain · © {new Date().getFullYear()} zecway
           </span>
-          <span className="font-mono text-[11px]">
-            ai workplace search · © {new Date().getFullYear()} zecway
+          <span className="font-mono text-[11px] text-on-dark-soft">
+            permissions enforced on every result
           </span>
-          <span className="font-mono text-[11px]">permissions enforced on every result</span>
         </div>
       </footer>
     </main>

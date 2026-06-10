@@ -70,6 +70,39 @@ export function ScatterToBar({ tools }: { tools: string[] }) {
   );
 }
 
+// Serif statements that assemble word by word as you scroll into them
+export function WordsRise({ text, className = "" }: { text: string; className?: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.from(ref.current!.querySelectorAll(".w"), {
+          y: 26,
+          opacity: 0,
+          duration: 0.7,
+          stagger: 0.045,
+          ease: "power3.out",
+          scrollTrigger: { trigger: ref.current, start: "top 82%" },
+        });
+      });
+    }, ref);
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <p ref={ref} className={className}>
+      {text.split(" ").map((w, i) => (
+        <span key={i} className="w inline-block whitespace-pre">
+          {w}{" "}
+        </span>
+      ))}
+    </p>
+  );
+}
+
 export function RiseIn({
   children,
   className = "",
