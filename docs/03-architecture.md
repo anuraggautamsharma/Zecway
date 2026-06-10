@@ -1,80 +1,93 @@
 # 03 — Architecture
 
-Written for a non-engineering reader first; implementation notes for the build are at
-the end. The guiding constraint: **one founder + Claude Code**, so we choose managed
-services over self-run infrastructure at every decision point.
+Written for a non-engineering reader first; implementation notes at the end. Guiding
+constraint: **one founder + Claude Code**, so managed services over self-run
+infrastructure at every decision point.
 
 ## How it works, in plain language
 
 ```
- Company tools                Zecway                          Employee
-┌──────────────┐   ┌────────────────────────────┐   ┌─────────────────────┐
-│ Google Drive │   │ 1. CONNECTORS              │   │ 4. SEARCH UI / CHAT │
-│ Slack        ├──▶│    pull content + who-can- │   │    one search bar,  │
-│ Notion       │   │    see-it rules, on a loop │   │    cited AI answers │
-│ Jira, etc.   │   │ 2. INDEX                   │◀──┤                     │
-└──────────────┘   │    store text + meaning    │   └─────────────────────┘
-                   │    vectors + permissions   │
-                   │ 3. RETRIEVAL + LLM (RAG)   │
-                   │    find permitted, relevant│
-                   │    content → Claude writes │
-                   │    the answer w/ citations │
-                   └────────────────────────────┘
+ Company tools            Zecway — the company brain                Executive
+┌──────────────┐   ┌──────────────────────────────────────┐   ┌──────────────────┐
+│ Drive, Slack │   │ 1. CONNECTORS                        │   │ 5. THE APP       │
+│ Email, Teams ├──▶│    pull content + access rules       │   │  ask · map ·     │
+│ Notion, Jira │   │ 2. MARKDOWN KNOWLEDGE GRAPH          │◀──┤  investigations  │
+│ Sheets, CRM  │   │    one uniform, living, permissioned │   └──────────────────┘
+└──────────────┘   │    copy of everything                │
+                   │ 3. SYSTEMS MAP                       │
+                   │    people · processes · tools, and   │
+                   │    the connections between them      │
+                   │ 4. AGENT RUNTIME (Claude)            │
+                   │    librarians · cartographers ·      │
+                   │    investigation teams · watchdogs   │
+                   └──────────────────────────────────────┘
 ```
 
-1. **Connectors** log into each tool with the company's blessing (OAuth) and
-   continuously copy two things: the *content* and the *access rules* (who can see
-   each document). They re-sync on a schedule and via webhooks so the index stays fresh.
-2. **The index** stores every document twice: as text (for keyword search) and as an
-   *embedding* — a numerical fingerprint of its meaning (for "find things about X even
-   if they don't contain the word X"). Each chunk carries its permission list.
-3. **Answering** (RAG — retrieval-augmented generation): when someone asks a question,
-   Zecway first finds the most relevant chunks *that this user is allowed to see*, then
-   hands only those to the LLM, which writes an answer citing them. The LLM never
-   answers from its own memory about the company.
-4. **The app** is a fast web interface: search bar, results, chat, admin console.
+1. **Connectors** authorize into each tool (OAuth) and continuously copy two things:
+   the *content* and the *access rules*. Webhooks + scheduled re-sync keep it fresh.
+2. **The markdown knowledge graph** converts every format — PDF, email, thread,
+   spreadsheet, transcript — into markdown documents with structure, metadata,
+   provenance, and per-item permissions. One medium for humans *and* agents. Each
+   document also gets embeddings (meaning-fingerprints) for semantic retrieval.
+3. **The systems map** is a set of entities (people, teams, processes, tools, vendors)
+   and edges (works-with, hands-off-to, depends-on) extracted from the graph by
+   cartographer agents.
+4. **The agent runtime** runs the workers: librarians (ingestion hygiene),
+   cartographers (map upkeep), investigation teams (lead → specialists → reviewer →
+   synthesis), and later watchdogs. Agents read only what the requesting user may see,
+   write their findings back into the graph as documents, and must cite sources for
+   every claim.
+5. **The app**: ask a question, browse the map, watch an investigation run, read the
+   brief.
 
-## The one thing we must never get wrong: permissions
+## The thing we must never get wrong: permissions
 
-Permissions are enforced in **two layers**, so a bug in one cannot leak data:
+Two enforcement layers, so one bug can't leak data:
 
-- **At index time** every chunk stores its allowed users/groups, synced from the source.
-- **At query time** every database query filters by the requesting user's identity —
-  enforced *in the database itself* (Postgres row-level security), not just in app code.
+- **At ingestion**, every graph document stores its allowed users/groups from the
+  source system.
+- **At query time**, every read — by a human *or an agent acting for them* — is
+  filtered by the requester's identity, enforced in the database itself (Postgres
+  row-level security), not just app code.
 
-If a document's sharing changes in Google Drive, the next sync updates it; deletes are
-propagated as hard deletes from the index.
+Email and meeting notes raise the bar further: per-source and per-mailbox opt-in,
+admin-visible ingestion scope, and hard-delete propagation.
 
 ## Technology choices
 
 | Layer | Choice | Why |
 |---|---|---|
-| Web app | **Next.js on Vercel** | Best-in-class DX, instant deploys, already in our toolchain |
-| Database + vectors | **Supabase** (Postgres + pgvector) | One system for data, vector search, auth, and row-level security; no separate vector DB to operate |
-| Keyword search | Postgres full-text search | Good enough until scale demands more (then: dedicated search engine) |
-| Background sync jobs | Supabase Edge Functions + scheduled jobs (move to a queue service like Inngest/Trigger.dev as volume grows) | Connector syncs are long-running; needs retries and rate-limit handling |
-| LLM | **Claude API** (Sonnet for chat, Haiku for cheap classification/summarization) | Quality + cost tiering; provider kept swappable behind one interface |
-| Embeddings | Managed embedding API (e.g. Voyage) | No model hosting |
-| Auth | Supabase Auth → SSO/SAML via WorkOS when enterprise deals require it | Don't build SAML ourselves |
+| Web app | **Next.js on Vercel** | Already live (zecway.com); instant deploys |
+| Graph store | **Supabase** (Postgres + pgvector) | Documents, embeddings, entities/edges, auth, and row-level security in one managed system |
+| Markdown conversion | Per-format extractors (PDF, email, chat, sheets) feeding one normalizer | The uniform-medium bet; each format is an isolated module |
+| Agent runtime | **Claude API** — Sonnet for investigation/synthesis, Haiku for extraction and classification | Quality + cost tiering; provider swappable behind one interface |
+| Background jobs | Supabase Edge Functions + scheduled jobs → dedicated queue (Inngest/Trigger.dev) as volume grows | Syncs and investigations are long-running; need retries |
+| Embeddings | Managed embedding API | No model hosting |
+| Auth | Supabase Auth → SSO/SAML via WorkOS when deals require | Don't build SAML ourselves |
 
-**Honest scaling note:** this stack comfortably serves pilots and mid-size customers
-(millions of documents). A true Fortune 500 full deployment (hundreds of millions of
-documents, strict tenancy isolation) will eventually need dedicated search
-infrastructure and per-tenant isolation — that re-platforming is a Phase 4 problem,
-paid for by revenue, and the data model is designed so it ports cleanly.
+**Honest scaling note:** this serves pilots and mid-size customers (millions of
+documents) comfortably. Hundred-million-document Fortune 500 tenants will need
+dedicated search/graph infrastructure and stronger tenant isolation — a problem revenue
+pays for; the data model is designed to port cleanly.
 
 ## Data model (core tables)
 
-- `workspaces` — one per customer company (all tables scoped by `workspace_id`)
-- `users`, `groups`, `group_members` — identities, mirrored from source systems
-- `connections` — a configured connector instance (tokens encrypted, sync state)
-- `documents` — one row per source item (title, url, author, timestamps, source type)
-- `chunks` — document pieces with text, embedding vector, and `permitted_principals[]`
-- `queries`, `answers`, `feedback` — every search/chat interaction, for quality metrics
+- `workspaces` — one per customer; everything scoped by `workspace_id`
+- `users`, `groups`, `group_members` — identities mirrored from source systems
+- `connections` — configured connector instances (tokens encrypted, sync state)
+- `documents` — graph nodes: markdown content, source, provenance, permissions
+- `chunks` — retrieval units: text + embedding + `permitted_principals[]`
+- `entities`, `edges` — the systems map (people/process/tool nodes and their relations)
+- `investigations`, `agent_runs`, `findings` — every agent workstream, its sources,
+  and its verified claims
+- `feedback` — was the brief useful; did the exec act on it
 
-## Connector design
+## Connector & agent design
 
-All connectors implement one interface so each new one is incremental work, not a
-rewrite: `full_sync()`, `incremental_sync(since)`, `fetch_permissions(item)`,
-`handle_webhook(event)`. Each runs as an isolated job with per-source rate limiting,
-retries with backoff, and a sync-status record the admin console displays.
+- All connectors implement one interface — `full_sync()`, `incremental_sync(since)`,
+  `fetch_permissions(item)`, `handle_webhook(event)` — so each new source is
+  incremental work.
+- All agents implement one contract: declared inputs, read scope (the requesting
+  user's permissions), required citations on every output claim, and a written
+  artifact in the graph. Reviewer agents check claims before synthesis; failures send
+  workstreams back, not forward.

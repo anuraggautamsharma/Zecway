@@ -1,78 +1,75 @@
 # 01 — Vision & Market
 
-## Vision
+## Vision: the company brain
 
-Every company runs on knowledge that is scattered across dozens of apps. The average
-enterprise uses 100+ SaaS tools; the answer to almost any question an employee has
-already exists *somewhere* — in a doc, a Slack thread, a ticket, a CRM note — but
-finding it is so painful that people ask colleagues, reinvent work, or give up.
+Every company already contains the answers to its own hardest questions — scattered
+across documents, PDFs, emails, Slack threads, spreadsheets, and meeting notes. Zecway
+turns all of it into one living brain, in three layers:
 
-**Zecway is the company brain.** Connect your tools once, and every employee gets:
+1. **The knowledge graph.** Every kind of file the company produces is converted into a
+   single uniform medium — markdown — that humans can read and AI agents can natively
+   work inside. Not just an index for retrieval: a legible, living copy of everything
+   the company knows, with permissions attached to every piece.
+2. **The systems map.** On top of the content, Zecway maps the company *as a system*:
+   the people, processes, and tools that make up real workflows, and the connections
+   between them — who hands off to whom, which process flows through which tool.
+3. **Decisions.** From the graph and the map, agent teams answer the questions
+   executives act on: how to restructure a team, whether to keep a vendor, where
+   handoffs between teams are breaking. Evidence-backed, cited, current — in minutes.
 
-1. **Search** across everything, ranked by relevance to *them*, showing only what
-   they're permitted to see.
-2. **Answers** — an AI assistant that responds to questions in plain language, with
-   citations to the real source documents.
-3. **Actions** (later) — agents that do work across apps: draft the doc, file the
-   ticket, update the record.
+## Who we actually compete with
 
-## The market
+The budget Zecway targets is not the software budget. It's the **analysis budget**.
 
-- **Category:** Enterprise search / "Work AI". Glean calls it the Work AI platform;
-  analysts group it under enterprise search and AI assistants.
-- **Proof the market pays:** Glean is valued at ~$7.2B (2026), charges $50+/user/month,
-  and its median customer pays ~$98,700/year. Microsoft sells Copilot at $30/user/month
-  on top of M365 licenses.
-- **Why now:** RAG (retrieval-augmented generation) is mature, LLM costs keep falling,
-  and every Fortune 500 has an "AI mandate" with budget attached. The buying question
-  has shifted from *"should we?"* to *"which one?"*
+| Today's alternative | Their weakness |
+|---|---|
+| **Management consultants** | A single engagement costs more than a year of any software; takes weeks; samples ~20 interviews instead of reading everything; goes stale on delivery |
+| **Internal analysts / BI teams** | Backlogged, limited to structured data, every question is a project |
+| **The executive asking around** | Fast but anecdotal, politically filtered, partial |
+| **Glean / Copilot (adjacent)** | Built for every employee's daily search, not for executive decisions; no systems map, no inference |
 
-## Competitive landscape
-
-| Competitor | Position | Weakness we exploit |
-|---|---|---|
-| **Glean** | Market leader, 100+ connectors, knowledge graph | Expensive ($50+/user/mo), opaque pricing, long enterprise deployment, utilitarian UX |
-| **Microsoft Copilot** | Default for M365 shops, $30/user/mo | Only covers M365 data well; non-Microsoft sources need clunky Graph Connectors |
-| **Onyx (ex-Danswer)** | Open-source, self-hostable, $20/user/mo cloud | Engineering-led product; weaker polish and admin experience |
-| **GoSearch, Guru, Coveo, Elastic, Dust** | Various niches | Fragmented; none combine Glean-level depth with consumer-grade design |
+Glean's $7B valuation proves enterprises pay for AI over company knowledge. We borrow
+that proof but sell a different product to a different buyer with a much bigger
+reference price: a $50K consulting *week*, not a $30/user/month seat.
 
 ## How Zecway wins
 
-Being honest: we will not out-connector Glean (100+ connectors) or out-distribute
-Microsoft on day one. We win on three axes where incumbents are weakest:
+1. **Agent-native architecture.** Competitors bolt agents onto APIs and a dozen data
+   formats. Zecway's agents live inside one uniform markdown graph — they read it like
+   humans do and leave findings in it for humans and other agents. Structural, not
+   cosmetic, differentiation.
+2. **A sharper buyer.** One executive sponsor with a real decision beats convincing IT
+   to roll out another tool to 5,000 seats. Fewer users, higher value per answer,
+   faster sales motion.
+3. **Design-led trust.** Founder is a product designer. A tool that briefs CEOs must
+   *feel* like it belongs in the boardroom — every answer with receipts, presented
+   impeccably.
+4. **Always current.** Consulting answers decay; the graph re-syncs continuously. The
+   moat compounds: the longer Zecway runs inside a company, the better its map.
 
-1. **Design-led experience.** Founder is a product designer. Every competitor's product
-   feels like infrastructure with a UI bolted on. Search quality gets you in the
-   evaluation; daily-use delight wins the renewal. Target: the first enterprise tool
-   employees *choose* to open.
-2. **Time-to-value in days, not months.** Self-serve onboarding: connect Google
-   Workspace + Slack in 15 minutes, see your own real answers immediately. Glean
-   deployments are sales-led and slow. Land in a single department, expand bottom-up.
-3. **Transparent, undercutting price.** Public pricing at roughly half of Glean
-   (target: $20–25/user/month, free pilot tier for one team). Under Glean's price
-   umbrella there is enormous room.
+## The trust ladder (how we earn the inference claim)
 
-## Wedge into the Fortune 500
+"Zecway infers where operations are inefficient" is the hardest promise in the vision —
+tools, like consultants, get fired for bad recommendations. We climb in order:
 
-"Fortune 500" is the destination, not the first customer. Big-company procurement
-requires SOC 2, security review, and references — so the path is:
+1. **Evidence assembly** — "here is everything relevant to your vendor decision,
+   organized, sourced, current." Low risk, immediately valuable.
+2. **Investigations** — agent teams decompose a question, investigate in parallel,
+   verify claims against sources, and synthesize a recommendation with confidence
+   levels and what-would-change-the-answer.
+3. **Proactive inference** — watchdog agents flag breaking workflows before anyone
+   asks. Only shipped once the graph is rich enough to support being right.
 
-1. **Phase 1–2:** Win teams *inside* big companies (a 50-person department can often
-   buy under a procurement threshold) and design-forward mid-size companies.
-2. **Phase 3:** Convert departmental wins into company-wide contracts once compliance
-   (SOC 2 Type II, SSO, audit logs) is in place. See [05 — Enterprise Readiness](05-enterprise-readiness.md).
+## Naming rule
 
-## Positioning note (June 2026)
-
-We lead with the **assistant**, not the search bar. Glean's own 2026 site headlines
-Assistant + Agents and calls Search "the foundation of enterprise AI" — the market's
-budgets are labeled AI, not search. Zecway's headline promise: *"Ask anything — your
-company already knows the answer."* Search and permissions are the trust story
-underneath the promise, not the headline.
+**Zecway** is the product and trademark. **"The company brain"** is the category
+descriptor — lowercase, preceded by "the," never used as the product's name. Spoken
+formula: *"Zecway, the company brain."* Descriptors can be retired; names can't.
 
 ## Success metrics
 
-- **North star:** weekly queries per active user (are people *living* in it?)
-- Answer quality: % of AI answers rated helpful, with a citation the user clicks
-- Time-to-first-answer for a new workspace (target: < 30 minutes from signup)
-- Logo expansion: department → company-wide conversions
+- **North star: decisions supported per customer per month** (an investigation an
+  executive actually acted on)
+- Time-to-answer for a decision question (target: minutes; baseline: weeks)
+- % of investigation claims with a verifiable citation (target: 100%)
+- Sponsor retention: does the executive ask a second question? A tenth?
