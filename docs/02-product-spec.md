@@ -61,8 +61,8 @@
 
 ## Deliberately out of scope (for now)
 
-- Systems map and multi-agent executive investigations (future bets — the graph
-  supports them when we're ready to climb upmarket)
-- Action-taking agents in external systems
+- The platform layers above search — company entity graph, personal context,
+  agents (Phase 5 of the roadmap: sequenced after search wins, not abandoned)
+- Action-taking agents in external systems without human approval
 - On-premise deployment; building our own LLM
 - Real-time conversational voice
