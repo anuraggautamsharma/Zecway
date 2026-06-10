@@ -52,7 +52,19 @@ talking to us.
 - Big-company connectors: Teams, Jira, Salesforce
 - Scale work: dedicated search infrastructure, tenant isolation for largest customers
 - First hires: senior engineer (connectors/infra), founding GTM
-- Future bets unlocked by a rich graph: systems map, executive investigations
+
+## Phase 5 — The platform (the destination)
+The climb from search to Work AI, in order, each layer on the one below:
+1. **Company graph**: entity extraction — the people, teams, processes, and tools
+   behind the documents, and how they relate
+2. **Personal context**: per-user goals, tasks, and writing voice; answers and
+   drafts become personal, not generic
+3. **Assistant upgrades**: proactive intelligence, content creation grounded in
+   company context
+4. **Agents**: created in plain language, per-department library, every action
+   permission-checked, human approval on anything that leaves the system
+5. **Trust productized + APIs**: a named, visible protection surface; search/ask
+   APIs so the graph is indexed once and used everywhere
 
 ## Risks and honest mitigations
 

@@ -16,15 +16,21 @@ employee one place to ask:
 3. **The assistant.** Plain-language questions, answers grounded only in permitted
    content, every claim cited. When the company hasn't written the answer down,
    Zecway says so instead of guessing.
+4. **Agents — the destination.** On the same foundation: AI workers created in
+   plain language that take on real work ("answer each question in this RFP from
+   our docs"), with every action permission-checked and every claim citable.
+   Search is the entry ticket; agents are the ceiling.
 
-This is the product Glean proved at a $7B valuation. We are building it for the
-companies Glean will never serve.
+This is the stack Glean proved at a $7B valuation — their own site calls search
+"the foundation of enterprise AI" and sells an assistant and an agent platform on
+top of it. We are building the same climb, for the companies Glean will never
+serve.
 
 ## The market: proven at the top, abandoned at the bottom
 
 | Player | What they prove / where they fail |
 |---|---|
-| **Glean** | Proves enterprises pay for AI over company knowledge. But: sales-led, quote-only pricing (reportedly $40K+/yr minimums), weeks-long IT deployments. A 40-person company can't even get a demo. |
+| **Glean** | Proves the whole stack: connectors → search → "enterprise context" graphs → assistant + agents, sold as a Work AI platform. But: sales-led, quote-only pricing (reportedly $40K+/yr minimums), weeks-long IT deployments. A 40-person company can't even get a demo. |
 | **Microsoft Copilot** | Bundled and cheap, but mediocre outside the Microsoft estate — and most modern small companies live in Google Workspace, Slack, and Notion. |
 | **ChatGPT Enterprise** | Adding connectors, but search/permissions are an afterthought, not the spine. |
 | **Notion AI / Slack AI** | Each searches only its own silo. The problem is *across* tools. |
@@ -52,11 +58,26 @@ customers.
 founder + AI engineering, obsessive focus on one segment, and an experience quality
 that bundled products don't attempt.
 
-## Future bets (parked, not dead)
+## The climb (sequenced, not parked)
 
-The graph we build for search can later support a systems map of the company and
-agent-run investigations for executives — a different buyer and a harder trust
-problem. Those ideas live in the appendix of our heads until search wins its market.
+Glean's architecture confirms the long game — and it is the original Zecway
+"company brain," returning as numbered layers instead of a parked appendix:
+
+1. **Company graph** — beyond documents: the entities behind them (people, teams,
+   processes, products, tools) and how they relate. Glean calls this the
+   Enterprise Graph; we called it the systems map.
+2. **Personal context** — each user's goals, tasks, work habits, and writing
+   voice, so answers and drafts come out *theirs*, not generic.
+3. **Assistant → agents** — from answering questions to doing work: agents
+   created in plain language, a library of per-department starting points,
+   human approval on actions that leave the system.
+4. **Trust as a product surface** — our database-enforced permissions and
+   mandatory citations, made visible and named (Glean productizes this as
+   "Protect"), plus the swappable model layer we already have in code (their
+   "Model Hub").
+
+Each layer only works on top of the one below. Search wins the beachhead; the
+layers above win the category.
 
 ## Naming rule
 
