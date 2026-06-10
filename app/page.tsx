@@ -31,7 +31,7 @@ const TICKER = [
 function Lockup({ dark = false }: { dark?: boolean }) {
   return (
     <span className="flex items-center gap-2.5">
-      <img src="/zecway-mark.svg" alt="" className="h-6 w-auto" />
+      <img src="/brand/zecway-mark.png" alt="" className="h-6 w-auto" />
       <span
         className={`font-display text-2xl leading-none ${dark ? "text-on-dark" : "text-ink"}`}
       >
@@ -49,13 +49,12 @@ export default function Home() {
         <GraphField />
 
         <div className="relative z-10 flex w-full flex-col items-center">
-          {/* vertical lockup — the brand crowns the page */}
-          <div className="animate-fade-up mb-7 flex flex-col items-center gap-2.5">
-            <img src="/zecway-mark.svg" alt="" className="h-12 w-auto sm:h-14" />
-            <span className="font-display text-2xl leading-none text-ink sm:text-3xl">
-              Zecway
-            </span>
-          </div>
+          {/* the vertical lockup, as designed — the brand crowns the page */}
+          <img
+            src="/brand/zecway-vertical.png"
+            alt="Zecway"
+            className="animate-fade-up mb-7 h-24 w-auto sm:h-28"
+          />
 
           <p
             className="animate-fade-up mx-auto mb-6 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-mist"

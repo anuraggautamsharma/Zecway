@@ -90,9 +90,8 @@ function SidebarContent({
   return (
     <div className="flex h-full flex-col p-4">
       <div className="mb-6 px-3 pt-2">
-        <Link href="/" className="flex items-center gap-2 text-ink">
-          <img src="/zecway-mark.svg" alt="" className="h-4 w-auto" />
-          <span className="font-display text-lg leading-none">Zecway</span>
+        <Link href="/" className="block">
+          <img src="/brand/zecway-horizontal.png" alt="Zecway" className="h-6 w-auto" />
         </Link>
         <p className="mt-3 truncate text-sm font-semibold text-ink">{workspaceName}</p>
       </div>
