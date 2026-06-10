@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -24,6 +24,19 @@ function LoginForm() {
     setError("");
     setStatus("busy");
     const supabase = createClient();
+
+    if (mode === "forgot") {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${location.origin}/auth/callback?next=/reset`,
+      });
+      if (error) {
+        setError(error.message);
+        setStatus("idle");
+        return;
+      }
+      setStatus("confirm");
+      return;
+    }
 
     if (mode === "signup") {
       const { error } = await supabase.auth.signUp({
@@ -60,8 +73,17 @@ function LoginForm() {
         <p className="text-2xl">📬</p>
         <h2 className="mt-3 text-lg font-semibold text-ink">Check your email</h2>
         <p className="mt-2 text-sm text-mist">
-          We sent a confirmation link to <strong>{email}</strong>. Click it and
-          you&apos;ll land in your workspace.
+          {mode === "forgot" ? (
+            <>
+              We sent a password-reset link to <strong>{email}</strong>. Click it
+              to choose a new password.
+            </>
+          ) : (
+            <>
+              We sent a confirmation link to <strong>{email}</strong>. Click it and
+              you&apos;ll land in your workspace.
+            </>
+          )}
         </p>
       </div>
     );
@@ -70,12 +92,18 @@ function LoginForm() {
   return (
     <div className="animate-pop w-full rounded-2xl border border-line bg-white p-8 shadow-[0_1px_2px_rgba(23,21,19,0.04),0_16px_40px_-20px_rgba(23,21,19,0.15)]">
       <h1 className="text-xl font-semibold text-ink">
-        {mode === "signin" ? "Sign in to Zecway" : "Create your account"}
+        {mode === "signin"
+          ? "Sign in to Zecway"
+          : mode === "signup"
+            ? "Create your account"
+            : "Reset your password"}
       </h1>
       <p className="mt-1 text-sm text-mist">
         {mode === "signin"
           ? "Your team's knowledge is waiting."
-          : "Give your company one search bar."}
+          : mode === "signup"
+            ? "Give your company one search bar."
+            : "We'll email you a link to set a new one."}
       </p>
 
       <form onSubmit={submit} className="mt-6 space-y-3">
@@ -87,10 +115,10 @@ function LoginForm() {
           placeholder="Work email"
           className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-mist focus:border-accent/50 focus:outline-none"
         />
-        <div className="relative">
+        <div className={mode === "forgot" ? "hidden" : "relative"}>
           <input
             type={showPassword ? "text" : "password"}
-            required
+            required={mode !== "forgot"}
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -127,9 +155,26 @@ function LoginForm() {
             ? "One moment…"
             : mode === "signin"
               ? "Sign in"
-              : "Create account"}
+              : mode === "signup"
+                ? "Create account"
+                : "Send reset link"}
         </button>
       </form>
+
+      {mode === "signin" && (
+        <p className="mt-3 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setMode("forgot");
+              setError("");
+            }}
+            className="text-xs text-mist transition hover:text-ink"
+          >
+            Forgot password?
+          </button>
+        </p>
+      )}
 
       {error && <p className="mt-3 text-xs text-red-500">{error}</p>}
 
