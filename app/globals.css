@@ -1,84 +1,36 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #fffcf8;
-  --color-cream: #fff5ec;
-  --color-ink: #221a12;
-  --color-mist: #75695c;
-  --color-line: rgba(34, 26, 18, 0.09);
+  --color-paper: #ffffff;
+  --color-cream: #f7f7f5;
+  --color-ink: #171513;
+  --color-mist: #6f6b66;
+  --color-line: rgba(23, 21, 19, 0.1);
   --color-accent: #f0590a;
   --color-accent-deep: #c74705;
-  --color-accent-soft: #ffe8d8;
+  --color-accent-soft: #fff0e6;
 
   --animate-fade-up: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-marquee: marquee 28s linear infinite;
   --animate-pop: pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-word: word-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-orb: orb-drift 16s ease-in-out infinite alternate;
-  --animate-shine: shine 2.6s linear infinite;
-  --animate-bounce-soft: bounce-soft 2s ease-in-out infinite;
 
   @keyframes fade-up {
     from {
       opacity: 0;
-      transform: translateY(24px);
+      transform: translateY(16px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
-    }
-  }
-  @keyframes marquee {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      transform: translateX(-50%);
     }
   }
   @keyframes pop {
     from {
       opacity: 0;
-      transform: scale(0.96) translateY(8px);
+      transform: scale(0.97) translateY(6px);
     }
     to {
       opacity: 1;
       transform: scale(1) translateY(0);
-    }
-  }
-  @keyframes word-rise {
-    from {
-      opacity: 0;
-      transform: translateY(105%);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  @keyframes orb-drift {
-    from {
-      transform: translate(-6%, -4%) scale(1);
-    }
-    to {
-      transform: translate(6%, 5%) scale(1.15);
-    }
-  }
-  @keyframes shine {
-    from {
-      background-position: -200% center;
-    }
-    to {
-      background-position: 200% center;
-    }
-  }
-  @keyframes bounce-soft {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(7px);
     }
   }
 }
@@ -94,27 +46,13 @@ body {
   overflow-x: clip;
 }
 
-/* Warm radial washes behind the hero */
-.hero-glow {
-  background:
-    radial-gradient(900px 480px at 50% -12%, rgba(240, 89, 10, 0.14), transparent 70%),
-    radial-gradient(700px 420px at 12% 28%, rgba(255, 196, 128, 0.18), transparent 70%),
-    radial-gradient(700px 420px at 90% 18%, rgba(255, 170, 90, 0.14), transparent 70%);
-}
-
-/* Dotted paper texture for panels */
-.dot-grid {
-  background-image: radial-gradient(rgba(34, 26, 18, 0.07) 1px, transparent 1px);
-  background-size: 18px 18px;
-}
-
-/* Scroll-reveal: starts hidden, .revealed animates in */
+/* Scroll-reveal: starts hidden, .revealed animates in (subtle) */
 .reveal {
   opacity: 0;
-  transform: translateY(32px);
+  transform: translateY(14px);
   transition:
-    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .reveal.revealed {
   opacity: 1;
@@ -138,59 +76,16 @@ body {
   }
 }
 
-/* Headline words rise out of a clipping mask, one by one */
-.word-mask {
-  display: inline-block;
-  overflow: hidden;
-  vertical-align: bottom;
-  padding-bottom: 0.08em;
-  margin-bottom: -0.08em;
-}
-
-/* Slowly animated gradient for statement text */
-.gradient-flow {
-  background: linear-gradient(
-    90deg,
-    var(--color-accent),
-    #ffb054,
-    var(--color-accent-deep),
-    var(--color-accent)
-  );
-  background-size: 250% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: gradient-pan 7s linear infinite;
-}
-@keyframes gradient-pan {
-  to {
-    background-position: 250% center;
-  }
-}
-
-/* Button sheen sweep */
-.btn-shine {
-  position: relative;
-  overflow: hidden;
-}
-.btn-shine::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.35) 50%,
-    transparent 70%
-  );
-  background-size: 200% 100%;
-  animation: shine 2.6s linear infinite;
+/* Dotted texture for panels (used in the app) */
+.dot-grid {
+  background-image: radial-gradient(rgba(23, 21, 19, 0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
 }
 
 /* Frosted nav */
 .nav-blur {
   backdrop-filter: blur(14px);
-  background: rgba(255, 252, 248, 0.75);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 @media (prefers-reduced-motion: reduce) {

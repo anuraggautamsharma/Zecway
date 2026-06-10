@@ -67,7 +67,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="animate-pop w-full rounded-2xl border border-line bg-white p-8 shadow-[0_20px_60px_-25px_rgba(240,89,10,0.3)]">
+    <div className="animate-pop w-full rounded-2xl border border-line bg-white p-8 shadow-[0_1px_2px_rgba(23,21,19,0.04),0_16px_40px_-20px_rgba(23,21,19,0.15)]">
       <h1 className="text-xl font-semibold text-ink">
         {mode === "signin" ? "Sign in to Zecway" : "Create your account"}
       </h1>
@@ -129,7 +129,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="hero-glow flex min-h-screen flex-col items-center justify-center px-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-cream px-4">
       <Link href="/" className="mb-8 text-2xl font-bold tracking-tight text-ink">
         zecway<span className="text-accent">.</span>
       </Link>
