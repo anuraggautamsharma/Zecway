@@ -42,5 +42,7 @@ export function chunkMarkdown(markdown: string): string[] {
 // Title: first markdown heading if there is one, else the file name.
 export function titleFromMarkdown(markdown: string, fallback: string): string {
   const heading = markdown.match(/^#{1,6}\s+(.+)$/m);
-  return heading ? heading[1].trim() : fallback.replace(/\.(md|markdown|txt)$/i, "");
+  return heading
+    ? heading[1].trim()
+    : fallback.replace(/\.(md|markdown|txt|pdf|docx)$/i, "");
 }

@@ -146,15 +146,15 @@ export default function Workspace({
           Add to the graph
         </h2>
         <p className="mt-1 text-sm text-mist">
-          Drop in markdown or text files — they become searchable, cited knowledge.
-          PDFs and connectors (Google Drive, Slack) are coming next.
+          Drop in PDFs, Word docs, markdown, or text files — they become searchable,
+          cited knowledge. Connectors (Google Drive, Slack) are coming next.
         </p>
         <div className="mt-4 flex items-center gap-3">
           <input
             ref={fileInput}
             type="file"
             multiple
-            accept=".md,.markdown,.txt"
+            accept=".md,.markdown,.txt,.pdf,.docx"
             onChange={(e) => uploadFiles(e.target.files)}
             disabled={uploading}
             className="text-xs text-mist file:mr-3 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-accent-deep"
