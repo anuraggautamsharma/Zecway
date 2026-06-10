@@ -1,286 +1,219 @@
 import dynamic from "next/dynamic";
-import SearchDemo from "./search-demo";
 import WaitlistForm from "./waitlist-form";
-import { RiseIn, ScatterToBar, WordsRise } from "./scroll-story";
-import { AssistantDemo, AgentsDemo, PermissionsDemo } from "./climb-demos";
+import QuestionType from "./question-type";
+import { RiseIn, WordsRise } from "./scroll-story";
+import { PermissionsDemo } from "./climb-demos";
 
-const GraphField = dynamic(() => import("./graph-field"));
+const WorldCanvas = dynamic(() => import("./world-canvas"));
 
-const SOURCES = [
-  "Google Drive",
-  "Slack",
-  "Notion",
-  "Confluence",
-  "Jira",
-  "GitHub",
-  "Email",
-  "PDFs",
-  "Meeting notes",
-  "Spreadsheets",
+const LAYERS = [
+  {
+    n: "01",
+    title: "Search",
+    line: "Find anything, instantly.",
+    body: "One bar across every tool your company uses — results as you type, only from what you're allowed to see.",
+    state: "live in early access",
+  },
+  {
+    n: "02",
+    title: "Assistant",
+    line: "An expert by your side.",
+    body: "Drafts, summaries, and decisions grounded in your company's real knowledge — in your voice, with receipts.",
+    state: "rolling out",
+  },
+  {
+    n: "03",
+    title: "Agents",
+    line: "Describe a chore. Get a worker.",
+    body: "AI teammates that take on real work — every action permission-checked, every claim cited.",
+    state: "the destination",
+  },
 ];
-
-const TICKER = [
-  "where's the latest pricing deck?",
-  "who owns customer onboarding?",
-  "what's our parental leave policy?",
-  "what did we decide about the rebrand?",
-  "is the API contract signed?",
-  "which vendor handles logistics?",
-];
-
-function Lockup({ dark = false }: { dark?: boolean }) {
-  return (
-    <span className="flex items-center gap-2.5">
-      <img src="/brand/zecway-mark.png" alt="" className="h-6 w-auto" />
-      <span
-        className={`font-display text-2xl leading-none ${dark ? "text-on-dark" : "text-ink"}`}
-      >
-        Zecway
-      </span>
-    </span>
-  );
-}
 
 export default function Home() {
   return (
-    <main className="min-h-screen overflow-x-clip">
-      {/* Hero — the field of scattered knowledge that organizes around answers */}
-      <header className="relative flex min-h-svh flex-col items-center justify-center px-6 pb-16 pt-12 text-center">
-        <GraphField />
+    <div className="bg-dark text-on-dark">
+      <WorldCanvas />
 
-        <div className="relative z-10 flex w-full flex-col items-center">
-          {/* the vertical lockup, as designed — the brand crowns the page */}
-          <img
-            src="/brand/zecway-vertical.png"
-            alt="Zecway"
-            className="animate-fade-up mb-7 h-24 w-auto sm:h-28"
-          />
-
-          <p
-            className="animate-fade-up mx-auto mb-6 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-mist"
-            style={{ animationDelay: "40ms" }}
-          >
-            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-            the company brain · launching 2026
-          </p>
-
-          <h1
-            className="animate-fade-up max-w-3xl font-display text-5xl leading-[1.04] text-ink sm:text-7xl"
-            style={{ animationDelay: "80ms" }}
-          >
-            Ask your company anything.
-          </h1>
-
-          <p
-            className="animate-fade-up mx-auto mt-5 max-w-xl text-base leading-relaxed text-body sm:text-lg"
-            style={{ animationDelay: "160ms" }}
-          >
-            Every dot behind this sentence is a piece of company knowledge,
-            scattered. Watch what happens when someone asks.
-          </p>
-
-          <div
-            className="animate-fade-up mt-9 w-full max-w-2xl"
-            style={{ animationDelay: "260ms" }}
-          >
-            <SearchDemo />
-          </div>
-
-          <div
-            className="animate-fade-up mt-9 flex w-full justify-center"
-            style={{ animationDelay: "340ms" }}
-            id="waitlist"
-          >
-            <WaitlistForm />
-          </div>
-          <p
-            className="animate-fade-up mt-3 font-mono text-[11px] text-mist"
-            style={{ animationDelay: "400ms" }}
-          >
-            early access is limited · no credit card
-          </p>
-        </div>
-      </header>
-
-      {/* Question ticker */}
-      <section className="border-y border-line bg-cream py-3.5">
-        <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-          <div className="animate-ticker flex w-max items-center gap-8">
-            {[...TICKER, ...TICKER].map((q, i) => (
-              <span
-                key={`${q}-${i}`}
-                className="flex items-center gap-8 font-mono text-xs text-mist"
-              >
-                {q}
-                <span className="inline-block h-1 w-1 rounded-full bg-accent" />
+      <main className="relative z-10">
+        {/* ACT I — CHAOS */}
+        <section data-act="0" className="h-[150svh]">
+          <div className="sticky top-0 flex h-svh flex-col items-center justify-center px-6 text-center">
+            <div className="animate-fade-up mb-8 flex flex-col items-center gap-3">
+              <img src="/brand/zecway-mark.png" alt="" className="h-12 w-auto sm:h-14" />
+              <span className="font-display text-2xl leading-none text-on-dark sm:text-3xl">
+                Zecway
               </span>
-            ))}
+            </div>
+            <p
+              className="animate-fade-up mb-6 font-mono text-[11px] uppercase tracking-[0.24em] text-on-dark-soft"
+              style={{ animationDelay: "60ms" }}
+            >
+              <span className="mr-2 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent align-middle" />
+              the company brain · early access 2026
+            </p>
+            <h1
+              className="animate-fade-up max-w-4xl font-display text-4xl leading-[1.06] text-on-dark sm:text-7xl"
+              style={{ animationDelay: "120ms" }}
+            >
+              Your company already
+              <br />
+              knows the answer.
+            </h1>
+            <p
+              className="animate-fade-up mt-6 max-w-md text-base leading-relaxed text-on-dark-soft sm:text-lg"
+              style={{ animationDelay: "200ms" }}
+            >
+              Every point of light around you is a piece of it — scattered
+              across ten tools. Keep scrolling.
+            </p>
+            <div
+              className="animate-fade-up absolute bottom-8 left-1/2 -translate-x-1/2 font-mono text-[11px] uppercase tracking-[0.24em] text-on-dark-soft/60"
+              style={{ animationDelay: "320ms" }}
+            >
+              scroll ↓
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Scatter → one bar (scroll-performed) */}
-      <section className="mx-auto max-w-4xl px-6 py-24 sm:py-36">
-        <WordsRise
-          text="Your company already knows the answer. It's just scattered across ten tools."
-          className="mx-auto max-w-2xl text-center font-display text-3xl leading-tight text-ink sm:text-5xl"
-        />
-        <div className="mt-16">
-          <ScatterToBar tools={SOURCES} />
-        </div>
-      </section>
+        {/* ACT II — THE QUESTION */}
+        <section data-act="1" className="h-[160svh]">
+          <div className="sticky top-0 flex h-svh flex-col items-center justify-center px-6 text-center">
+            <RiseIn>
+              <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.24em] text-on-dark-soft">
+                then, someone asks
+              </p>
+            </RiseIn>
+            <QuestionType />
+          </div>
+        </section>
 
-      {/* THE CLIMB — search is day one */}
-      <section className="border-t border-line bg-cream">
-        <div className="mx-auto max-w-4xl px-6 py-20 text-center sm:py-28">
-          <RiseIn>
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent">
-              ● search is day one
-            </p>
-            <h2 className="mx-auto mt-5 max-w-2xl font-display text-3xl leading-tight text-ink sm:text-5xl">
-              Zecway is building the company brain. In three layers.
-            </h2>
-          </RiseIn>
-        </div>
-      </section>
+        {/* ACT III — THE ANSWER */}
+        <section data-act="2" className="h-[200svh]">
+          <div className="sticky top-0 flex h-svh flex-col items-center justify-center px-6 text-center">
+            <RiseIn>
+              <p className="mb-7 font-mono text-[11px] uppercase tracking-[0.24em] text-accent">
+                ● answer · 0.4s
+              </p>
+            </RiseIn>
+            <WordsRise
+              text="Pricing v4.2, updated Tuesday by Marcus — here's the deck, and the thread explaining what changed."
+              className="mx-auto max-w-3xl font-display text-3xl leading-snug text-on-dark sm:text-5xl"
+            />
+            <RiseIn delay={0.4}>
+              <p className="mt-8 font-mono text-xs text-on-dark-soft">
+                [1] Pricing v4.2 · Drive&nbsp;&nbsp;&nbsp;[2] #go-to-market · Slack
+              </p>
+              <p className="mt-10 max-w-sm text-sm leading-relaxed text-on-dark-soft">
+                Watch the chaos organize. Every answer is built from the graph
+                — cited, current, permitted.
+              </p>
+            </RiseIn>
+          </div>
+        </section>
 
-      {/* 01 · Search */}
-      <section className="border-t border-line">
-        <div className="mx-auto max-w-4xl px-6 py-20 text-center sm:py-28">
-          <RiseIn>
-            <p className="font-mono text-xs text-mist">01 · search</p>
-            <h3 className="mt-3 font-display text-2xl text-ink sm:text-4xl">
-              Find anything, instantly.
-            </h3>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-body">
-              One bar across everything your company uses. Results as you
-              type — only ever from what you&apos;re allowed to see.
-            </p>
-          </RiseIn>
-          <RiseIn delay={0.15} className="mt-10">
-            <div className="mx-auto w-full max-w-xl rounded-2xl border border-line bg-paper p-2 text-left shadow-[0_1px_1px_rgba(20,20,19,0.03),0_12px_24px_-16px_rgba(20,20,19,0.25)]">
-              <div className="flex items-center gap-2.5 rounded-xl bg-cream px-4 py-2.5">
-                <span className="font-mono text-xs text-mist">⌕</span>
-                <span className="text-sm text-ink">parental leave</span>
-              </div>
-              <div className="divide-y divide-line px-4">
-                {[
-                  ["HR Policy 2026", "drive"],
-                  ["Parental leave FAQ", "notion"],
-                  ["#people-ops thread", "slack"],
-                ].map(([title, src]) => (
-                  <div key={title} className="flex items-baseline justify-between py-2.5">
-                    <span className="text-sm text-ink">{title}</span>
-                    <span className="font-mono text-[11px] text-mist">{src}</span>
+        {/* ACT IV — THE LAYERS */}
+        <section data-act="3" className="h-[220svh]">
+          <div className="sticky top-0 flex h-svh flex-col items-center justify-center px-6">
+            <RiseIn>
+              <p className="text-center font-mono text-[11px] uppercase tracking-[0.24em] text-accent">
+                ● search is day one
+              </p>
+              <h2 className="mx-auto mt-5 max-w-2xl text-center font-display text-3xl leading-tight text-on-dark sm:text-5xl">
+                The brain has three layers.
+              </h2>
+            </RiseIn>
+            <div className="mx-auto mt-12 w-full max-w-xl space-y-7 sm:mt-16">
+              {LAYERS.map((l, i) => (
+                <RiseIn key={l.n} delay={i * 0.18}>
+                  <div className="flex items-baseline gap-5 border-t border-white/10 pt-5">
+                    <span className="font-mono text-xs text-accent">{l.n}</span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-baseline gap-x-3">
+                        <h3 className="font-display text-2xl text-on-dark sm:text-3xl">
+                          {l.line}
+                        </h3>
+                      </div>
+                      <p className="mt-1.5 text-sm leading-relaxed text-on-dark-soft">
+                        {l.body}
+                      </p>
+                      <p className="mt-2 font-mono text-[11px] uppercase tracking-wider text-on-dark-soft/60">
+                        {l.title} · {l.state}
+                      </p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </RiseIn>
-        </div>
-      </section>
-
-      {/* 02 · Assistant */}
-      <section className="bg-dark">
-        <div className="mx-auto max-w-4xl px-6 py-20 text-center sm:py-28">
-          <RiseIn>
-            <p className="font-mono text-xs text-on-dark-soft">02 · assistant</p>
-            <h3 className="mt-3 font-display text-2xl text-on-dark sm:text-4xl">
-              An expert by your side.
-            </h3>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-on-dark-soft">
-              Not just finding — doing. Drafts, summaries, and decisions
-              grounded in your company&apos;s real knowledge, in your voice.
-            </p>
-          </RiseIn>
-          <RiseIn delay={0.15} className="mt-10">
-            <AssistantDemo />
-          </RiseIn>
-        </div>
-      </section>
-
-      {/* 03 · Agents */}
-      <section className="bg-cream">
-        <div className="mx-auto max-w-4xl px-6 py-20 text-center sm:py-28">
-          <RiseIn>
-            <p className="font-mono text-xs text-mist">03 · agents — the destination</p>
-            <h3 className="mt-3 font-display text-2xl text-ink sm:text-4xl">
-              Describe a chore. Get a worker.
-            </h3>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-body">
-              AI teammates that take on real work across your company&apos;s
-              knowledge — every action permission-checked, every claim cited.
-            </p>
-          </RiseIn>
-          <RiseIn delay={0.15} className="mt-10">
-            <AgentsDemo />
-          </RiseIn>
-        </div>
-      </section>
-
-      {/* Permissions theater */}
-      <section className="bg-dark">
-        <div className="mx-auto max-w-4xl px-6 py-20 text-center sm:py-32">
-          <RiseIn>
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent">
-              ● the part everyone asks about
-            </p>
-            <h2 className="mx-auto mt-5 max-w-2xl font-display text-3xl leading-tight text-on-dark sm:text-5xl">
-              Same question. Different clearance.
-            </h2>
-          </RiseIn>
-          <RiseIn delay={0.15} className="mt-12">
-            <PermissionsDemo />
-          </RiseIn>
-          <RiseIn delay={0.25}>
-            <p className="mx-auto mt-10 max-w-md text-sm leading-relaxed text-on-dark-soft">
-              Permissions are enforced in the database — before anything ever
-              reaches an AI. People only see what they could already open.
-            </p>
-          </RiseIn>
-        </div>
-      </section>
-
-      {/* Receipts statement */}
-      <section className="mx-auto max-w-3xl px-6 py-24 text-center sm:py-36">
-        <RiseIn>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent">
-            ● no confident fiction
-          </p>
-        </RiseIn>
-        <WordsRise
-          text="Every claim cites its source. And when the answer isn't written down anywhere, Zecway says so."
-          className="mx-auto mt-6 max-w-2xl font-display text-2xl leading-relaxed text-ink sm:text-4xl"
-        />
-      </section>
-
-      {/* Final CTA — ember band */}
-      <section className="px-6 pb-20">
-        <RiseIn>
-          <div className="mx-auto max-w-5xl rounded-xl bg-accent px-6 py-14 text-center sm:px-12 sm:py-20">
-            <h2 className="font-display text-3xl text-white sm:text-5xl">
-              Give your team one search bar
-              <br className="hidden sm:block" /> for everything.
-            </h2>
-            <div className="mt-8 flex w-full justify-center">
-              <WaitlistForm compact />
+                </RiseIn>
+              ))}
             </div>
           </div>
-        </RiseIn>
-      </section>
+        </section>
 
-      {/* Footer — dark, never inverts */}
-      <footer className="bg-dark">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 py-12 sm:flex-row">
-          <Lockup dark />
-          <span className="font-mono text-[11px] text-on-dark-soft">
-            the company brain · © {new Date().getFullYear()} zecway
-          </span>
-          <span className="font-mono text-[11px] text-on-dark-soft">
-            permissions enforced on every result
-          </span>
-        </div>
-      </footer>
-    </main>
+        {/* ACT V — CLEARANCE */}
+        <section data-act="4" className="h-[180svh]">
+          <div className="sticky top-0 flex h-svh flex-col items-center justify-center px-6 text-center">
+            <RiseIn>
+              <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-accent">
+                ● the part enterprises ask first
+              </p>
+              <h2 className="mx-auto mt-5 max-w-2xl font-display text-3xl leading-tight text-on-dark sm:text-5xl">
+                Same question.
+                <br className="sm:hidden" /> Different clearance.
+              </h2>
+            </RiseIn>
+            <RiseIn delay={0.15} className="mt-10 w-full">
+              <PermissionsDemo />
+            </RiseIn>
+            <RiseIn delay={0.25}>
+              <p className="mx-auto mt-8 max-w-md text-sm leading-relaxed text-on-dark-soft">
+                Permissions are enforced in the database — before anything ever
+                reaches an AI.
+              </p>
+            </RiseIn>
+          </div>
+        </section>
+
+        {/* FINALE — THE HALO */}
+        <section data-act="5" id="join" className="flex min-h-svh flex-col">
+          <div className="flex flex-1 flex-col items-center justify-center px-6 pb-28 pt-20 text-center md:pb-20">
+            <WordsRise
+              text="Give your team one search bar for everything."
+              className="mx-auto max-w-2xl font-display text-4xl leading-[1.1] text-on-dark sm:text-6xl"
+            />
+            <RiseIn delay={0.25} className="mt-10 flex w-full justify-center">
+              <WaitlistForm tone="dark" />
+            </RiseIn>
+            <RiseIn delay={0.35}>
+              <p className="mt-4 font-mono text-[11px] text-on-dark-soft">
+                early access is limited · no credit card
+              </p>
+            </RiseIn>
+          </div>
+          <footer className="relative z-10 border-t border-white/10">
+            <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 py-10 sm:flex-row">
+              <span className="flex items-center gap-2.5">
+                <img src="/brand/zecway-mark.png" alt="" className="h-6 w-auto" />
+                <span className="font-display text-xl leading-none text-on-dark">
+                  Zecway
+                </span>
+              </span>
+              <span className="font-mono text-[11px] text-on-dark-soft">
+                the company brain · © {new Date().getFullYear()} zecway
+              </span>
+              <span className="font-mono text-[11px] text-on-dark-soft">
+                permissions enforced on every result
+              </span>
+            </div>
+          </footer>
+        </section>
+      </main>
+
+      {/* Mobile thumb-zone CTA — always one tap away */}
+      <a
+        href="#join"
+        className="fixed inset-x-4 bottom-4 z-40 rounded-xl bg-accent py-3.5 text-center text-sm font-medium text-white shadow-[0_8px_24px_-8px_rgba(232,84,10,0.6)] active:scale-[0.97] md:hidden"
+      >
+        Get early access
+      </a>
+    </div>
   );
 }
