@@ -48,7 +48,8 @@ export default function Home() {
       {/* Nav */}
       <nav className="nav-blur fixed inset-x-0 top-0 z-50 border-b border-line">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3.5">
-          <span className="text-lg font-bold tracking-tight">
+          <span className="flex items-center gap-2.5 text-lg font-bold tracking-tight">
+            <img src="/zecway-mark.svg" alt="" className="h-5 w-auto" />
             zecway<span className="text-accent">.</span>
           </span>
           <a
@@ -195,7 +196,8 @@ export default function Home() {
       {/* Footer — dark, never inverts */}
       <footer className="bg-dark">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-6 py-12 text-xs text-on-dark-soft sm:flex-row">
-          <span className="text-sm font-bold tracking-tight text-on-dark">
+          <span className="flex items-center gap-2 text-sm font-bold tracking-tight text-on-dark">
+            <img src="/zecway-mark.svg" alt="" className="h-4 w-auto" />
             zecway<span className="text-accent">.</span>
           </span>
           <span className="font-mono text-[11px]">
