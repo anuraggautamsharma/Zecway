@@ -10,7 +10,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 const EMBER = new THREE.Color("#e8540a");
-const DUST = new THREE.Color("#8e8b82");
+const DUST = new THREE.Color("#7a7268");
 
 function bell(s: number, k: number) {
   return Math.max(0, 1 - Math.abs(s - k));
@@ -104,7 +104,7 @@ export default function WorldCanvas() {
       size: isMobile ? 0.105 : 0.09,
       vertexColors: true,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.85,
       sizeAttenuation: true,
       depthWrite: false,
     });
