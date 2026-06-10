@@ -17,26 +17,33 @@ const eb = (x: number) => {
   return 1 + (k + 1) * v * v * v + k * v * v; // back out (punch)
 };
 
-const CUTS: Record<string, [number, number]> = {
-  open: [0, 1.2],
-  q1: [1.2, 1.8],
-  q2: [1.8, 2.4],
-  q3: [2.4, 3.0],
-  chaos: [3.0, 4.6],
-  cost: [4.6, 6.2],
-  beat: [6.2, 7.4],
-  hare: [7.4, 9.0],
-  search: [9.0, 11.0],
-  answer: [11.0, 13.2],
-  claim1: [13.2, 14.2],
-  claim2: [14.2, 15.2],
-  perm: [15.2, 17.4],
-  climb: [17.4, 19.6],
-  agent: [19.6, 22.0],
-  connect: [22.0, 24.0],
-  ask: [24.0, 26.5],
-  end: [26.5, 30.01],
+// Every cut lands on a beat. B is fitted to the soundtrack (122.23 bpm),
+// so the edit and the music share one grid.
+const B = 0.49087;
+export const AD_DURATION = 61.5 * B;
+const BEATS: Record<string, [number, number]> = {
+  open: [0, 3],
+  q1: [3, 4],
+  q2: [4, 5],
+  q3: [5, 6],
+  chaos: [6, 10],
+  cost: [10, 14],
+  beat: [14, 17],
+  hare: [17, 20],
+  search: [20, 24],
+  answer: [24, 29],
+  claim1: [29, 31],
+  claim2: [31, 33],
+  perm: [33, 38],
+  climb: [38, 42],
+  agent: [42, 47],
+  connect: [47, 51],
+  ask: [51, 56],
+  end: [56, 61.51],
 };
+const CUTS = Object.fromEntries(
+  Object.entries(BEATS).map(([k, [a, b]]) => [k, [a * B, b * B]]),
+) as Record<string, [number, number]>;
 
 const BGS: Record<string, string> = {
   open: "#181715", q1: "#faf9f5", q2: "#f5f0e8", q3: "#faf9f5",
@@ -261,7 +268,7 @@ export default function AdScene() {
       const t0 = performance.now();
       const loop = () => {
         raf = requestAnimationFrame(loop);
-        seek(((performance.now() - t0) / 1000) % 30);
+        seek(((performance.now() - t0) / 1000) % AD_DURATION);
       };
       loop();
     } else {
