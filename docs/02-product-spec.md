@@ -2,70 +2,78 @@
 
 ## Personas
 
-1. **The employee (daily user).** Anyone at the company with a question: "What's our
-   parental leave policy?", "Who owns the Acme account?", "Is there a deck about the
-   Q3 launch?" Wants one place to ask, instant trustworthy answers, zero training.
-2. **The knowledge worker (power user).** PMs, sales, support, engineers. Uses Zecway
-   to assemble context: summarize a thread, compare docs, draft from sources.
-3. **The IT admin (buyer's operator).** Connects data sources, manages users and
-   permissions, watches usage. Needs confidence nothing leaks and clear audit trails.
-4. **The executive sponsor (economic buyer).** CIO/CTO. Cares about security posture,
-   adoption metrics, and ROI ("hours saved per employee").
+1. **The executive sponsor (primary buyer & user).** CEO, COO, functional VP. Has
+   decisions queued that each justify the product alone: restructure, vendor renewal,
+   why-is-this-team-slow. Wants an evidence-backed brief in minutes, not a project.
+2. **The chief of staff / ops lead (power operator).** Runs Zecway day to day: frames
+   questions, reviews investigation briefs before they reach the exec, curates what
+   gets connected.
+3. **The IT/security admin (the gate).** Approves what Zecway may ingest. Needs
+   per-source controls, audit trails, and certainty that permissions can't leak —
+   especially with email and meeting notes in scope.
+4. **Employees (later beneficiaries).** Once the graph exists, everyday search/ask for
+   everyone is a natural expansion — but it is the expansion, not the wedge.
 
-## Core product (Phases 1–2)
+## Core product
 
-### 1. Universal search
-- One search bar over all connected sources. Results unified, deduplicated, and ranked.
-- **Permissions-aware, always:** a user only ever sees results they could open in the
-  source app. This is non-negotiable and enforced at query time.
-- Filters: source app, author, date, content type.
-- Instant results as you type; full-text + semantic (meaning-based) matching combined.
+### 1. Ingestion → the markdown knowledge graph
+- Connectors pull every kind of content: documents, PDFs, emails, Slack/Teams messages,
+  spreadsheets, meeting notes, tickets, CRM records.
+- Everything is converted to **markdown** — one uniform medium, readable by humans and
+  natively workable by agents. Tables, threads, and slides all become legible text with
+  structure and metadata preserved.
+- Every item carries its **permissions** from the source system, plus provenance
+  (where it came from, when, who wrote it).
+- The graph is *living*: continuous re-sync, hard deletes propagated.
 
-### 2. AI assistant (chat)
-- Ask in plain language; Zecway retrieves the most relevant permitted content and the
-  LLM composes an answer **with citations** — every claim links to its source.
-- Follow-up questions keep context ("…and who wrote that?").
-- Honest fallback: when the answer isn't in company knowledge, say so clearly rather
-  than guess. Trust is the product.
+### 2. The systems map
+- Entities: people, teams, processes, tools, vendors, customers — extracted from the
+  graph's content and activity.
+- Edges: who works with whom, which process crosses which teams and tools, where
+  handoffs occur. Built by **cartographer agents**, refreshed as the company changes.
+- Rendered visually: the map is a flagship UI surface, not just internal plumbing.
 
-### 3. Connectors (initial five families)
-| Connector | Content indexed | Permissions model synced |
-|---|---|---|
-| Google Workspace | Drive files, Docs/Sheets/Slides, (later Gmail, Calendar) | Drive ACLs, shared drives, domain sharing |
-| Slack | Public channels first; private channels/DMs opt-in per workspace policy | Channel membership |
-| Microsoft Teams | Channel messages, files | Team/channel membership |
-| Notion & Confluence | Pages, databases/spaces | Page/space permissions |
-| Jira, GitHub, Salesforce | Issues, PRs/READMEs, accounts/opportunities/notes | Project roles, repo access, sharing rules |
+### 3. Ask: answers with receipts
+- Plain-language questions; answers grounded only in permitted graph content.
+- **Every claim cites its source.** No citation, no claim. When the graph doesn't
+  contain the answer, Zecway says so.
 
-Build order within Phase 1: **Google Drive → Slack → Notion** (highest knowledge
-density per engineering effort), then the rest.
+### 4. Investigations (the consulting engagement, compressed)
+- For decision-grade questions, a **lead agent** decomposes the question into
+  workstreams; **specialist agents** investigate each in parallel inside the graph;
+  a **reviewer agent** verifies every claim against sources; the lead synthesizes a
+  brief: recommendation, evidence, confidence, and what would change the answer.
+- Output is a document in the graph — reusable, shareable, citable by later
+  investigations.
 
-### 4. Admin console
-- Connect/disconnect sources, see sync status and indexed-document counts.
-- User management (invite, deactivate), workspace settings.
-- Usage analytics: queries/day, top questions, answer-helpfulness ratings — the
-  adoption story the buyer shows their boss.
+### 5. Standing agents
+- **Librarians** — keep ingestion clean, deduplicated, current.
+- **Cartographers** — maintain the systems map.
+- **Watchdogs** (trust-ladder stage 3) — surface anomalies proactively: a handoff
+  slowing, duplicated work, a vendor drifting out of SLA.
 
-## Later product (Phase 3+)
+## The two non-negotiables
 
-- **Knowledge graph signals:** rank using people and activity (who you work with, what
-  your team opens) — Glean's moat, approached incrementally.
-- **Browser extension & Slack bot:** meet users where they already are.
-- **Agents & actions:** "file this bug in Jira", "draft a follow-up to this thread" —
-  with explicit user approval per action.
-- **Verified answers:** admins bless canonical answers for common questions (policy
-  questions, IT how-tos).
+1. **Permissions.** A user only ever sees — and an agent acting for a user only ever
+   reads — what that user could open in the source system. Enforced at ingestion and
+   again at query time, in the database itself.
+2. **Citations.** Agents may not assert what they cannot cite. This is the survival
+   mechanism against compounding multi-agent error, not a feature.
 
-## Experience principles (the differentiator)
+## Experience principles
 
-1. **Faster than asking a colleague.** Sub-second search; answers stream immediately.
-2. **Never show what you can't open.** A single permissions leak destroys the company.
-3. **Cite or be silent.** Every AI statement traceable to a source; no confident fiction.
-4. **Zero-training UI.** If it needs onboarding docs, the design failed.
-5. **Calm, premium feel.** Enterprise software that looks like it costs what it costs.
+1. **Boardroom-grade output.** Every brief should look like the best deck the best
+   consultant ever delivered — because that's the comparison the buyer is making.
+2. **Minutes, visibly.** Show the investigation working: workstreams spawning,
+   sources being read, claims being verified. The theater is honest *and* persuasive.
+3. **Honest uncertainty.** Confidence levels and gaps stated plainly. Trust compounds;
+   bluffing kills.
+4. **Read first, act later.** Analysis agents are read-only. Agents that take actions
+   in external systems require explicit per-action human approval — and come later.
 
-## Out of scope (deliberately)
+## Deliberately out of scope (for now)
 
-- On-premise deployment (cloud-only until a Fortune 500 contract demands otherwise)
-- Indexing email and DMs by default (privacy landmine; opt-in only, later)
-- Building our own LLM (we use Claude via API; model choice can be configurable later)
+- Action-taking agents without human approval gates
+- Company-wide every-employee rollout as the initial motion (it's the expansion)
+- On-premise deployment; building our own LLM
+- Real-time conversational voice — text briefs first
