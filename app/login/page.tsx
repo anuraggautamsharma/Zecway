@@ -232,9 +232,12 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           <Link
             href="/"
-            className="mb-10 block text-center text-2xl font-bold tracking-tight text-ink"
+            className="mb-10 flex flex-col items-center gap-3 text-2xl font-bold tracking-tight text-ink"
           >
-            zecway<span className="text-accent">.</span>
+            <img src="/zecway-mark.svg" alt="Zecway" className="h-10 w-auto" />
+            <span>
+              zecway<span className="text-accent">.</span>
+            </span>
           </Link>
           <Suspense>
             <LoginForm />
