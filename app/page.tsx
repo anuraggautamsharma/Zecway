@@ -45,16 +45,22 @@ export default function Home() {
   return (
     <main className="min-h-screen overflow-x-clip">
       {/* Hero — the field of scattered knowledge that organizes around answers */}
-      <header className="relative flex min-h-svh flex-col items-center justify-center px-6 pb-16 pt-20 text-center">
+      <header className="relative flex min-h-svh flex-col items-center justify-center px-6 pb-16 pt-12 text-center">
         <GraphField />
 
-        {/* brand, floating — no nav, no chrome */}
-        <div className="absolute left-6 top-6 z-20 sm:left-10 sm:top-8">
-          <Lockup />
-        </div>
-
         <div className="relative z-10 flex w-full flex-col items-center">
-          <p className="animate-fade-up mx-auto mb-6 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-mist">
+          {/* vertical lockup — the brand crowns the page */}
+          <div className="animate-fade-up mb-7 flex flex-col items-center gap-2.5">
+            <img src="/zecway-mark.svg" alt="" className="h-12 w-auto sm:h-14" />
+            <span className="font-display text-2xl leading-none text-ink sm:text-3xl">
+              Zecway
+            </span>
+          </div>
+
+          <p
+            className="animate-fade-up mx-auto mb-6 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-mist"
+            style={{ animationDelay: "40ms" }}
+          >
             <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
             the company brain · launching 2026
           </p>
