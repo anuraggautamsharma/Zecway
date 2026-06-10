@@ -234,8 +234,7 @@ export default function LoginPage() {
             href="/"
             className="mb-10 flex flex-col items-center gap-3 text-2xl font-bold tracking-tight text-ink"
           >
-            <img src="/zecway-mark.svg" alt="Zecway" className="h-10 w-auto" />
-            <span className="font-display">Zecway</span>
+            <img src="/brand/zecway-vertical.png" alt="Zecway" className="h-20 w-auto" />
           </Link>
           <Suspense>
             <LoginForm />
