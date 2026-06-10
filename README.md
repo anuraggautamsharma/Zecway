@@ -4,7 +4,8 @@ Zecway connects to every tool a company uses, understands all of its knowledge, 
 every employee one place to **search, ask, and act** — with answers that always respect
 who is allowed to see what.
 
-> One search bar for the entire company. One assistant that actually knows your business.
+> Ask anything — your company already knows the answer. One AI assistant that knows
+> your entire company, built on permissions-aware search across every tool.
 
 This repository currently contains the **product plan**. Code comes next, following the
 roadmap below.

@@ -16,13 +16,14 @@ const SOURCES = [
 const PILLARS = [
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <circle cx="11" cy="11" r="7" />
-        <path d="m20 20-3.5-3.5" />
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m12 2 9 5-9 5-9-5 9-5Z" />
+        <path d="m3 12 9 5 9-5" />
+        <path d="m3 17 9 5 9-5" />
       </svg>
     ),
-    title: "Find anything",
-    body: "One search bar across every tool your company uses. Results ranked by what matters to you — not just keyword matches.",
+    title: "Every tool, one brain",
+    body: "Zecway connects the apps your company already uses and understands all of it — docs, conversations, tickets, and records.",
   },
   {
     icon: (
@@ -30,8 +31,8 @@ const PILLARS = [
         <path d="M21 11.5a8.38 8.38 0 0 1-9 8.36 8.5 8.5 0 0 1-3.4-.76L3 21l1.9-5.6a8.38 8.38 0 0 1-.76-3.4 8.5 8.5 0 0 1 8.36-9 8.38 8.38 0 0 1 8.5 8.5Z" />
       </svg>
     ),
-    title: "Ask anything",
-    body: "Plain-language questions, AI answers grounded in your company's real knowledge. Every claim cites its source document.",
+    title: "Answers with receipts",
+    body: "Ask in plain language, get answers grounded in your company's real knowledge. Every claim cites its source — no confident fiction.",
   },
   {
     icon: (
@@ -88,21 +89,22 @@ export default function Home() {
               Work AI for the enterprise — early access open
             </p>
             <h1
-              className="animate-fade-up max-w-3xl text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-7xl"
+              className="animate-fade-up max-w-4xl text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-7xl"
               style={{ animationDelay: "80ms" }}
             >
-              One search bar for your{" "}
+              Ask anything. Your company{" "}
               <span className="bg-gradient-to-r from-accent to-amber-500 bg-clip-text text-transparent">
-                entire company
-              </span>
+                already knows
+              </span>{" "}
+              the answer.
             </h1>
             <p
               className="animate-fade-up mt-6 max-w-2xl text-lg leading-relaxed text-mist"
               style={{ animationDelay: "160ms" }}
             >
-              Zecway connects every tool your company uses and gives every employee one
-              place to search and ask — with AI answers that cite their sources and always
-              respect who&apos;s allowed to see what.
+              Zecway is the AI assistant that actually knows your company. It connects
+              every tool you use and turns scattered knowledge into instant, cited
+              answers — built on permissions-aware search across everything.
             </p>
             <div
               className="animate-fade-up mt-9 flex w-full justify-center"
