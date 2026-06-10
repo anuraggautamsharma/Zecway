@@ -37,6 +37,11 @@ export default function SearchDemo() {
   const [typed, setTyped] = useState("");
   const [phase, setPhase] = useState<"typing" | "answer">("typing");
 
+  // Let the page (e.g. the hero's particle field) react to the demo's rhythm
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("zecway-demo-phase", { detail: phase }));
+  }, [phase]);
+
   useEffect(() => {
     const { query } = DEMOS[demo];
     if (phase === "typing") {
@@ -70,28 +75,46 @@ export default function SearchDemo() {
         </span>
       </div>
 
-      {/* Answer */}
-      <div className={`${phase === "answer" ? "animate-pop" : "invisible"}`}>
-        <div className="mt-4 border-t border-white/10 pt-4">
-          <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-accent">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-            Answer
+      {/* Answer — or, while the question types, a quiet skeleton of what's coming */}
+      <div className="relative mt-4 min-h-[148px] border-t border-white/10 pt-4">
+        {phase === "answer" ? (
+          <div className="animate-pop">
+            <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-accent">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
+              Answer
+            </div>
+            <p className="mt-3 font-display text-lg leading-relaxed text-on-dark">{current.answer}</p>
+            <div className="mt-3.5 flex flex-wrap gap-2">
+              {current.sources.map((s) => (
+                <span
+                  key={s.label}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-dark-elevated px-2.5 py-1 font-mono text-[11px] text-on-dark-soft"
+                >
+                  <span>{s.icon}</span> {s.label}
+                </span>
+              ))}
+            </div>
+            <p className="mt-4 text-xs text-on-dark-soft">
+              Only from documents <em>you</em> are allowed to see — always.
+            </p>
           </div>
-          <p className="mt-3 font-display text-lg leading-relaxed text-on-dark">{current.answer}</p>
-          <div className="mt-3.5 flex flex-wrap gap-2">
-            {current.sources.map((s) => (
-              <span
-                key={s.label}
-                className="inline-flex items-center gap-1.5 rounded-md bg-dark-elevated px-2.5 py-1 font-mono text-[11px] text-on-dark-soft"
-              >
-                <span>{s.icon}</span> {s.label}
-              </span>
-            ))}
+        ) : (
+          <div aria-hidden>
+            <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-on-dark-soft/50">
+              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent/60" />
+              Searching the graph
+            </div>
+            <div className="mt-4 space-y-2.5">
+              <div className="h-3 w-11/12 animate-pulse rounded bg-dark-elevated" />
+              <div className="h-3 w-3/4 animate-pulse rounded bg-dark-elevated [animation-delay:120ms]" />
+              <div className="h-3 w-2/3 animate-pulse rounded bg-dark-elevated [animation-delay:240ms]" />
+            </div>
+            <div className="mt-5 flex gap-2">
+              <div className="h-6 w-32 animate-pulse rounded-md bg-dark-elevated" />
+              <div className="h-6 w-28 animate-pulse rounded-md bg-dark-elevated [animation-delay:180ms]" />
+            </div>
           </div>
-          <p className="mt-4 text-xs text-on-dark-soft">
-            Only from documents <em>you</em> are allowed to see — always.
-          </p>
-        </div>
+        )}
       </div>
     </div>
   );
