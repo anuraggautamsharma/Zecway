@@ -11,6 +11,17 @@ const GENERATION_MODEL = "gemini-2.5-flash";
 const EMBEDDING_MODEL = "gemini-embedding-001";
 export const EMBEDDING_DIMS = 768;
 
+// The free tier intermittently returns 429/503 ("model overloaded") for a
+// second or two; retrying absorbs those instead of failing the user's request.
+async function fetchWithRetry(makeRequest: () => Promise<Response>): Promise<Response> {
+  let res = await makeRequest();
+  for (let attempt = 1; attempt <= 2 && (res.status === 429 || res.status === 503); attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
+    res = await makeRequest();
+  }
+  return res;
+}
+
 class GeminiProvider implements AiProvider {
   private key: string;
 
@@ -19,9 +30,8 @@ class GeminiProvider implements AiProvider {
   }
 
   async generateText(prompt: string, system?: string): Promise<string> {
-    const res = await fetch(
-      `${GEMINI_BASE}/models/${GENERATION_MODEL}:generateContent?key=${this.key}`,
-      {
+    const res = await fetchWithRetry(() =>
+      fetch(`${GEMINI_BASE}/models/${GENERATION_MODEL}:generateContent?key=${this.key}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -30,7 +40,7 @@ class GeminiProvider implements AiProvider {
             : {}),
           contents: [{ parts: [{ text: prompt }] }],
         }),
-      },
+      }),
     );
     if (!res.ok) {
       throw new Error(`AI generation failed (${res.status}): ${await res.text()}`);
@@ -45,9 +55,8 @@ class GeminiProvider implements AiProvider {
   }
 
   async embedTexts(texts: string[]): Promise<number[][]> {
-    const res = await fetch(
-      `${GEMINI_BASE}/models/${EMBEDDING_MODEL}:batchEmbedContents?key=${this.key}`,
-      {
+    const res = await fetchWithRetry(() =>
+      fetch(`${GEMINI_BASE}/models/${EMBEDDING_MODEL}:batchEmbedContents?key=${this.key}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -57,7 +66,7 @@ class GeminiProvider implements AiProvider {
             outputDimensionality: EMBEDDING_DIMS,
           })),
         }),
-      },
+      }),
     );
     if (!res.ok) {
       throw new Error(`Embedding failed (${res.status}): ${await res.text()}`);
