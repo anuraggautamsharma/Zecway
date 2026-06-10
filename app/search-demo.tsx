@@ -4,30 +4,31 @@ import { useEffect, useState } from "react";
 
 const DEMOS = [
   {
+    query: "Where are handoffs breaking between sales and delivery?",
+    answer:
+      "Handoff time tripled since March — 9 deals are stalled at contract review between Sales and Legal, all waiting on one approver.",
+    sources: [
+      { icon: "📊", label: "Pipeline · Salesforce" },
+      { icon: "💬", label: "#deal-desk · Slack" },
+      { icon: "📄", label: "SLA tracker · Sheets" },
+    ],
+  },
+  {
+    query: "Should we renew the Acme logistics contract?",
+    answer:
+      "Acme missed 4 of 12 SLAs this quarter and costs rose 18%. Two vetted alternatives are already in procurement notes.",
+    sources: [
+      { icon: "📄", label: "Vendor scorecard · Drive" },
+      { icon: "📝", label: "Procurement · Notion" },
+    ],
+  },
+  {
     query: "What's our parental leave policy?",
     answer:
       "Full-time employees get 18 weeks of fully paid parental leave, extendable by 4 unpaid weeks.",
     sources: [
       { icon: "📄", label: "HR Policy 2026 · Google Drive" },
       { icon: "💬", label: "#people-ops · Slack" },
-    ],
-  },
-  {
-    query: "Who owns the Acme Corp account?",
-    answer:
-      "Priya Sharma is the account executive for Acme Corp; the renewal is scheduled for August 12.",
-    sources: [
-      { icon: "📊", label: "Acme Corp · Salesforce" },
-      { icon: "📄", label: "Q3 renewals · Notion" },
-    ],
-  },
-  {
-    query: "Is there a deck for the Q3 launch?",
-    answer:
-      "Yes — the latest version is “Q3 Launch Narrative v4”, updated last Tuesday by the product team.",
-    sources: [
-      { icon: "📄", label: "Q3 Launch Narrative v4 · Drive" },
-      { icon: "🎫", label: "LAUNCH-214 · Jira" },
     ],
   },
 ];
