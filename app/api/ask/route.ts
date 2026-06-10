@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 const NO_ANSWER =
   "The graph doesn't contain anything about this yet. Add the relevant documents and ask again.";
 
+const AI_BUSY =
+  "The AI service is briefly overloaded — please try again in a few seconds.";
+
 const SYSTEM = `You are Zecway, a company's knowledge assistant. Answer the question using ONLY the numbered sources provided. After every claim, cite its source like [1] or [2]. Be direct and concise. If the sources do not contain the answer, say exactly: "${NO_ANSWER}" Never invent facts that are not in the sources.`;
 
 export async function POST(request: Request) {
@@ -30,7 +33,13 @@ export async function POST(request: Request) {
 
   // Retrieval is permission-filtered in the database: match_chunks verifies
   // membership and only returns chunks this user's principals may see.
-  const [embedding] = await ai().embedTexts([question]);
+  let embedding: number[];
+  try {
+    [embedding] = await ai().embedTexts([question]);
+  } catch (e) {
+    console.error("ask: embedding failed:", e);
+    return NextResponse.json({ error: AI_BUSY }, { status: 503 });
+  }
   const { data: matches, error: matchError } = await supabase.rpc("match_chunks", {
     ws: workspaceId,
     query_embedding: JSON.stringify(embedding),
@@ -73,10 +82,15 @@ export async function POST(request: Request) {
       .map((c) => `[${docNumbers.get(c.document_id)}] ${c.title}\n${c.content}`)
       .join("\n\n---\n\n");
 
-    answer = await ai().generateText(
-      `Sources:\n\n${sources}\n\nQuestion: ${question}`,
-      SYSTEM,
-    );
+    try {
+      answer = await ai().generateText(
+        `Sources:\n\n${sources}\n\nQuestion: ${question}`,
+        SYSTEM,
+      );
+    } catch (e) {
+      console.error("ask: generation failed:", e);
+      return NextResponse.json({ error: AI_BUSY }, { status: 503 });
+    }
 
     // Only surface sources the answer actually cites
     if (answer.includes(NO_ANSWER)) {

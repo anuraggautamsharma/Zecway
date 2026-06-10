@@ -62,7 +62,16 @@ export async function POST(request: Request) {
   await supabase.from("chunks").delete().eq("document_id", doc.id);
 
   const contents = chunkMarkdown(markdown);
-  const embeddings = await ai().embedTexts(contents);
+  let embeddings: number[][];
+  try {
+    embeddings = await ai().embedTexts(contents);
+  } catch (e) {
+    console.error("ingest: embedding failed:", e);
+    return NextResponse.json(
+      { error: "The AI service is briefly overloaded — please try again in a few seconds." },
+      { status: 503 },
+    );
+  }
 
   const { error: chunkError } = await supabase.from("chunks").insert(
     contents.map((content, idx) => ({
