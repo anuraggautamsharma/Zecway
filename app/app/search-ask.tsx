@@ -88,13 +88,41 @@ export default function SearchAsk({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ workspace_id: workspaceId, question: query }),
       });
-      const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => ({}) as { error?: string });
         setAskError(data.error ?? "Something went wrong, please try again.");
         return;
       }
-      setAnswer(data.answer);
-      setCitations(data.citations ?? []);
+      // NDJSON stream: render the answer while the model writes it
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let acc = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          let msg: { type: string; text?: string; citations?: Citation[]; error?: string };
+          try {
+            msg = JSON.parse(line);
+          } catch {
+            continue;
+          }
+          if (msg.type === "delta" && msg.text) {
+            acc += msg.text;
+            setAnswer(acc);
+          } else if (msg.type === "done") {
+            setCitations(msg.citations ?? []);
+          } else if (msg.type === "error" && msg.error) {
+            if (!acc) setAnswer(null);
+            setAskError(msg.error);
+          }
+        }
+      }
     } catch {
       setAskError("Something went wrong, please try again.");
     } finally {
