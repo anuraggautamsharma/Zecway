@@ -224,7 +224,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen">
+    <main className="app-surface flex min-h-screen">
       {/* Left: the pitch + live product demo */}
       <aside className="hidden w-1/2 flex-col items-center justify-center bg-cream px-10 lg:flex xl:px-16">
         <div className="w-full max-w-xl">

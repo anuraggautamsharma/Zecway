@@ -13,7 +13,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Before a workspace exists there's nothing to navigate — plain centered page.
   if (!workspace) {
     return (
-      <div className="min-h-screen">
+      <div className="app-surface min-h-screen bg-paper">
         <header className="nav-blur sticky top-0 z-10 border-b border-line">
           <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
             <Link href="/" className="block">

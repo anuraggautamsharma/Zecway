@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Markdown from "react-markdown";
 
 type Citation = { n: number; title: string; url: string | null };
 export type ChatMessage = {
@@ -54,12 +55,16 @@ export default function Chat({
   initialId,
   initialMessages,
   sources = [],
+  initialAsk = null,
+  suggestions = [],
 }: {
   workspaceId: string;
   conversations: Conversation[];
   initialId: string | null;
   initialMessages: ChatMessage[];
   sources?: string[];
+  initialAsk?: string | null;
+  suggestions?: string[];
 }) {
   const [convId, setConvId] = useState<string | null>(initialId);
   const [msgs, setMsgs] = useState<ChatMessage[]>(initialMessages);
@@ -76,13 +81,20 @@ export default function Chat({
     endRef.current?.scrollIntoView({ block: "end" });
   }, [msgs]);
 
-  async function send(e: React.FormEvent) {
-    e.preventDefault();
-    const message = input.trim();
+  // a question handed over from the Home bar starts the chat immediately
+  const autoSent = useRef(false);
+  useEffect(() => {
+    if (initialAsk && initialMessages.length === 0 && !autoSent.current) {
+      autoSent.current = true;
+      sendMessage(initialAsk);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function sendMessage(message: string) {
     if (!message || busy) return;
     setError("");
     setBusy(true);
-    setInput("");
     setMsgs((m) => [...m, { role: "user", content: message }, { role: "assistant", content: "" }]);
 
     const patchLast = (patch: Partial<ChatMessage>) =>
@@ -212,6 +224,20 @@ export default function Chat({
                 then ask follow-ups — every claim cited, permissions always
                 respected.
               </p>
+              {suggestions.length > 0 && (
+                <div className="mx-auto mt-6 flex max-w-md flex-wrap justify-center gap-1.5">
+                  {suggestions.map((sg) => (
+                    <button
+                      key={sg}
+                      type="button"
+                      onClick={() => sendMessage(sg)}
+                      className="rounded-full border border-line bg-paper px-3.5 py-1.5 text-xs text-mist transition hover:border-accent/50 hover:text-accent active:scale-[0.97]"
+                    >
+                      {sg}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           {msgs.map((m, i) =>
@@ -243,9 +269,15 @@ export default function Chat({
                     </a>
                   </p>
                 )}
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
-                  {m.content || (busy && i === msgs.length - 1 && !m.searching ? "…" : "")}
-                </p>
+                {m.content ? (
+                  <div className="md-body text-sm leading-relaxed text-ink">
+                    <Markdown>{m.content}</Markdown>
+                  </div>
+                ) : (
+                  <p className="text-sm text-mist">
+                    {busy && i === msgs.length - 1 && !m.searching ? "…" : ""}
+                  </p>
+                )}
                 <Citations list={m.citations ?? []} />
               </div>
             ),
@@ -256,7 +288,12 @@ export default function Chat({
         {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
 
         <form
-          onSubmit={send}
+          onSubmit={(e) => {
+            e.preventDefault();
+            const m = input.trim();
+            setInput("");
+            sendMessage(m);
+          }}
           className="sticky bottom-4 mt-6 flex items-center gap-2 rounded-xl border border-line bg-paper p-1.5 shadow-[0_8px_24px_-12px_rgba(20,20,19,0.25)] transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10"
         >
           <div className="relative">

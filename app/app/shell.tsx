@@ -8,11 +8,11 @@ import { signOut } from "./actions";
 const NAV = [
   {
     href: "/app",
-    label: "Search",
+    label: "Home",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <circle cx="11" cy="11" r="7" />
-        <path d="m20 20-3.5-3.5" />
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <path d="M9 22V12h6v10" />
       </svg>
     ),
   },
@@ -154,7 +154,7 @@ export default function Shell({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="app-surface flex min-h-screen bg-paper">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-60 border-r border-line bg-cream md:block">
         <SidebarContent workspaceName={workspaceName} email={email} isFounder={isFounder} />
@@ -194,7 +194,7 @@ export default function Shell({
 
       {/* Content */}
       <main className="min-w-0 flex-1 pt-14 md:ml-60 md:pt-0">
-        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 md:py-12">{children}</div>
+        <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 md:py-10">{children}</div>
       </main>
     </div>
   );

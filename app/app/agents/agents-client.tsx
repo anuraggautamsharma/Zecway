@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Markdown from "react-markdown";
 
 type Citation = { n: number; title: string; url: string | null };
 export type RunSummary = {
@@ -27,13 +28,10 @@ const KIND_ICON: Record<string, string> = {
   respond: "✎",
 };
 
-// Minimal markdown: bold + headings render, everything else stays literal.
 function Output({ text }: { text: string }) {
   return (
-    <div className="whitespace-pre-wrap font-display text-base leading-relaxed text-ink">
-      {text.split(/\*\*(.+?)\*\*/g).map((part, i) =>
-        i % 2 === 1 ? <strong key={i}>{part}</strong> : <span key={i}>{part}</span>,
-      )}
+    <div className="md-body font-display text-base leading-relaxed text-ink">
+      <Markdown>{text}</Markdown>
     </div>
   );
 }
