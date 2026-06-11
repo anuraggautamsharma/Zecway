@@ -34,7 +34,7 @@ export default function ResetPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-cream px-4">
+    <main className="app-surface flex min-h-screen flex-col items-center justify-center bg-cream px-4">
       <Link href="/" className="mb-8 text-2xl font-bold tracking-tight text-ink">
         zecway<span className="text-accent">.</span>
       </Link>

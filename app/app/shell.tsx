@@ -154,7 +154,7 @@ export default function Shell({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="app-surface flex min-h-screen bg-paper">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-60 border-r border-line bg-cream md:block">
         <SidebarContent workspaceName={workspaceName} email={email} isFounder={isFounder} />

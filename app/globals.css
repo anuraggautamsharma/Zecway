@@ -172,3 +172,10 @@ body {
   padding: 0.1em 0.35em;
   border-radius: 0.3em;
 }
+
+/* Product surfaces run white; the paper warmth steps back to secondary
+   roles (sidebar, inputs, tinted cards). The landing keeps its paper. */
+.app-surface {
+  --color-paper: #ffffff;
+  --color-cream: #faf9f5;
+}
