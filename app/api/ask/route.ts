@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { workspaceAi, KEY_REJECTED } from "@/lib/workspace-ai";
+import { workspaceAi, KEY_REJECTED, TRIAL_CAPPED } from "@/lib/workspace-ai";
 import { createClient } from "@/lib/supabase/server";
 
 const NO_ANSWER =
@@ -45,7 +45,10 @@ export async function POST(request: Request) {
       ? new Date(Date.now() - body.days * 86400 * 1000).toISOString()
       : null;
 
-  const { provider, ownKey } = await workspaceAi(supabase, workspaceId);
+  const { provider, ownKey, capped } = await workspaceAi(supabase, workspaceId);
+  if (capped) {
+    return NextResponse.json({ error: TRIAL_CAPPED }, { status: 429 });
+  }
 
   // Retrieval is permission-filtered in the database: match_chunks verifies
   // membership and only returns chunks this user's principals may see.

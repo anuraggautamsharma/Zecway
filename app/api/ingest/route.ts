@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { workspaceAi, KEY_REJECTED } from "@/lib/workspace-ai";
+import { workspaceAi, KEY_REJECTED, TRIAL_CAPPED } from "@/lib/workspace-ai";
 import { extractMarkdown } from "@/lib/extract";
 import { chunkMarkdown, titleFromMarkdown, WORKSPACE_PRINCIPAL } from "@/lib/ingest";
 import { createClient } from "@/lib/supabase/server";
@@ -75,7 +75,10 @@ export async function POST(request: Request) {
   await supabase.from("chunks").delete().eq("document_id", doc.id);
 
   const contents = chunkMarkdown(markdown);
-  const { provider, ownKey } = await workspaceAi(supabase, workspaceId);
+  const { provider, ownKey, capped } = await workspaceAi(supabase, workspaceId);
+  if (capped) {
+    return NextResponse.json({ error: TRIAL_CAPPED }, { status: 429 });
+  }
 
   let embeddings: number[][];
   try {
