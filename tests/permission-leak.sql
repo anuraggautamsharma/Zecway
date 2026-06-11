@@ -6,6 +6,10 @@
 grant select, insert, update, delete on all tables in schema public to anon, authenticated;
 
 -- ── Seed (as superuser) ────────────────────────────────────────────────────
+-- the access gate (0007) only lets approved emails into auth.users
+insert into public.access_grants (email) values
+  ('a@test.co'), ('b@test.co'), ('outsider@test.co');
+
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.co'),
   ('00000000-0000-0000-0000-00000000000b', 'b@test.co'),
@@ -116,4 +120,19 @@ begin
 end $$;
 
 reset role;
+
+-- ── The front door: unapproved emails cannot create accounts ──────────────
+do $$
+begin
+  begin
+    insert into auth.users (id, email)
+      values ('00000000-0000-0000-0000-00000000000d', 'gatecrasher@test.co');
+    raise exception 'GATE FAILED: unapproved signup was allowed';
+  exception when others then
+    if sqlerrm not like '%invite-only%' then
+      raise;
+    end if;
+  end;
+end $$;
+
 select 'permission-leak tests passed' as result;

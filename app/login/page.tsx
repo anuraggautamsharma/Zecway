@@ -9,8 +9,11 @@ import SearchDemo from "../search-demo";
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
-  const [email, setEmail] = useState("");
+  // invite links arrive as /login?mode=signup&email=… with the email pre-filled
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">(
+    params.get("mode") === "signup" ? "signup" : "signin",
+  );
+  const [email, setEmail] = useState(params.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<"idle" | "busy" | "confirm">("idle");
@@ -40,6 +43,17 @@ function LoginForm() {
     }
 
     if (mode === "signup") {
+      // early access is invite-only — explain kindly before Supabase errors
+      const { data: allowed } = await supabase.rpc("signup_allowed", {
+        check_email: email.trim(),
+      });
+      if (!allowed) {
+        setError(
+          "Zecway is invite-only right now. Join the waitlist on the homepage — invites go out personally, usually within a day or two.",
+        );
+        setStatus("idle");
+        return;
+      }
       const { error } = await supabase.auth.signUp({
         email,
         password,

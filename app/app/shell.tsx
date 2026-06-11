@@ -39,11 +39,22 @@ const NAV = [
   },
 ];
 
-function Nav({ onNavigate }: { onNavigate?: () => void }) {
+const ADMIN_ITEM = {
+  href: "/app/admin",
+  label: "Founder console",
+  icon: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+    </svg>
+  ),
+};
+
+function Nav({ onNavigate, isFounder }: { onNavigate?: () => void; isFounder?: boolean }) {
   const pathname = usePathname();
+  const items = isFounder ? [...NAV, ADMIN_ITEM] : NAV;
   return (
     <nav className="flex flex-col gap-0.5">
-      {NAV.map((item) => {
+      {items.map((item) => {
         const active =
           item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
         return (
@@ -81,10 +92,12 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
 function SidebarContent({
   workspaceName,
   email,
+  isFounder,
   onNavigate,
 }: {
   workspaceName: string;
   email: string;
+  isFounder?: boolean;
   onNavigate?: () => void;
 }) {
   return (
@@ -95,7 +108,7 @@ function SidebarContent({
         </Link>
         <p className="mt-3 truncate text-sm font-semibold text-ink">{workspaceName}</p>
       </div>
-      <Nav onNavigate={onNavigate} />
+      <Nav onNavigate={onNavigate} isFounder={isFounder} />
       <div className="mt-auto border-t border-line px-3 pt-4">
         <p className="truncate text-xs text-mist">{email}</p>
         <form action={signOut} className="mt-2">
@@ -111,10 +124,12 @@ function SidebarContent({
 export default function Shell({
   workspaceName,
   email,
+  isFounder,
   children,
 }: {
   workspaceName: string;
   email: string;
+  isFounder?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -123,7 +138,7 @@ export default function Shell({
     <div className="flex min-h-screen">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-60 border-r border-line bg-cream md:block">
-        <SidebarContent workspaceName={workspaceName} email={email} />
+        <SidebarContent workspaceName={workspaceName} email={email} isFounder={isFounder} />
       </aside>
 
       {/* Mobile top bar + drawer */}
@@ -151,6 +166,7 @@ export default function Shell({
             <SidebarContent
               workspaceName={workspaceName}
               email={email}
+              isFounder={isFounder}
               onNavigate={() => setOpen(false)}
             />
           </aside>

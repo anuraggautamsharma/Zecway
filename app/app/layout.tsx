@@ -7,7 +7,7 @@ import Shell from "./shell";
 export const metadata = { title: "Zecway — Workspace" };
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, workspace } = await getAppContext();
+  const { user, workspace, isFounder } = await getAppContext();
   if (!user) redirect("/login");
 
   // Before a workspace exists there's nothing to navigate — plain centered page.
@@ -35,7 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <Shell workspaceName={workspace.name} email={user.email ?? ""}>
+    <Shell workspaceName={workspace.name} email={user.email ?? ""} isFounder={isFounder}>
       {children}
     </Shell>
   );
