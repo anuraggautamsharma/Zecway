@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import { ai } from "@/lib/ai";
+import { workspaceAi, KEY_REJECTED } from "@/lib/workspace-ai";
 import { createClient } from "@/lib/supabase/server";
 
 const AI_BUSY =
   "The AI service is briefly overloaded — please try again in a few seconds.";
+
+const aiError = (e: unknown, ownKey: boolean) =>
+  ownKey && /\((400|401|403)\)/.test(String(e)) ? KEY_REJECTED : AI_BUSY;
 
 // quota guard: one embedding batch + one generation per run
 const MAX_ITEMS = 10;
@@ -143,6 +146,7 @@ export async function POST(request: Request) {
     );
   }
   const runId = run.id;
+  const { provider, ownKey } = await workspaceAi(supabase, workspaceId);
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -185,7 +189,7 @@ export async function POST(request: Request) {
         const retrievalTexts = items.map((q) =>
           def.searchHint ? `${def.searchHint}\n${q}` : q,
         );
-        const embeddings = await ai().embedTexts(retrievalTexts);
+        const embeddings = await provider.embedTexts(retrievalTexts);
 
         type Match = {
           chunk_id: string; document_id: string; content: string;
@@ -230,7 +234,7 @@ export async function POST(request: Request) {
 
         const th = await step("think", "Drafting from what it found");
         let output = "";
-        for await (const delta of ai().generateTextStream(blocks, def.system)) {
+        for await (const delta of provider.generateTextStream(blocks, def.system)) {
           output += delta;
           send({ type: "delta", text: delta });
         }
@@ -255,7 +259,7 @@ export async function POST(request: Request) {
           .from("agent_runs")
           .update({ status: "failed", finished_at: new Date().toISOString() })
           .eq("id", runId);
-        send({ type: "error", error: AI_BUSY });
+        send({ type: "error", error: aiError(e, ownKey) });
       } finally {
         controller.close();
       }

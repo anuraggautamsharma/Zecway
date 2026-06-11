@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ai } from "@/lib/ai";
+import { workspaceAi, KEY_REJECTED } from "@/lib/workspace-ai";
 import { createClient } from "@/lib/supabase/server";
 
 const NO_ANSWER =
@@ -7,6 +7,9 @@ const NO_ANSWER =
 
 const AI_BUSY =
   "The AI service is briefly overloaded — please try again in a few seconds.";
+
+const aiError = (e: unknown, ownKey: boolean) =>
+  ownKey && /\((400|401|403)\)/.test(String(e)) ? KEY_REJECTED : AI_BUSY;
 
 const SYSTEM = `You are Zecway, a company's knowledge assistant. Answer the question using ONLY the numbered sources provided. After every claim, cite its source like [1] or [2]. Be direct and concise. If the sources do not contain the answer, say exactly: "${NO_ANSWER}" Never invent facts that are not in the sources.`;
 
@@ -42,14 +45,16 @@ export async function POST(request: Request) {
       ? new Date(Date.now() - body.days * 86400 * 1000).toISOString()
       : null;
 
+  const { provider, ownKey } = await workspaceAi(supabase, workspaceId);
+
   // Retrieval is permission-filtered in the database: match_chunks verifies
   // membership and only returns chunks this user's principals may see.
   let embedding: number[];
   try {
-    [embedding] = await ai().embedTexts([question]);
+    [embedding] = await provider.embedTexts([question]);
   } catch (e) {
     console.error("ask: embedding failed:", e);
-    return NextResponse.json({ error: AI_BUSY }, { status: 503 });
+    return NextResponse.json({ error: aiError(e, ownKey) }, { status: 503 });
   }
   const { data: matches, error: matchError } = await supabase.rpc("match_chunks", {
     ws: workspaceId,
@@ -105,7 +110,7 @@ export async function POST(request: Request) {
           answer = NO_ANSWER;
           send({ type: "delta", text: NO_ANSWER });
         } else {
-          for await (const delta of ai().generateTextStream(
+          for await (const delta of provider.generateTextStream(
             `Sources:\n\n${sources}\n\nQuestion: ${question}`,
             SYSTEM,
           )) {
@@ -126,7 +131,7 @@ export async function POST(request: Request) {
         });
       } catch (e) {
         console.error("ask: generation failed:", e);
-        send({ type: "error", error: AI_BUSY });
+        send({ type: "error", error: aiError(e, ownKey) });
       } finally {
         controller.close();
       }

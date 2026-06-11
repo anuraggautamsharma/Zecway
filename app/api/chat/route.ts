@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ai } from "@/lib/ai";
+import { workspaceAi, KEY_REJECTED } from "@/lib/workspace-ai";
 import { createClient } from "@/lib/supabase/server";
 
 const NO_ANSWER =
@@ -7,6 +7,9 @@ const NO_ANSWER =
 
 const AI_BUSY =
   "The AI service is briefly overloaded — please try again in a few seconds.";
+
+const aiError = (e: unknown, ownKey: boolean) =>
+  ownKey && /\((400|401|403)\)/.test(String(e)) ? KEY_REJECTED : AI_BUSY;
 
 const SYSTEM = `You are Zecway, a company's knowledge assistant, in an ongoing conversation. Answer the user's latest message using ONLY the numbered sources provided, considering the conversation so far for context. After every claim, cite its source like [1] or [2]. Be direct and concise. If the sources do not contain the answer, say exactly: "${NO_ANSWER}" Never invent facts that are not in the sources.`;
 
@@ -95,6 +98,8 @@ export async function POST(request: Request) {
     .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
     .join("\n\n");
 
+  const { provider, ownKey } = await workspaceAi(supabase, workspaceId);
+
   const encoder = new TextEncoder();
   const convId = conversationId;
   const citations: { n: number; title: string; url: string | null; document_id: string }[] =
@@ -109,7 +114,7 @@ export async function POST(request: Request) {
         // retrieval happens inside the stream so the client can show the
         // search step while it runs — the receipts start before the answer
         send({ type: "searching", query: retrievalText });
-        const [embedding] = await ai().embedTexts([retrievalText]);
+        const [embedding] = await provider.embedTexts([retrievalText]);
         const { data: matches, error: matchError } = await supabase.rpc("match_chunks", {
           ws: workspaceId,
           query_embedding: JSON.stringify(embedding),
@@ -153,7 +158,7 @@ export async function POST(request: Request) {
           answer = NO_ANSWER;
           send({ type: "delta", text: NO_ANSWER });
         } else {
-          for await (const delta of ai().generateTextStream(prompt, SYSTEM)) {
+          for await (const delta of provider.generateTextStream(prompt, SYSTEM)) {
             answer += delta;
             send({ type: "delta", text: delta });
           }
@@ -174,7 +179,7 @@ export async function POST(request: Request) {
           .eq("id", convId);
       } catch (e) {
         console.error("chat: generation failed:", e);
-        send({ type: "error", error: AI_BUSY });
+        send({ type: "error", error: aiError(e, ownKey) });
       } finally {
         controller.close();
       }

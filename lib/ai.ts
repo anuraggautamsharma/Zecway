@@ -136,3 +136,10 @@ export function ai(): AiProvider {
   }
   return provider;
 }
+
+// A provider bound to a specific key — used for workspaces that bring
+// their own. Falls back to the shared provider when no key is given.
+export function aiWithKey(key?: string | null): AiProvider {
+  if (!key) return ai();
+  return new GeminiProvider(key);
+}

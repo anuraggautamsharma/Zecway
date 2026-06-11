@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ai } from "@/lib/ai";
+import { workspaceAi, KEY_REJECTED } from "@/lib/workspace-ai";
 import { extractMarkdown } from "@/lib/extract";
 import { chunkMarkdown, titleFromMarkdown, WORKSPACE_PRINCIPAL } from "@/lib/ingest";
 import { createClient } from "@/lib/supabase/server";
@@ -75,13 +75,20 @@ export async function POST(request: Request) {
   await supabase.from("chunks").delete().eq("document_id", doc.id);
 
   const contents = chunkMarkdown(markdown);
+  const { provider, ownKey } = await workspaceAi(supabase, workspaceId);
+
   let embeddings: number[][];
   try {
-    embeddings = await ai().embedTexts(contents);
+    embeddings = await provider.embedTexts(contents);
   } catch (e) {
     console.error("ingest: embedding failed:", e);
     return NextResponse.json(
-      { error: "The AI service is briefly overloaded — please try again in a few seconds." },
+      {
+        error:
+          ownKey && /\((400|401|403)\)/.test(String(e))
+            ? KEY_REJECTED
+            : "The AI service is briefly overloaded — please try again in a few seconds.",
+      },
       { status: 503 },
     );
   }
