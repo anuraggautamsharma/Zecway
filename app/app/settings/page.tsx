@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import PageBody from "../page-body";
 import { createClient } from "@/lib/supabase/server";
 import { getAppContext } from "@/lib/app-context";
 import { encryptionReady } from "@/lib/crypto";
@@ -39,6 +40,8 @@ export default async function SettingsPage({
             : null;
 
   return (
+    <PageBody>
+
     <div className="mx-auto max-w-xl">
       <h1 className="text-xl font-semibold text-ink">Settings</h1>
       <p className="mt-1 text-sm text-mist">Workspace: {workspace.name}</p>
@@ -121,5 +124,6 @@ export default async function SettingsPage({
         )}
       </section>
     </div>
+    </PageBody>
   );
 }

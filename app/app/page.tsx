@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PageBody from "./page-body";
 import { createClient } from "@/lib/supabase/server";
 import { getAppContext } from "@/lib/app-context";
 import { acceptInvite, createWorkspace } from "./actions";
@@ -43,7 +44,7 @@ export default async function AppHome({
 
   if (!workspace) {
     return (
-      <>
+      <PageBody><>
         {invites.length > 0 && (
           <div className="mb-8 space-y-2">
             {invites.map((inv) => (
@@ -82,7 +83,7 @@ export default async function AppHome({
             </button>
           </form>
         </div>
-      </>
+      </></PageBody>
     );
   }
 
@@ -129,7 +130,7 @@ export default async function AppHome({
     .replace(/^./, (c) => c.toUpperCase());
 
   return (
-    <div className="pt-2 md:pt-8">
+    <PageBody><div className="pt-2 md:pt-8">
       <HomeHero
         workspaceId={workspace.id}
         hasDocuments={docCount > 0}
@@ -237,6 +238,6 @@ export default async function AppHome({
           </section>
         </aside>
       </div>
-    </div>
+    </div></PageBody>
   );
 }

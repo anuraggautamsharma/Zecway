@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Markdown from "react-markdown";
+import { StepGlyph } from "../new/builder";
 
 type Citation = { n: number; title: string; url: string | null };
 export type AgentView = {

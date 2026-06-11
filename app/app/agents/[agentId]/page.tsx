@@ -1,4 +1,5 @@
 import { redirect, notFound } from "next/navigation";
+import PageBody from "../../page-body";
 import { createClient } from "@/lib/supabase/server";
 import { getAppContext } from "@/lib/app-context";
 import RunClient, { type AgentView, type RunSummary, type RunDetail } from "./run-client";
@@ -99,11 +100,14 @@ export default async function AgentDetailPage({
   }
 
   return (
+    <PageBody>
+
     <RunClient
       workspaceId={workspace.id}
       agent={agent}
       runs={(runs ?? []) as RunSummary[]}
       initialRun={initialRun}
     />
+    </PageBody>
   );
 }

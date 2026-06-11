@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import PageBody from "../page-body";
 import { createClient } from "@/lib/supabase/server";
 import { getAppContext } from "@/lib/app-context";
 import { grantAccess, revokeAccess } from "./actions";
@@ -33,6 +34,8 @@ export default async function AdminPage() {
   const joined = rows.filter((r) => r.joined).length;
 
   return (
+    <PageBody>
+
     <div>
       <h1 className="text-xl font-semibold text-ink">Founder console</h1>
       <p className="mt-1 text-sm text-mist">
@@ -122,5 +125,6 @@ export default async function AdminPage() {
         the sign-up form; only approved emails can complete sign-up.
       </p>
     </div>
+    </PageBody>
   );
 }

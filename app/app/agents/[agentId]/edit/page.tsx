@@ -27,17 +27,7 @@ export default async function EditAgentPage({
   if (!a) notFound();
 
   return (
-    <div>
-      <div className="mb-6 flex items-center gap-2 font-mono text-[11px] text-mist">
-        <a href="/app/agents" className="hover:text-accent">agents</a>
-        <span>/</span>
-        <a href={`/app/agents/${a.id}`} className="hover:text-accent">
-          {a.name.toLowerCase()}
-        </a>
-        <span>/</span>
-        <span className="text-ink">edit</span>
-      </div>
-      <Builder
+    <Builder
         workspaceId={workspace.id}
         initial={{
           id: a.id,
@@ -51,6 +41,5 @@ export default async function EditAgentPage({
           respondInstructions: a.respond_instructions,
         }}
       />
-    </div>
   );
 }

@@ -61,6 +61,10 @@ export default async function AssistantPage({
       sources={sources}
       initialAsk={!c ? (ask ?? null) : null}
       suggestions={suggestions}
+      userName={(user?.email ?? "there")
+        .split("@")[0]
+        .split(/[._\d]/)[0]
+        .replace(/^./, (ch) => ch.toUpperCase())}
     />
   );
 }

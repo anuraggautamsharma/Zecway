@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import PageBody from "../page-body";
 import { createClient } from "@/lib/supabase/server";
 import { getAppContext } from "@/lib/app-context";
 import { inviteMember, revokeInvite } from "../actions";
@@ -27,6 +28,8 @@ export default async function TeamPage() {
   const invites = (openInvites ?? []) as OpenInvite[];
 
   return (
+    <PageBody>
+
     <div className="space-y-8">
       <div>
         <h1 className="text-lg font-semibold tracking-tight text-ink">Team</h1>
@@ -97,5 +100,6 @@ export default async function TeamPage() {
         </div>
       )}
     </div>
+    </PageBody>
   );
 }
