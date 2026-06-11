@@ -3,6 +3,7 @@
 
 export interface AiProvider {
   generateText(prompt: string, system?: string): Promise<string>;
+  generateTextStream(prompt: string, system?: string): AsyncIterable<string>;
   embedTexts(texts: string[]): Promise<number[][]>;
 }
 
@@ -52,6 +53,55 @@ class GeminiProvider implements AiProvider {
         .join("");
     if (!text) throw new Error("AI generation returned no text");
     return text;
+  }
+
+  // Same generation, but yielded as deltas while the model writes.
+  async *generateTextStream(prompt: string, system?: string): AsyncIterable<string> {
+    const res = await fetchWithRetry(() =>
+      fetch(
+        `${GEMINI_BASE}/models/${GENERATION_MODEL}:streamGenerateContent?alt=sse&key=${this.key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...(system
+              ? { systemInstruction: { parts: [{ text: system }] } }
+              : {}),
+            contents: [{ parts: [{ text: prompt }] }],
+          }),
+        },
+      ),
+    );
+    if (!res.ok || !res.body) {
+      throw new Error(`AI generation failed (${res.status}): ${await res.text()}`);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === "[DONE]") continue;
+        let data: {
+          candidates?: { content?: { parts?: { text?: string }[] } }[];
+        };
+        try {
+          data = JSON.parse(payload);
+        } catch {
+          continue; // keep-alive or partial frame
+        }
+        const text = data.candidates?.[0]?.content?.parts
+          ?.map((p) => p.text ?? "")
+          .join("");
+        if (text) yield text;
+      }
+    }
   }
 
   async embedTexts(texts: string[]): Promise<number[][]> {

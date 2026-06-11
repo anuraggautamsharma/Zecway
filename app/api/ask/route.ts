@@ -59,54 +59,71 @@ export async function POST(request: Request) {
   };
   const chunks = (matches ?? []) as Match[];
 
-  let answer = NO_ANSWER;
-  let citations: { n: number; title: string; url: string | null; document_id: string }[] =
+  const citations: { n: number; title: string; url: string | null; document_id: string }[] =
     [];
 
-  if (chunks.length > 0) {
-    // One citation number per document, in retrieval order
-    const docNumbers = new Map<string, number>();
-    for (const c of chunks) {
-      if (!docNumbers.has(c.document_id)) {
-        docNumbers.set(c.document_id, docNumbers.size + 1);
-        citations.push({
-          n: docNumbers.size,
-          title: c.title,
-          url: c.url,
-          document_id: c.document_id,
-        });
-      }
-    }
-
-    const sources = chunks
-      .map((c) => `[${docNumbers.get(c.document_id)}] ${c.title}\n${c.content}`)
-      .join("\n\n---\n\n");
-
-    try {
-      answer = await ai().generateText(
-        `Sources:\n\n${sources}\n\nQuestion: ${question}`,
-        SYSTEM,
-      );
-    } catch (e) {
-      console.error("ask: generation failed:", e);
-      return NextResponse.json({ error: AI_BUSY }, { status: 503 });
-    }
-
-    // Only surface sources the answer actually cites
-    if (answer.includes(NO_ANSWER)) {
-      citations = [];
-    } else {
-      citations = citations.filter((c) => answer.includes(`[${c.n}]`));
+  // One citation number per document, in retrieval order
+  const docNumbers = new Map<string, number>();
+  for (const c of chunks) {
+    if (!docNumbers.has(c.document_id)) {
+      docNumbers.set(c.document_id, docNumbers.size + 1);
+      citations.push({
+        n: docNumbers.size,
+        title: c.title,
+        url: c.url,
+        document_id: c.document_id,
+      });
     }
   }
+  const sources = chunks
+    .map((c) => `[${docNumbers.get(c.document_id)}] ${c.title}\n${c.content}`)
+    .join("\n\n---\n\n");
 
-  await supabase.from("queries").insert({
-    workspace_id: workspaceId,
-    user_id: user.id,
-    question,
-    answer,
-    citations,
+  // Stream the answer as NDJSON lines: {type:"delta"} while the model writes,
+  // then {type:"done"} carrying only the citations the answer actually used.
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (obj: unknown) =>
+        controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
+      let answer = "";
+      try {
+        if (chunks.length === 0) {
+          answer = NO_ANSWER;
+          send({ type: "delta", text: NO_ANSWER });
+        } else {
+          for await (const delta of ai().generateTextStream(
+            `Sources:\n\n${sources}\n\nQuestion: ${question}`,
+            SYSTEM,
+          )) {
+            answer += delta;
+            send({ type: "delta", text: delta });
+          }
+        }
+        const used = answer.includes(NO_ANSWER)
+          ? []
+          : citations.filter((c) => answer.includes(`[${c.n}]`));
+        send({ type: "done", citations: used });
+        await supabase.from("queries").insert({
+          workspace_id: workspaceId,
+          user_id: user.id,
+          question,
+          answer,
+          citations: used,
+        });
+      } catch (e) {
+        console.error("ask: generation failed:", e);
+        send({ type: "error", error: AI_BUSY });
+      } finally {
+        controller.close();
+      }
+    },
   });
 
-  return NextResponse.json({ answer, citations });
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "application/x-ndjson; charset=utf-8",
+      "Cache-Control": "no-cache",
+    },
+  });
 }
