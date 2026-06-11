@@ -17,6 +17,12 @@ export default async function AssistantPage({
   const { c } = await searchParams;
   const supabase = await createClient();
 
+  const { data: sourceRows } = await supabase
+    .from("documents")
+    .select("source")
+    .eq("workspace_id", workspace.id);
+  const sources = [...new Set((sourceRows ?? []).map((r) => r.source))].sort();
+
   const { data: convs } = await supabase
     .from("conversations")
     .select("id, title, updated_at")
@@ -40,6 +46,7 @@ export default async function AssistantPage({
       conversations={convs ?? []}
       initialId={c ?? null}
       initialMessages={initialMessages}
+      sources={sources}
     />
   );
 }
