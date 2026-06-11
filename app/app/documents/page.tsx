@@ -30,13 +30,27 @@ export default async function DocumentsPage() {
       <Upload workspaceId={workspace.id} />
 
       {docs.length > 0 && (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-paper">
+        <ul className="divide-y divide-line rounded-2xl border border-line bg-paper">
           {docs.map((d) => (
-            <li key={d.id} className="flex items-center justify-between px-5 py-3">
-              <span className="truncate text-sm text-ink">{d.title}</span>
-              <span className="ml-4 flex shrink-0 items-center gap-3 font-mono text-[11px] text-mist">
-                <span className="rounded-md border border-line px-2 py-0.5">{d.source}</span>
-                {new Date(d.created_at).toLocaleDateString()}
+            <li key={d.id} className="flex items-center gap-3 px-5 py-3.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cream text-mist">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6" />
+                </svg>
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-ink">{d.title}</p>
+                <p className="mt-0.5 font-mono text-[11px] text-mist">
+                  added{" "}
+                  {new Date(d.created_at).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </p>
+              </div>
+              <span className="rounded-md border border-line px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-mist">
+                {d.source}
               </span>
             </li>
           ))}
