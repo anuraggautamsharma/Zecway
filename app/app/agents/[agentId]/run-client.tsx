@@ -206,6 +206,14 @@ export default function RunClient({
           <p className="mt-2 font-mono text-[10px] leading-relaxed text-mist/80">
             runs as you · sees only what you can see · every claim cited
           </p>
+          {!agent.builtin && (
+            <a
+              href={`/app/agents/${agent.id}/edit`}
+              className="mt-3 inline-block rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-mist transition hover:border-accent/50 hover:text-accent"
+            >
+              Edit agent
+            </a>
+          )}
 
           <h2 className="mb-3 mt-7 font-mono text-[10px] uppercase tracking-wider text-mist">
             how it works

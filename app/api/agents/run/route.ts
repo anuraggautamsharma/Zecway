@@ -52,6 +52,12 @@ export async function POST(request: Request) {
     workspace_id?: string;
     agent_slug?: string;
     agent_id?: string;
+    preview?: {
+      name?: string;
+      split_lines?: boolean;
+      search_hint?: string;
+      respond_instructions?: string;
+    };
     input?: { text?: string; questions?: string };
   };
   try {
@@ -64,9 +70,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  // resolve the recipe: built-in template or a workspace-built agent (RLS-read)
+  // resolve the recipe: built-in template, a workspace-built agent (RLS-read),
+  // or an unsaved draft being previewed from the builder
   let def: AgentDef;
-  if (body.agent_id) {
+  if (body.preview?.respond_instructions) {
+    def = {
+      id: null,
+      slug: "preview",
+      name: body.preview.name || "Untitled agent",
+      splitLines: Boolean(body.preview.split_lines),
+      searchHint: body.preview.search_hint ?? "",
+      system: customSystem(
+        body.preview.name || "Untitled agent",
+        body.preview.respond_instructions,
+      ),
+    };
+  } else if (body.agent_id) {
     const { data: agent, error } = await supabase
       .from("agents")
       .select("id, name, split_lines, search_hint, respond_instructions, workspace_id")
