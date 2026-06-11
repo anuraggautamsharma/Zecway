@@ -4,6 +4,7 @@
 export interface AiProvider {
   generateText(prompt: string, system?: string): Promise<string>;
   generateTextStream(prompt: string, system?: string): AsyncIterable<string>;
+  generateWithWebSearch(prompt: string): Promise<string>;
   embedTexts(texts: string[]): Promise<number[][]>;
 }
 
@@ -102,6 +103,30 @@ class GeminiProvider implements AiProvider {
         if (text) yield text;
       }
     }
+  }
+
+  // Web-grounded generation via Gemini's built-in Google Search tool.
+  async generateWithWebSearch(prompt: string): Promise<string> {
+    const res = await fetchWithRetry(() =>
+      fetch(`${GEMINI_BASE}/models/${GENERATION_MODEL}:generateContent?key=${this.key}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tools: [{ google_search: {} }],
+          contents: [{ parts: [{ text: prompt }] }],
+        }),
+      }),
+    );
+    if (!res.ok) {
+      throw new Error(`Web search failed (${res.status}): ${await res.text()}`);
+    }
+    const data = await res.json();
+    const text: string | undefined =
+      data.candidates?.[0]?.content?.parts
+        ?.map((p: { text?: string }) => p.text ?? "")
+        .join("");
+    if (!text) throw new Error("Web search returned no text");
+    return text;
   }
 
   async embedTexts(texts: string[]): Promise<number[][]> {
