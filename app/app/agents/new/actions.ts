@@ -17,6 +17,15 @@ export async function saveAgent(formData: FormData) {
   const instructions = get("respond_instructions");
   if (!name || !instructions) throw new Error("missing required fields");
 
+  let fields: unknown = [];
+  let steps: unknown = [];
+  try {
+    fields = JSON.parse(get("fields") || "[]");
+    steps = JSON.parse(get("steps") || "[]");
+  } catch {
+    throw new Error("invalid recipe");
+  }
+
   const values = {
     name,
     description: get("description"),
@@ -26,6 +35,8 @@ export async function saveAgent(formData: FormData) {
     split_lines: formData.get("split_lines") === "on",
     search_hint: get("search_hint"),
     respond_instructions: instructions,
+    fields,
+    steps,
   };
 
   const agentId = get("agent_id");

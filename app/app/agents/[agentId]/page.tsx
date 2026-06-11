@@ -2,24 +2,15 @@ import { redirect, notFound } from "next/navigation";
 import PageBody from "../../page-body";
 import { createClient } from "@/lib/supabase/server";
 import { getAppContext } from "@/lib/app-context";
+import {
+  BUILTIN_RFP,
+  synthesizeLegacy,
+  type FieldDef,
+  type StepDef,
+} from "@/lib/agent-def";
 import RunClient, { type AgentView, type RunSummary, type RunDetail } from "./run-client";
 
 export const metadata = { title: "Zecway — Agent" };
-
-const BUILTIN: AgentView = {
-  id: null,
-  slug: "rfp-answerer",
-  name: "RFP answerer",
-  description:
-    "Paste questionnaire questions — one per line, up to 10. The agent searches the graph per question and drafts cited answers.",
-  emoji: "📋",
-  inputLabel: "Questions",
-  inputPlaceholder:
-    "What is your data retention policy?\nDo you support SSO?\nWhere is customer data stored?",
-  splitLines: true,
-  searchHint: "",
-  builtin: true,
-};
 
 export default async function AgentDetailPage({
   params,
@@ -38,27 +29,39 @@ export default async function AgentDetailPage({
 
   let agent: AgentView;
   if (agentId === "rfp-answerer") {
-    agent = BUILTIN;
+    agent = {
+      id: null,
+      slug: "rfp-answerer",
+      name: BUILTIN_RFP.name,
+      description:
+        "Paste questionnaire questions — one per line, up to 10. The agent searches the graph per question and drafts cited answers.",
+      emoji: "📋",
+      splitLines: BUILTIN_RFP.splitLines,
+      fields: BUILTIN_RFP.fields,
+      steps: BUILTIN_RFP.steps,
+      builtin: true,
+    };
   } else {
     const { data: a } = await supabase
       .from("agents")
       .select(
-        "id, name, description, emoji, input_label, input_placeholder, split_lines, search_hint",
+        "id, name, description, emoji, input_label, input_placeholder, split_lines, search_hint, respond_instructions, fields, steps",
       )
       .eq("id", agentId)
       .eq("workspace_id", workspace.id)
       .single();
     if (!a) notFound();
+    const v2 = Array.isArray(a.steps) && (a.steps as StepDef[]).length > 0;
+    const synth = v2 ? null : synthesizeLegacy(a);
     agent = {
       id: a.id,
       slug: "custom",
       name: a.name,
       description: a.description,
       emoji: a.emoji,
-      inputLabel: a.input_label,
-      inputPlaceholder: a.input_placeholder,
       splitLines: a.split_lines,
-      searchHint: a.search_hint,
+      fields: v2 ? (a.fields as FieldDef[]) : synth!.fields,
+      steps: v2 ? (a.steps as StepDef[]) : synth!.steps,
       builtin: false,
     };
   }
@@ -101,13 +104,12 @@ export default async function AgentDetailPage({
 
   return (
     <PageBody>
-
-    <RunClient
-      workspaceId={workspace.id}
-      agent={agent}
-      runs={(runs ?? []) as RunSummary[]}
-      initialRun={initialRun}
-    />
+      <RunClient
+        workspaceId={workspace.id}
+        agent={agent}
+        runs={(runs ?? []) as RunSummary[]}
+        initialRun={initialRun}
+      />
     </PageBody>
   );
 }

@@ -1,41 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Markdown from "react-markdown";
 import { saveAgent } from "./actions";
+import {
+  type FieldDef,
+  type StepDef,
+  STEP_META,
+  fieldKey,
+} from "@/lib/agent-def";
 
 type Citation = { n: number; title: string; url: string | null };
+export type DocOption = { id: string; title: string };
 export type AgentDraft = {
   id?: string;
   name: string;
   description: string;
   emoji: string;
-  inputLabel: string;
-  inputPlaceholder: string;
   splitLines: boolean;
-  searchHint: string;
-  respondInstructions: string;
+  fields: FieldDef[];
+  steps: StepDef[];
 };
 
 const EMPTY: AgentDraft = {
   name: "",
   description: "",
   emoji: "🤖",
-  inputLabel: "Input",
-  inputPlaceholder: "",
   splitLines: false,
-  searchHint: "",
-  respondInstructions: "",
+  fields: [{ key: "input", label: "Input", placeholder: "", long: true }],
+  steps: [
+    { kind: "search", query: "[[input]]" },
+    { kind: "respond", instructions: "" },
+  ],
 };
-
-type StepKey = "trigger" | "search" | "think" | "respond";
-
-const STEPS: { key: StepKey; label: string }[] = [
-  { key: "trigger", label: "Trigger" },
-  { key: "search", label: "Company search" },
-  { key: "think", label: "Think" },
-  { key: "respond", label: "Respond" },
-];
 
 export function StepGlyph({ kind, active }: { kind: string; active?: boolean }) {
   const paths: Record<string, React.ReactNode> = {
@@ -46,7 +43,19 @@ export function StepGlyph({ kind, active }: { kind: string; active?: boolean }) 
         <path d="m20 20-3.5-3.5" />
       </>
     ),
+    web_search: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
+      </>
+    ),
     read: (
+      <>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <path d="M14 2v6h6" />
+      </>
+    ),
+    read_doc: (
       <>
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
         <path d="M14 2v6h6" />
@@ -78,74 +87,144 @@ export function StepGlyph({ kind, active }: { kind: string; active?: boolean }) 
   );
 }
 
-function stepSummary(key: StepKey, d: AgentDraft): string {
-  switch (key) {
-    case "trigger":
-      return `Runs manually with “${d.inputLabel || "Input"}”${d.splitLines ? " · one item per line" : ""}`;
+function stepSummary(s: StepDef): string {
+  switch (s.kind) {
     case "search":
-      return d.searchHint
-        ? `Searches the graph, steered by “${d.searchHint}”`
-        : "Searches the knowledge graph — permission-checked";
+      return s.query ? `Query: “${s.query.slice(0, 60)}${s.query.length > 60 ? "…" : ""}”` : "Set the search query";
+    case "web_search":
+      return s.query ? `Web: “${s.query.slice(0, 60)}${s.query.length > 60 ? "…" : ""}”` : "Set the web query";
+    case "read_doc":
+      return s.title ? `Reads “${s.title}”` : "Pick a document";
     case "think":
-      return d.respondInstructions
-        ? `“${d.respondInstructions.slice(0, 70)}${d.respondInstructions.length > 70 ? "…" : ""}”`
-        : "Reasons over what it found — set instructions";
+      return s.instructions
+        ? `“${s.instructions.slice(0, 60)}${s.instructions.length > 60 ? "…" : ""}”`
+        : "Set hidden reasoning instructions";
     case "respond":
-      return "Produces a cited markdown document";
+      return s.instructions
+        ? `“${s.instructions.slice(0, 60)}${s.instructions.length > 60 ? "…" : ""}”`
+        : "Set what the final document should be";
   }
 }
 
+const CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "respond"];
+
 export default function Builder({
   workspaceId,
+  documents,
   initial,
 }: {
   workspaceId: string;
+  documents: DocOption[];
   initial?: AgentDraft;
 }) {
   const [d, setD] = useState<AgentDraft>(initial ?? EMPTY);
-  const [sel, setSel] = useState<StepKey>("trigger");
-  const [drawer, setDrawer] = useState<"step" | "preview" | null>("step");
+  const [sel, setSel] = useState<number>(-1); // -1 = trigger
+  const [drawer, setDrawer] = useState<"step" | "catalog" | "preview" | null>("step");
+  const [catalogAt, setCatalogAt] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const areaRef = useRef<HTMLTextAreaElement>(null);
 
-  // preview run state
-  const [pvInput, setPvInput] = useState("");
+  // preview state
+  const [pvInputs, setPvInputs] = useState<Record<string, string>>({});
   const [pvBusy, setPvBusy] = useState(false);
   const [pvOutput, setPvOutput] = useState("");
   const [pvCitations, setPvCitations] = useState<Citation[]>([]);
   const [pvStatus, setPvStatus] = useState("");
 
   const set = (patch: Partial<AgentDraft>) => setD((x) => ({ ...x, ...patch }));
-  const canSave = d.name.trim().length > 0 && d.respondInstructions.trim().length > 0;
-  const canPreview = d.respondInstructions.trim().length > 0;
+  const setStep = (i: number, patch: Partial<StepDef>) =>
+    setD((x) => ({
+      ...x,
+      steps: x.steps.map((s, j) => (j === i ? ({ ...s, ...patch } as StepDef) : s)),
+    }));
+
+  const hasRespond = d.steps.some((s) => s.kind === "respond");
+  const canSave = d.name.trim().length > 0 && hasRespond;
+  const canPreview = hasRespond;
+
+  // variables available to the step being configured
+  const varsFor = (stepIndex: number) => [
+    ...d.fields.map((f) => f.key),
+    ...d.steps.slice(0, Math.max(stepIndex, 0)).map((_, i) => `step_${i + 1}`),
+  ];
+  const insertVar = (v: string) => {
+    const el = areaRef.current;
+    const tag = `[[${v}]]`;
+    if (sel < 0) return;
+    const s = d.steps[sel];
+    const key = s.kind === "search" || s.kind === "web_search" ? "query" : "instructions";
+    const cur = (s as Record<string, unknown>)[key] as string ?? "";
+    if (el && document.activeElement === el) {
+      const at = el.selectionStart ?? cur.length;
+      setStep(sel, { [key]: cur.slice(0, at) + tag + cur.slice(at) } as Partial<StepDef>);
+    } else {
+      setStep(sel, { [key]: (cur ? cur + " " : "") + tag } as Partial<StepDef>);
+    }
+  };
+
+  function addStep(kind: StepDef["kind"], at: number) {
+    const blank: StepDef =
+      kind === "search"
+        ? { kind, query: d.fields[0] ? `[[${d.fields[0].key}]]` : "" }
+        : kind === "web_search"
+          ? { kind, query: "" }
+          : kind === "read_doc"
+            ? { kind, document_id: documents[0]?.id ?? "", title: documents[0]?.title }
+            : { kind, instructions: "" };
+    const steps = [...d.steps];
+    steps.splice(at, 0, blank);
+    set({ steps });
+    setSel(at);
+    setDrawer("step");
+  }
+  const removeStep = (i: number) => {
+    set({ steps: d.steps.filter((_, j) => j !== i) });
+    setSel(-1);
+    setDrawer(null);
+  };
+  const moveStep = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= d.steps.length) return;
+    const steps = [...d.steps];
+    [steps[i], steps[j]] = [steps[j], steps[i]];
+    set({ steps });
+    setSel(j);
+  };
 
   async function save() {
     if (!canSave || saving) return;
     setSaving(true);
     setError("");
+    const fields = d.fields.map((f, i) => ({ ...f, key: f.key || fieldKey(f.label, i) }));
     const fd = new FormData();
     fd.set("workspace_id", workspaceId);
     if (d.id) fd.set("agent_id", d.id);
     fd.set("name", d.name);
     fd.set("description", d.description);
     fd.set("emoji", d.emoji);
-    fd.set("input_label", d.inputLabel);
-    fd.set("input_placeholder", d.inputPlaceholder);
     if (d.splitLines) fd.set("split_lines", "on");
-    fd.set("search_hint", d.searchHint);
-    fd.set("respond_instructions", d.respondInstructions);
+    fd.set("fields", JSON.stringify(fields));
+    fd.set("steps", JSON.stringify(d.steps));
+    // legacy columns mirror the first field for older surfaces
+    fd.set("input_label", fields[0]?.label ?? "Input");
+    fd.set("input_placeholder", fields[0]?.placeholder ?? "");
+    fd.set(
+      "respond_instructions",
+      (d.steps.find((s) => s.kind === "respond") as { instructions?: string })?.instructions ?? "-",
+    );
     try {
-      await saveAgent(fd); // redirects on success
+      await saveAgent(fd);
     } catch (e) {
       if ((e as Error)?.message?.includes("NEXT_REDIRECT")) throw e;
-      setError("Could not save — check name and instructions.");
+      setError("Could not save — name and a Respond step are required.");
       setSaving(false);
     }
   }
 
   async function preview(e: React.FormEvent) {
     e.preventDefault();
-    if (pvBusy || !pvInput.trim() || !canPreview) return;
+    if (pvBusy || !canPreview) return;
     setPvBusy(true);
     setPvOutput("");
     setPvCitations([]);
@@ -159,10 +238,10 @@ export default function Builder({
           preview: {
             name: d.name || "Untitled agent",
             split_lines: d.splitLines,
-            search_hint: d.searchHint,
-            respond_instructions: d.respondInstructions,
+            fields: d.fields,
+            steps: d.steps,
           },
-          input: { text: pvInput },
+          input: { inputs: pvInputs },
         }),
       });
       if (!res.ok || !res.body) {
@@ -182,10 +261,7 @@ export default function Builder({
         buf = lines.pop() ?? "";
         for (const line of lines) {
           if (!line.trim()) continue;
-          let m: {
-            type: string; title?: string; text?: string;
-            citations?: Citation[]; error?: string;
-          };
+          let m: { type: string; title?: string; text?: string; citations?: Citation[]; error?: string };
           try {
             m = JSON.parse(line);
           } catch {
@@ -207,37 +283,101 @@ export default function Builder({
     }
   }
 
-  const field = (label: string, node: React.ReactNode, hint?: string) => (
-    <div>
-      <label className="mb-1.5 block text-xs font-medium text-ink">{label}</label>
-      {node}
-      {hint && <p className="mt-1.5 text-xs leading-relaxed text-mist">{hint}</p>}
+  const Chips = ({ at }: { at: number }) => (
+    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      <span className="font-mono text-[10px] uppercase tracking-wider text-mist">insert:</span>
+      {varsFor(at).map((v) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => insertVar(v)}
+          className="rounded-full border border-line bg-cream px-2.5 py-1 font-mono text-[11px] text-accent-deep transition hover:border-accent/50"
+        >
+          [[{v}]]
+        </button>
+      ))}
     </div>
   );
 
-  const stepPanel = {
-    trigger: (
-      <div className="space-y-4">
-        {field(
-          "Input label",
-          <input
-            value={d.inputLabel}
-            onChange={(e) => set({ inputLabel: e.target.value })}
-            maxLength={40}
-            placeholder="Questions"
-            className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm text-ink placeholder:text-mist-soft focus:border-accent/60 focus:outline-none"
-          />,
-        )}
-        {field(
-          "Placeholder",
-          <input
-            value={d.inputPlaceholder}
-            onChange={(e) => set({ inputPlaceholder: e.target.value })}
-            maxLength={120}
-            placeholder="Paste this week's questions…"
-            className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm text-ink placeholder:text-mist-soft focus:border-accent/60 focus:outline-none"
-          />,
-        )}
+  const inputCls =
+    "w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm text-ink placeholder:text-mist-soft focus:border-accent/60 focus:outline-none";
+
+  // ── drawer body for the selected card ──
+  let drawerTitle = "";
+  let drawerBody: React.ReactNode = null;
+  if (drawer === "step" && sel === -1) {
+    drawerTitle = "configure · Trigger";
+    drawerBody = (
+      <div className="space-y-5">
+        <p className="text-xs leading-relaxed text-mist">
+          The input form people fill when they run this agent. Every field
+          becomes a variable you can insert into any step.
+        </p>
+        {d.fields.map((f, i) => (
+          <div key={i} className="rounded-xl border border-line p-3">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10px] uppercase tracking-wider text-mist">
+                field · [[{f.key || fieldKey(f.label, i)}]]
+              </span>
+              {d.fields.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => set({ fields: d.fields.filter((_, j) => j !== i) })}
+                  className="text-xs text-mist hover:text-red-500"
+                >
+                  remove
+                </button>
+              )}
+            </div>
+            <input
+              value={f.label}
+              onChange={(e) => {
+                const fields = [...d.fields];
+                fields[i] = { ...f, label: e.target.value, key: fieldKey(e.target.value, i) };
+                set({ fields });
+              }}
+              placeholder="Label"
+              className={`mt-2 ${inputCls}`}
+            />
+            <input
+              value={f.placeholder ?? ""}
+              onChange={(e) => {
+                const fields = [...d.fields];
+                fields[i] = { ...f, placeholder: e.target.value };
+                set({ fields });
+              }}
+              placeholder="Placeholder"
+              className={`mt-2 ${inputCls}`}
+            />
+            <label className="mt-2 flex items-center gap-2 text-xs text-ink">
+              <input
+                type="checkbox"
+                checked={f.long ?? false}
+                onChange={(e) => {
+                  const fields = [...d.fields];
+                  fields[i] = { ...f, long: e.target.checked };
+                  set({ fields });
+                }}
+                className="accent-[#e8540a]"
+              />
+              Multi-line field
+            </label>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() =>
+            set({
+              fields: [
+                ...d.fields,
+                { key: `field_${d.fields.length + 1}`, label: "", placeholder: "" },
+              ],
+            })
+          }
+          className="w-full rounded-xl border border-dashed border-line px-3 py-2 text-xs text-mist transition hover:border-accent/50 hover:text-accent"
+        >
+          + Add field
+        </button>
         <label className="flex items-start gap-2.5 text-sm text-ink">
           <input
             type="checkbox"
@@ -246,67 +386,184 @@ export default function Builder({
             className="mt-0.5 accent-[#e8540a]"
           />
           <span>
-            Treat each line as a separate item
+            Treat each line of the first field as a separate item
             <span className="block text-xs text-mist">
-              the agent searches and answers each line on its own (up to 10)
+              searches referencing it run per line (up to 10)
             </span>
           </span>
         </label>
-        <p className="text-xs leading-relaxed text-mist">
-          Schedules and content triggers are on the roadmap — agents run
-          manually for now.
-        </p>
       </div>
-    ),
-    search: (
+    );
+  } else if (drawer === "step" && sel >= 0 && d.steps[sel]) {
+    const s = d.steps[sel];
+    drawerTitle = `configure · ${STEP_META[s.kind].label}`;
+    drawerBody = (
       <div className="space-y-4">
-        {field(
-          "Search hint (optional)",
-          <input
-            value={d.searchHint}
-            onChange={(e) => set({ searchHint: e.target.value })}
-            maxLength={120}
-            placeholder="e.g. customer support policies"
-            className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm text-ink placeholder:text-mist-soft focus:border-accent/60 focus:outline-none"
-          />,
-          "Added to every search this agent runs, steering retrieval toward the right corner of the graph. Searches are always permission-checked.",
+        <p className="text-xs leading-relaxed text-mist">{STEP_META[s.kind].blurb}.</p>
+        {(s.kind === "search" || s.kind === "web_search") && (
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-ink">Query</label>
+            <textarea
+              ref={areaRef}
+              value={s.query}
+              onChange={(e) => setStep(sel, { query: e.target.value })}
+              rows={3}
+              placeholder={s.kind === "search" ? "what to look for in the graph…" : "what to look for on the web…"}
+              className={inputCls}
+            />
+            <Chips at={sel} />
+          </div>
         )}
-      </div>
-    ),
-    think: (
-      <div className="space-y-4">
-        {field(
-          "Instructions — what should it do with the input? *",
-          <textarea
-            value={d.respondInstructions}
-            onChange={(e) => set({ respondInstructions: e.target.value })}
-            rows={6}
-            maxLength={1200}
-            placeholder="e.g. For each customer question, draft a short reply in our support tone, citing the policy it's based on."
-            className="w-full rounded-xl border border-line bg-cream px-3.5 py-3 text-sm leading-relaxed text-ink placeholder:text-mist-soft focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/15"
-          />,
-          "The agent grounds everything in retrieved documents and cites every claim — your instructions shape tone, format and focus.",
+        {s.kind === "read_doc" && (
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-ink">Document</label>
+            <select
+              value={s.document_id}
+              onChange={(e) => {
+                const doc = documents.find((x) => x.id === e.target.value);
+                setStep(sel, { document_id: e.target.value, title: doc?.title });
+              }}
+              className={inputCls}
+            >
+              {documents.map((doc) => (
+                <option key={doc.id} value={doc.id}>
+                  {doc.title}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
+        {(s.kind === "think" || s.kind === "respond") && (
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-ink">
+              Instructions {s.kind === "respond" && "*"}
+            </label>
+            <textarea
+              ref={areaRef}
+              value={s.instructions}
+              onChange={(e) => setStep(sel, { instructions: e.target.value })}
+              rows={6}
+              placeholder={
+                s.kind === "think"
+                  ? "e.g. From [[step_1]], extract the three most important risks as a list."
+                  : "e.g. Write a friendly summary answering [[question]], citing every claim."
+              }
+              className={`${inputCls} rounded-xl leading-relaxed`}
+            />
+            <Chips at={sel} />
+          </div>
+        )}
+        <div className="flex items-center gap-2 border-t border-line pt-3">
+          <button type="button" onClick={() => moveStep(sel, -1)} className="rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:text-ink">↑ up</button>
+          <button type="button" onClick={() => moveStep(sel, 1)} className="rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:text-ink">↓ down</button>
+          <button type="button" onClick={() => removeStep(sel)} className="ml-auto rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:border-red-300 hover:text-red-500">delete step</button>
+        </div>
       </div>
-    ),
-    respond: (
-      <p className="text-xs leading-relaxed text-mist">
-        The agent assembles a markdown document with numbered citations and
-        keeps it in run history. Output destinations (Slack DM, email) arrive
-        with connectors.
-      </p>
-    ),
-  }[sel];
+    );
+  } else if (drawer === "catalog") {
+    drawerTitle = "select step";
+    drawerBody = (
+      <div className="space-y-2">
+        <p className="text-xs leading-relaxed text-mist">Define what the agent does at this point.</p>
+        {CATALOG.map((kind) => (
+          <button
+            key={kind}
+            type="button"
+            onClick={() => addStep(kind, catalogAt)}
+            className="flex w-full items-start gap-3 rounded-xl border border-line p-3 text-left transition hover:border-accent/40"
+          >
+            <StepGlyph kind={kind} />
+            <span>
+              <span className="block text-sm font-medium text-ink">{STEP_META[kind].label}</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-mist">{STEP_META[kind].blurb}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    );
+  } else if (drawer === "preview") {
+    drawerTitle = "preview — try it before saving";
+    drawerBody = (
+      <>
+        <form onSubmit={preview} className="space-y-3">
+          {d.fields.map((f, i) => (
+            <div key={i}>
+              <label className="mb-1 block text-xs font-medium text-ink">{f.label || `Field ${i + 1}`}</label>
+              {f.long ? (
+                <textarea
+                  value={pvInputs[f.key] ?? ""}
+                  onChange={(e) => setPvInputs({ ...pvInputs, [f.key]: e.target.value })}
+                  rows={3}
+                  placeholder={f.placeholder}
+                  className={`${inputCls} rounded-xl leading-relaxed`}
+                />
+              ) : (
+                <input
+                  value={pvInputs[f.key] ?? ""}
+                  onChange={(e) => setPvInputs({ ...pvInputs, [f.key]: e.target.value })}
+                  placeholder={f.placeholder}
+                  className={inputCls}
+                />
+              )}
+            </div>
+          ))}
+          <div className="flex items-center gap-3">
+            <button
+              disabled={pvBusy || !canPreview}
+              className="rounded-lg bg-ink px-4 py-2 text-xs font-medium text-white transition active:scale-[0.97] disabled:opacity-40"
+            >
+              {pvBusy ? "Running…" : "Run preview"}
+            </button>
+            {!canPreview && <span className="text-xs text-mist">add a Respond step first</span>}
+          </div>
+          {pvStatus && <p className="font-mono text-[11px] text-mist">{pvStatus}</p>}
+        </form>
+        {pvOutput && (
+          <div className="mt-4 border-t border-line pt-4">
+            <div className="md-body text-sm leading-relaxed text-ink">
+              <Markdown>{pvOutput}</Markdown>
+            </div>
+            {pvCitations.length > 0 && (
+              <ul className="mt-3 space-y-1 border-t border-line pt-2.5">
+                {pvCitations.map((c) => (
+                  <li key={c.n} className="font-mono text-[11px] text-mist">
+                    <span className="mr-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-accent-soft text-[10px] font-semibold text-accent-deep">{c.n}</span>
+                    {c.title}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  const AddConnector = ({ at }: { at: number }) => (
+    <div className="flex flex-col items-center py-1 text-line" aria-hidden={false}>
+      <span className="h-3 w-px bg-line" />
+      <button
+        type="button"
+        onClick={() => {
+          setCatalogAt(at);
+          setDrawer("catalog");
+        }}
+        aria-label="Add step"
+        className="flex h-6 w-6 items-center justify-center rounded-full border border-line bg-paper text-mist shadow-sm transition hover:border-accent/60 hover:text-accent"
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
+      <span className="h-3 w-px bg-line" />
+    </div>
+  );
 
   return (
     <div className="flex h-[calc(100svh-3.5rem)] flex-col md:h-svh">
       {/* top bar */}
       <div className="flex shrink-0 items-center gap-3 border-b border-line bg-paper px-4 py-2">
-        <a
-          href="/app/agents"
-          aria-label="Back to agents"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-mist transition hover:bg-cream hover:text-ink"
-        >
+        <a href="/app/agents" aria-label="Back to agents" className="flex h-9 w-9 items-center justify-center rounded-lg text-mist transition hover:bg-cream hover:text-ink">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m12 19-7-7 7-7M19 12H5" />
           </svg>
@@ -358,60 +615,89 @@ export default function Builder({
         </button>
       </div>
 
-      {/* the viewport: dotted canvas with the flow floating on it */}
+      {/* viewport */}
       <div className="relative min-h-0 flex-1 overflow-hidden">
         <div className="dot-grid h-full overflow-y-auto bg-cream/30">
-          <div className="mx-auto w-[440px] max-w-full px-4 pb-16 pt-10">
+          <div className="mx-auto w-[460px] max-w-full px-4 pb-16 pt-10">
             <span className="mb-3 inline-block rounded-md bg-accent-soft px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-widest text-accent-deep">
               start
             </span>
-            {STEPS.map((s, i) => (
-              <div key={s.key}>
+
+            {/* trigger card */}
+            <button
+              type="button"
+              onClick={() => {
+                setSel(-1);
+                setDrawer("step");
+              }}
+              className={`flex w-full items-start gap-3 rounded-2xl border bg-paper p-4 text-left shadow-sm transition ${
+                sel === -1 && drawer === "step"
+                  ? "border-accent/60 shadow-[0_12px_28px_-14px_rgba(232,84,10,0.4)]"
+                  : "border-line hover:border-accent/35"
+              }`}
+            >
+              <StepGlyph kind="trigger" active={sel === -1 && drawer === "step"} />
+              <span className="min-w-0">
+                <span className="flex items-baseline gap-2">
+                  <span className="font-mono text-[10px] text-mist">0.</span>
+                  <span className="text-sm font-medium text-ink">Trigger</span>
+                </span>
+                <span className="mt-1 block text-xs leading-relaxed text-mist">
+                  Runs manually with{" "}
+                  {d.fields.map((f) => `“${f.label || "…"}”`).join(", ")}
+                  {d.splitLines ? " · first field one item per line" : ""}
+                </span>
+              </span>
+            </button>
+
+            <AddConnector at={0} />
+
+            {d.steps.map((s, i) => (
+              <div key={i}>
                 <button
                   type="button"
                   onClick={() => {
-                    setSel(s.key);
+                    setSel(i);
                     setDrawer("step");
                   }}
                   className={`flex w-full items-start gap-3 rounded-2xl border bg-paper p-4 text-left shadow-sm transition ${
-                    sel === s.key && drawer === "step"
+                    sel === i && drawer === "step"
                       ? "border-accent/60 shadow-[0_12px_28px_-14px_rgba(232,84,10,0.4)]"
                       : "border-line hover:border-accent/35"
                   }`}
                 >
-                  <StepGlyph kind={s.key} active={sel === s.key && drawer === "step"} />
-                  <span className="min-w-0">
+                  <StepGlyph kind={s.kind} active={sel === i && drawer === "step"} />
+                  <span className="min-w-0 flex-1">
                     <span className="flex items-baseline gap-2">
-                      <span className="font-mono text-[10px] text-mist">{i}.</span>
-                      <span className="text-sm font-medium text-ink">{s.label}</span>
+                      <span className="font-mono text-[10px] text-mist">{i + 1}.</span>
+                      <span className="text-sm font-medium text-ink">{STEP_META[s.kind].label}</span>
+                      <span className="ml-auto font-mono text-[10px] uppercase tracking-wide text-mist/70">
+                        [[step_{i + 1}]]
+                      </span>
                     </span>
                     <span className="mt-1 block text-xs leading-relaxed text-mist">
-                      {stepSummary(s.key, d)}
+                      {stepSummary(s)}
                     </span>
                   </span>
                 </button>
-                {i < STEPS.length - 1 && (
-                  <div className="flex flex-col items-center py-1.5 text-line" aria-hidden>
-                    <span className="h-5 w-px bg-line" />
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </div>
-                )}
+                <AddConnector at={i + 1} />
               </div>
             ))}
+
+            {!hasRespond && (
+              <p className="mt-1 rounded-xl border border-dashed border-line px-4 py-3 text-center text-xs text-mist">
+                Add a <strong>Respond</strong> step — every agent ends by writing
+                its answer.
+              </p>
+            )}
           </div>
         </div>
 
-        {/* right drawer: step config or preview */}
+        {/* right drawer */}
         {drawer && (
           <div className="animate-pop absolute inset-y-0 right-0 flex w-full max-w-[400px] flex-col border-l border-line bg-paper shadow-2xl">
             <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3.5">
-              <h2 className="font-mono text-[11px] uppercase tracking-wider text-mist">
-                {drawer === "preview"
-                  ? "preview — try it before saving"
-                  : `configure · ${STEPS.find((s) => s.key === sel)?.label}`}
-              </h2>
+              <h2 className="font-mono text-[11px] uppercase tracking-wider text-mist">{drawerTitle}</h2>
               <button
                 type="button"
                 onClick={() => setDrawer(null)}
@@ -423,56 +709,7 @@ export default function Builder({
                 </svg>
               </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-5">
-              {drawer === "step" ? (
-                stepPanel
-              ) : (
-                <>
-                  <form onSubmit={preview}>
-                    <textarea
-                      value={pvInput}
-                      onChange={(e) => setPvInput(e.target.value)}
-                      rows={3}
-                      placeholder={d.inputPlaceholder || "Sample input…"}
-                      className="w-full rounded-xl border border-line bg-cream px-3.5 py-2.5 text-sm leading-relaxed text-ink placeholder:text-mist-soft focus:border-accent/60 focus:outline-none"
-                    />
-                    <div className="mt-2 flex items-center gap-3">
-                      <button
-                        disabled={pvBusy || !pvInput.trim() || !canPreview}
-                        className="rounded-lg bg-ink px-4 py-2 text-xs font-medium text-white transition active:scale-[0.97] disabled:opacity-40"
-                      >
-                        {pvBusy ? "Running…" : "Run preview"}
-                      </button>
-                      {!canPreview && (
-                        <span className="text-xs text-mist">set Think instructions first</span>
-                      )}
-                    </div>
-                    {pvStatus && (
-                      <p className="mt-2 font-mono text-[11px] text-mist">{pvStatus}</p>
-                    )}
-                  </form>
-                  {pvOutput && (
-                    <div className="mt-4 border-t border-line pt-4">
-                      <div className="md-body text-sm leading-relaxed text-ink">
-                        <Markdown>{pvOutput}</Markdown>
-                      </div>
-                      {pvCitations.length > 0 && (
-                        <ul className="mt-3 space-y-1 border-t border-line pt-2.5">
-                          {pvCitations.map((c) => (
-                            <li key={c.n} className="font-mono text-[11px] text-mist">
-                              <span className="mr-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-accent-soft text-[10px] font-semibold text-accent-deep">
-                                {c.n}
-                              </span>
-                              {c.title}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">{drawerBody}</div>
           </div>
         )}
       </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Markdown from "react-markdown";
 import { StepGlyph } from "../new/builder";
+import { STEP_META, type FieldDef, type StepDef } from "@/lib/agent-def";
 
 type Citation = { n: number; title: string; url: string | null };
 export type AgentView = {
@@ -11,10 +12,9 @@ export type AgentView = {
   name: string;
   description: string;
   emoji: string;
-  inputLabel: string;
-  inputPlaceholder: string;
   splitLines: boolean;
-  searchHint: string;
+  fields: FieldDef[];
+  steps: StepDef[];
   builtin: boolean;
 };
 export type RunSummary = { id: string; status: string; created_at: string };
@@ -28,27 +28,19 @@ export type RunDetail = {
 
 type StepView = { idx: number; kind: string; title: string; status: string };
 
-const KIND_LABEL: Record<string, string> = {
-  trigger: "Trigger",
-  search: "Company search",
-  read: "Read",
-  think: "Think",
-  respond: "Respond",
-};
-
-// The recipe, drawn Glean-style: what this agent will do, before it runs.
+// The recipe, drawn from the agent's actual steps.
 function Flow({ agent }: { agent: AgentView }) {
-  const steps = [
+  const steps: { kind: string; label: string; text: string }[] = [
     {
       kind: "trigger",
-      text: `Runs manually with your ${agent.inputLabel.toLowerCase()}${agent.splitLines ? " — each line is an item" : ""}`,
+      label: "Trigger",
+      text: `Runs manually with ${agent.fields.map((f) => `“${f.label}”`).join(", ")}${agent.splitLines ? " — first field one item per line" : ""}`,
     },
-    {
-      kind: "search",
-      text: `Searches the knowledge graph${agent.splitLines ? " per item" : ""}${agent.searchHint ? ` (steered: “${agent.searchHint}”)` : ""} — permission-checked`,
-    },
-    { kind: "think", text: "Reasons over what it found, following the agent's instructions" },
-    { kind: "respond", text: "Produces a cited markdown document" },
+    ...agent.steps.map((s) => ({
+      kind: s.kind,
+      label: STEP_META[s.kind].label,
+      text: STEP_META[s.kind].blurb,
+    })),
   ];
   return (
     <ol className="relative space-y-0">
@@ -62,7 +54,7 @@ function Flow({ agent }: { agent: AgentView }) {
           </span>
           <div className="pt-1">
             <p className="font-mono text-[10px] uppercase tracking-wider text-accent">
-              {KIND_LABEL[s.kind]}
+              {s.label}
             </p>
             <p className="mt-0.5 text-xs leading-relaxed text-mist">{s.text}</p>
           </div>
@@ -83,7 +75,7 @@ export default function RunClient({
   runs: RunSummary[];
   initialRun: RunDetail | null;
 }) {
-  const [text, setText] = useState("");
+  const [inputs, setInputs] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [steps, setSteps] = useState<StepView[]>(initialRun?.steps ?? []);
@@ -96,7 +88,8 @@ export default function RunClient({
 
   async function run(e: React.FormEvent) {
     e.preventDefault();
-    if (busy || !text.trim()) return;
+    const firstVal = (inputs[agent.fields[0]?.key] ?? "").trim();
+    if (busy || !firstVal) return;
     setBusy(true);
     setError("");
     setSteps([]);
@@ -110,7 +103,7 @@ export default function RunClient({
         body: JSON.stringify({
           workspace_id: workspaceId,
           ...(agent.id ? { agent_id: agent.id } : { agent_slug: agent.slug }),
-          input: { text },
+          input: { inputs },
         }),
       });
       if (!res.ok || !res.body) {
@@ -251,25 +244,38 @@ export default function RunClient({
         {/* right: run it */}
         <div className="min-w-0">
           {!viewingHistory && (
-            <form onSubmit={run} className="rounded-2xl border border-line bg-paper p-5">
-              <label className="mb-1.5 block text-sm font-medium text-ink">
-                {agent.inputLabel}
-                {agent.splitLines && (
-                  <span className="ml-2 font-mono text-[10px] uppercase tracking-wide text-mist">
-                    one item per line · up to 10
-                  </span>
-                )}
-              </label>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                rows={5}
-                placeholder={agent.inputPlaceholder}
-                className="w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm leading-relaxed text-ink placeholder:text-mist-soft focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/15"
-              />
+            <form onSubmit={run} className="space-y-4 rounded-2xl border border-line bg-paper p-5">
+              {agent.fields.map((f, fi) => (
+                <div key={f.key}>
+                  <label className="mb-1.5 block text-sm font-medium text-ink">
+                    {f.label}
+                    {fi === 0 && agent.splitLines && (
+                      <span className="ml-2 font-mono text-[10px] uppercase tracking-wide text-mist">
+                        one item per line · up to 10
+                      </span>
+                    )}
+                  </label>
+                  {f.long ? (
+                    <textarea
+                      value={inputs[f.key] ?? ""}
+                      onChange={(e) => setInputs({ ...inputs, [f.key]: e.target.value })}
+                      rows={fi === 0 ? 5 : 3}
+                      placeholder={f.placeholder}
+                      className="w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm leading-relaxed text-ink placeholder:text-mist-soft focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/15"
+                    />
+                  ) : (
+                    <input
+                      value={inputs[f.key] ?? ""}
+                      onChange={(e) => setInputs({ ...inputs, [f.key]: e.target.value })}
+                      placeholder={f.placeholder}
+                      className="w-full rounded-lg border border-line bg-cream px-3.5 py-2.5 text-sm text-ink placeholder:text-mist-soft focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/15"
+                    />
+                  )}
+                </div>
+              ))}
               <div className="mt-3 flex items-center gap-3">
                 <button
-                  disabled={busy || !text.trim()}
+                  disabled={busy || !(inputs[agent.fields[0]?.key] ?? "").trim()}
                   className="rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white transition hover:bg-accent-deep active:scale-[0.97] disabled:opacity-40"
                 >
                   {busy ? "Running…" : "Run agent"}
