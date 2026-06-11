@@ -7,6 +7,7 @@ export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   citations?: Citation[];
+  searching?: string; // transient: the retrieval query, shown while it runs
 };
 type Conversation = { id: string; title: string; updated_at: string };
 
@@ -32,22 +33,42 @@ function Citations({ list }: { list: Citation[] }) {
   );
 }
 
+const SOURCE_LABELS: Record<string, string> = {
+  upload: "Uploads",
+  gdrive: "Google Drive",
+  slack: "Slack",
+  notion: "Notion",
+};
+const sourceLabel = (s: string) =>
+  SOURCE_LABELS[s] ?? s.charAt(0).toUpperCase() + s.slice(1);
+const TIME_SCOPES = [
+  { days: 0, label: "All time" },
+  { days: 30, label: "Past 30 days" },
+  { days: 7, label: "Past week" },
+] as const;
+
 export default function Chat({
   workspaceId,
   conversations,
   initialId,
   initialMessages,
+  sources = [],
 }: {
   workspaceId: string;
   conversations: Conversation[];
   initialId: string | null;
   initialMessages: ChatMessage[];
+  sources?: string[];
 }) {
   const [convId, setConvId] = useState<string | null>(initialId);
   const [msgs, setMsgs] = useState<ChatMessage[]>(initialMessages);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // per-conversation scope, sent with every turn
+  const [days, setDays] = useState(0);
+  const [selSources, setSelSources] = useState<string[]>([]);
+  const [scopeOpen, setScopeOpen] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -78,6 +99,8 @@ export default function Chat({
           workspace_id: workspaceId,
           conversation_id: convId ?? undefined,
           message,
+          ...(days > 0 ? { days } : {}),
+          ...(selSources.length > 0 ? { sources: selSources } : {}),
         }),
       });
       if (!res.ok || !res.body) {
@@ -103,6 +126,7 @@ export default function Chat({
             text?: string;
             citations?: Citation[];
             conversation_id?: string;
+            query?: string;
             error?: string;
           };
           try {
@@ -115,11 +139,13 @@ export default function Chat({
               setConvId(m.conversation_id);
               window.history.replaceState(null, "", `/app/assistant?c=${m.conversation_id}`);
             }
+          } else if (m.type === "searching" && m.query) {
+            patchLast({ searching: m.query });
           } else if (m.type === "delta" && m.text) {
             acc += m.text;
             patchLast({ content: acc });
           } else if (m.type === "done") {
-            patchLast({ citations: m.citations ?? [] });
+            patchLast({ citations: m.citations ?? [], searching: undefined });
           } else if (m.type === "error" && m.error) {
             setError(m.error);
             if (!acc) setMsgs((mm) => mm.slice(0, -1));
@@ -189,8 +215,14 @@ export default function Chat({
                 key={i}
                 className="max-w-[92%] rounded-2xl rounded-bl-md border border-line bg-paper px-5 py-4 shadow-[0_1px_1px_rgba(20,20,19,0.03),0_12px_24px_-16px_rgba(20,20,19,0.2)]"
               >
+                {m.searching && (
+                  <p className="mb-2 font-mono text-[11px] text-mist">
+                    <span className="text-accent">⌕</span> searching the graph:{" "}
+                    {m.searching}
+                  </p>
+                )}
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
-                  {m.content || (busy && i === msgs.length - 1 ? "…" : "")}
+                  {m.content || (busy && i === msgs.length - 1 && !m.searching ? "…" : "")}
                 </p>
                 <Citations list={m.citations ?? []} />
               </div>
@@ -205,6 +237,72 @@ export default function Chat({
           onSubmit={send}
           className="sticky bottom-4 mt-6 flex items-center gap-2 rounded-xl border border-line bg-paper p-1.5 shadow-[0_8px_24px_-12px_rgba(20,20,19,0.25)] transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10"
         >
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setScopeOpen(!scopeOpen)}
+              aria-label="Scope"
+              className={`ml-1 flex h-8 w-8 items-center justify-center rounded-lg border transition ${
+                days > 0 || selSources.length > 0
+                  ? "border-accent/60 bg-accent-soft text-accent-deep"
+                  : "border-line text-mist hover:text-ink"
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 3H2l8 9.46V19l4 2v-8.54z" />
+              </svg>
+            </button>
+            {scopeOpen && (
+              <div className="animate-pop absolute bottom-11 left-0 z-20 w-60 rounded-xl border border-line bg-paper p-3 shadow-xl">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-mist">time</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {TIME_SCOPES.map((t) => (
+                    <button
+                      key={t.days}
+                      type="button"
+                      onClick={() => setDays(t.days)}
+                      className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                        days === t.days
+                          ? "border-accent/60 bg-accent-soft text-accent-deep"
+                          : "border-line text-mist hover:text-ink"
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+                {sources.length > 1 && (
+                  <>
+                    <p className="mt-3 font-mono text-[10px] uppercase tracking-wider text-mist">sources</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {sources.map((s) => {
+                        const on = selSources.includes(s);
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() =>
+                              setSelSources(on ? selSources.filter((x) => x !== s) : [...selSources, s])
+                            }
+                            className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                              on
+                                ? "border-accent/60 bg-accent-soft text-accent-deep"
+                                : "border-line text-mist hover:text-ink"
+                            }`}
+                          >
+                            {sourceLabel(s)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+                <p className="mt-3 text-[10px] leading-relaxed text-mist/80">
+                  Applies to every question in this chat. Permissions are always enforced.
+                </p>
+              </div>
+            )}
+          </div>
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}

@@ -90,64 +90,15 @@ export async function POST(request: Request) {
   const retrievalText =
     message.split(/\s+/).length < 8 && prevUserQ ? `${prevUserQ}\n${message}` : message;
 
-  let embedding: number[];
-  try {
-    [embedding] = await ai().embedTexts([retrievalText]);
-  } catch (e) {
-    console.error("chat: embedding failed:", e);
-    return NextResponse.json({ error: AI_BUSY }, { status: 503 });
-  }
-  const { data: matches, error: matchError } = await supabase.rpc("match_chunks", {
-    ws: workspaceId,
-    query_embedding: JSON.stringify(embedding),
-    user_principals: [user.email],
-    src_filter: srcFilter,
-    after_ts: afterTs,
-  });
-  if (matchError) {
-    return NextResponse.json({ error: matchError.message }, { status: 500 });
-  }
-
-  type Match = {
-    chunk_id: string;
-    document_id: string;
-    content: string;
-    title: string;
-    url: string | null;
-    similarity: number;
-  };
-  const chunks = (matches ?? []) as Match[];
-
-  const citations: { n: number; title: string; url: string | null; document_id: string }[] =
-    [];
-  const docNumbers = new Map<string, number>();
-  for (const c of chunks) {
-    if (!docNumbers.has(c.document_id)) {
-      docNumbers.set(c.document_id, docNumbers.size + 1);
-      citations.push({
-        n: docNumbers.size,
-        title: c.title,
-        url: c.url,
-        document_id: c.document_id,
-      });
-    }
-  }
-  const sources = chunks
-    .map((c) => `[${docNumbers.get(c.document_id)}] ${c.title}\n${c.content}`)
-    .join("\n\n---\n\n");
-
   const transcript = history
     .slice(-6)
     .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
     .join("\n\n");
 
-  const prompt =
-    `Sources:\n\n${sources || "(none)"}\n\n` +
-    (transcript ? `Conversation so far:\n\n${transcript}\n\n` : "") +
-    `User's new message: ${message}`;
-
   const encoder = new TextEncoder();
   const convId = conversationId;
+  const citations: { n: number; title: string; url: string | null; document_id: string }[] =
+    [];
   const stream = new ReadableStream({
     async start(controller) {
       const send = (obj: unknown) =>
@@ -155,6 +106,49 @@ export async function POST(request: Request) {
       let answer = "";
       try {
         send({ type: "meta", conversation_id: convId });
+        // retrieval happens inside the stream so the client can show the
+        // search step while it runs — the receipts start before the answer
+        send({ type: "searching", query: retrievalText });
+        const [embedding] = await ai().embedTexts([retrievalText]);
+        const { data: matches, error: matchError } = await supabase.rpc("match_chunks", {
+          ws: workspaceId,
+          query_embedding: JSON.stringify(embedding),
+          user_principals: [user.email],
+          src_filter: srcFilter,
+          after_ts: afterTs,
+        });
+        if (matchError) throw new Error(matchError.message);
+
+        type Match = {
+          chunk_id: string;
+          document_id: string;
+          content: string;
+          title: string;
+          url: string | null;
+          similarity: number;
+        };
+        const chunks = (matches ?? []) as Match[];
+
+        const docNumbers = new Map<string, number>();
+        for (const c of chunks) {
+          if (!docNumbers.has(c.document_id)) {
+            docNumbers.set(c.document_id, docNumbers.size + 1);
+            citations.push({
+              n: docNumbers.size,
+              title: c.title,
+              url: c.url,
+              document_id: c.document_id,
+            });
+          }
+        }
+        const sources = chunks
+          .map((c) => `[${docNumbers.get(c.document_id)}] ${c.title}\n${c.content}`)
+          .join("\n\n---\n\n");
+        const prompt =
+          `Sources:\n\n${sources || "(none)"}\n\n` +
+          (transcript ? `Conversation so far:\n\n${transcript}\n\n` : "") +
+          `User's new message: ${message}`;
+
         if (chunks.length === 0) {
           answer = NO_ANSWER;
           send({ type: "delta", text: NO_ANSWER });
