@@ -199,9 +199,18 @@ export default function SearchAsk({
         <button
           type="submit"
           disabled={asking || !hasDocuments || !query.trim()}
-          className="shrink-0 rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-dark-elevated active:scale-[0.97] disabled:opacity-40"
+          aria-label="Ask"
+          title="Ask"
+          className="mr-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-white transition hover:bg-accent-deep active:scale-[0.95] disabled:opacity-40"
         >
-          {asking ? "Thinking…" : "Ask AI"}
+          {asking ? (
+            <span className="inline-block h-2 w-2 animate-pulse rounded-sm bg-white" />
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 19V5" />
+              <path d="m5 12 7-7 7 7" />
+            </svg>
+          )}
         </button>
       </form>
 
