@@ -33,9 +33,11 @@ function Snippet({ text }: { text: string }) {
 export default function SearchAsk({
   workspaceId,
   hasDocuments,
+  suggestions = [],
 }: {
   workspaceId: string;
   hasDocuments: boolean;
+  suggestions?: string[];
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Result[]>([]);
@@ -135,6 +137,22 @@ export default function SearchAsk({
           {asking ? "Thinking…" : "Ask AI"}
         </button>
       </form>
+
+      {/* nudge the blank-page moment: tap a question about your own library */}
+      {!query && suggestions.length > 0 && (
+        <div className="mt-3 flex flex-wrap justify-center gap-2">
+          {suggestions.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setQuery(s)}
+              className="rounded-full border border-line bg-paper px-3.5 py-1.5 text-xs text-mist transition hover:border-accent/50 hover:text-accent active:scale-[0.97]"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
 
       {askError && <p className="mt-3 text-xs text-red-500">{askError}</p>}
 
