@@ -213,9 +213,9 @@ export default function Chat({
         </div>
       </aside>
 
-      {/* thread */}
-      <div className="flex min-h-[70vh] min-w-0 flex-1 flex-col">
-        <div className="flex-1 space-y-4">
+      {/* thread — document column, Claude-style */}
+      <div className="mx-auto flex min-h-[70vh] w-full min-w-0 max-w-2xl flex-1 flex-col">
+        <div className="flex-1 space-y-7">
           {msgs.length === 0 && (
             <div className="pt-10 text-center">
               <h1 className="font-display text-3xl text-ink">Assistant</h1>
@@ -243,15 +243,12 @@ export default function Chat({
           {msgs.map((m, i) =>
             m.role === "user" ? (
               <div key={i} className="flex justify-end">
-                <p className="max-w-[85%] rounded-2xl rounded-br-md bg-ink px-4 py-2.5 text-sm leading-relaxed text-white">
+                <p className="max-w-[90%] whitespace-pre-wrap rounded-2xl bg-cream px-4 py-3 text-[15px] leading-relaxed text-ink">
                   {m.content}
                 </p>
               </div>
             ) : (
-              <div
-                key={i}
-                className="max-w-[92%] rounded-2xl rounded-bl-md border border-line bg-paper px-5 py-4 shadow-[0_1px_1px_rgba(20,20,19,0.03),0_12px_24px_-16px_rgba(20,20,19,0.2)]"
-              >
+              <div key={i} className="px-0.5">
                 {m.searching && (
                   <p className="mb-2 font-mono text-[11px] text-mist">
                     <span className="text-accent">⌕</span> searching the graph:{" "}
@@ -270,7 +267,7 @@ export default function Chat({
                   </p>
                 )}
                 {m.content ? (
-                  <div className="md-body text-sm leading-relaxed text-ink">
+                  <div className="md-body text-[15px] leading-relaxed text-ink">
                     <Markdown>{m.content}</Markdown>
                   </div>
                 ) : (
@@ -294,7 +291,7 @@ export default function Chat({
             setInput("");
             sendMessage(m);
           }}
-          className="sticky bottom-4 mt-6 flex items-center gap-2 rounded-xl border border-line bg-paper p-1.5 shadow-[0_8px_24px_-12px_rgba(20,20,19,0.25)] transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10"
+          className="sticky bottom-4 mt-8 flex items-center gap-2 rounded-2xl border border-line bg-paper p-2 shadow-[0_12px_32px_-12px_rgba(20,20,19,0.3)] transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10"
         >
           <div className="relative">
             <button
@@ -372,9 +369,17 @@ export default function Chat({
           <button
             type="submit"
             disabled={busy || !input.trim()}
-            className="shrink-0 rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-dark-elevated active:scale-[0.97] disabled:opacity-40"
+            aria-label="Send"
+            className="mr-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-white transition hover:bg-accent-deep active:scale-[0.95] disabled:opacity-40"
           >
-            {busy ? "Thinking…" : "Send"}
+            {busy ? (
+              <span className="inline-block h-2 w-2 animate-pulse rounded-sm bg-white" />
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 19V5" />
+                <path d="m5 12 7-7 7 7" />
+              </svg>
+            )}
           </button>
         </form>
       </div>

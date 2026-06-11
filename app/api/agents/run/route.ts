@@ -5,19 +5,38 @@ import { createClient } from "@/lib/supabase/server";
 const AI_BUSY =
   "The AI service is briefly overloaded — please try again in a few seconds.";
 
-// v1 quota guard: one embedding batch + one generation per run.
-const MAX_QUESTIONS = 10;
-const CHUNKS_PER_QUESTION = 3;
+// quota guard: one embedding batch + one generation per run
+const MAX_ITEMS = 10;
+const CHUNKS_PER_ITEM = 3;
+const NO_ANSWER = "No grounded answer found — add the relevant documents.";
 
-const SYSTEM = `You are Zecway's RFP-answering agent. You will receive a list of questionnaire questions, each with its own numbered sources retrieved from the company's knowledge graph. Answer every question using ONLY its sources. After every claim, cite its source like [1] or [2]. If a question's sources don't contain the answer, write exactly: "No grounded answer found — add the relevant documents." Format the output as markdown: each question as a bold line, its answer below. Be direct and concise.`;
+type AgentDef = {
+  id: string | null;
+  slug: string;
+  name: string;
+  splitLines: boolean;
+  searchHint: string;
+  system: string;
+};
 
-// Split a pasted questionnaire into individual questions.
-function parseQuestions(raw: string): string[] {
+const RFP_SYSTEM = `You are Zecway's RFP-answering agent. You will receive a list of questionnaire questions, each with its own numbered sources retrieved from the company's knowledge graph. Answer every question using ONLY its sources. After every claim, cite its source like [1] or [2]. If a question's sources don't contain the answer, write exactly: "${NO_ANSWER}" Format the output as markdown: each question as a bold line, its answer below. Be direct and concise.`;
+
+function customSystem(name: string, instructions: string) {
+  return `You are "${name}", an agent inside Zecway, a company's knowledge tool. The agent author's instructions for what to produce: ${instructions}
+
+You will receive the user's input split into items, each with its own numbered sources retrieved from the company's knowledge graph. Follow the author's instructions using ONLY those sources. After every claim, cite its source like [1] or [2]. If the sources don't contain what you need for an item, write exactly: "${NO_ANSWER}" Output well-structured markdown. Be direct and concise.`;
+}
+
+function parseItems(raw: string, splitLines: boolean): string[] {
+  if (!splitLines) {
+    const t = raw.trim();
+    return t ? [t.slice(0, 2000)] : [];
+  }
   return raw
     .split("\n")
     .map((l) => l.replace(/^\s*(?:\d+[).:]|[-*•])\s*/, "").trim())
     .filter((l) => l.length > 5)
-    .slice(0, MAX_QUESTIONS);
+    .slice(0, MAX_ITEMS);
 }
 
 export async function POST(request: Request) {
@@ -29,32 +48,72 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
 
-  let body: { workspace_id?: string; agent_slug?: string; input?: { questions?: string } };
+  let body: {
+    workspace_id?: string;
+    agent_slug?: string;
+    agent_id?: string;
+    input?: { text?: string; questions?: string };
+  };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
   const workspaceId = body.workspace_id;
-  if (!workspaceId || body.agent_slug !== "rfp-answerer") {
+  if (!workspaceId) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  // resolve the recipe: built-in template or a workspace-built agent (RLS-read)
+  let def: AgentDef;
+  if (body.agent_id) {
+    const { data: agent, error } = await supabase
+      .from("agents")
+      .select("id, name, split_lines, search_hint, respond_instructions, workspace_id")
+      .eq("id", body.agent_id)
+      .single();
+    if (error || !agent || agent.workspace_id !== workspaceId) {
+      return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+    }
+    def = {
+      id: agent.id,
+      slug: "custom",
+      name: agent.name,
+      splitLines: agent.split_lines,
+      searchHint: agent.search_hint,
+      system: customSystem(agent.name, agent.respond_instructions),
+    };
+  } else if (body.agent_slug === "rfp-answerer") {
+    def = {
+      id: null,
+      slug: "rfp-answerer",
+      name: "RFP answerer",
+      splitLines: true,
+      searchHint: "",
+      system: RFP_SYSTEM,
+    };
+  } else {
     return NextResponse.json({ error: "Unknown agent" }, { status: 400 });
   }
-  const questions = parseQuestions(body.input?.questions ?? "");
-  if (questions.length === 0) {
+
+  const rawInput = body.input?.text ?? body.input?.questions ?? "";
+  const items = parseItems(rawInput, def.splitLines);
+  if (items.length === 0) {
     return NextResponse.json(
-      { error: "Paste at least one question (one per line)." },
+      { error: def.splitLines ? "Add at least one line of input." : "Add some input first." },
       { status: 400 },
     );
   }
 
-  // The run is owned by the caller; RLS enforces both insert and later reads.
   const { data: run, error: runError } = await supabase
     .from("agent_runs")
     .insert({
       workspace_id: workspaceId,
       user_id: user.id,
-      agent_slug: "rfp-answerer",
-      input: { questions: questions.join("\n") },
+      agent_slug: def.slug,
+      agent_id: def.id,
+      agent_name: def.name,
+      input: { text: rawInput },
     })
     .select("id")
     .single();
@@ -97,33 +156,38 @@ export async function POST(request: Request) {
       try {
         send({ type: "meta", run_id: runId });
 
-        const t = await step("trigger", `Input received — ${questions.length} question${questions.length === 1 ? "" : "s"}`);
-        await finishStep(t, { questions });
+        const t = await step(
+          "trigger",
+          `Input received — ${items.length} item${items.length === 1 ? "" : "s"}`,
+        );
+        await finishStep(t, { items });
 
-        // one embedding batch for all questions
-        const s = await step("search", "Searching the graph per question");
-        const embeddings = await ai().embedTexts(questions);
+        const s = await step("search", "Searching the graph");
+        const retrievalTexts = items.map((q) =>
+          def.searchHint ? `${def.searchHint}\n${q}` : q,
+        );
+        const embeddings = await ai().embedTexts(retrievalTexts);
 
         type Match = {
           chunk_id: string; document_id: string; content: string;
           title: string; url: string | null; similarity: number;
         };
-        const perQuestion: { question: string; chunks: Match[] }[] = [];
-        for (let qi = 0; qi < questions.length; qi++) {
+        const perItem: { item: string; chunks: Match[] }[] = [];
+        for (let qi = 0; qi < items.length; qi++) {
           const { data: matches, error } = await supabase.rpc("match_chunks", {
             ws: workspaceId,
             query_embedding: JSON.stringify(embeddings[qi]),
             user_principals: [user.email],
-            match_count: CHUNKS_PER_QUESTION,
+            match_count: def.splitLines ? CHUNKS_PER_ITEM : 8,
           });
           if (error) throw new Error(error.message);
-          perQuestion.push({ question: questions[qi], chunks: (matches ?? []) as Match[] });
-          send({ type: "search_progress", done: qi + 1, total: questions.length });
+          perItem.push({ item: items[qi], chunks: (matches ?? []) as Match[] });
+          if (items.length > 1)
+            send({ type: "search_progress", done: qi + 1, total: items.length });
         }
-        const totalHits = perQuestion.reduce((n, q) => n + q.chunks.length, 0);
-        await finishStep(s, { queries: questions, hits: totalHits });
+        const totalHits = perItem.reduce((n, q) => n + q.chunks.length, 0);
+        await finishStep(s, { queries: items, hits: totalHits });
 
-        // citation numbering across the whole run, one number per document
         const citations: { n: number; title: string; url: string | null; document_id: string }[] = [];
         const docNumbers = new Map<string, number>();
         const cite = (m: Match) => {
@@ -136,24 +200,24 @@ export async function POST(request: Request) {
           return docNumbers.get(m.document_id);
         };
 
-        const blocks = perQuestion
+        const blocks = perItem
           .map((q, i) => {
             const sources = q.chunks
               .map((c) => `[${cite(c)}] ${c.title}\n${c.content}`)
               .join("\n\n");
-            return `Question ${i + 1}: ${q.question}\nSources:\n${sources || "(none)"}`;
+            return `Item ${i + 1}: ${q.item}\nSources:\n${sources || "(none)"}`;
           })
           .join("\n\n=====\n\n");
 
-        const th = await step("think", "Drafting grounded answers");
+        const th = await step("think", "Drafting from what it found");
         let output = "";
-        for await (const delta of ai().generateTextStream(blocks, SYSTEM)) {
+        for await (const delta of ai().generateTextStream(blocks, def.system)) {
           output += delta;
           send({ type: "delta", text: delta });
         }
         await finishStep(th, { model: "gemini-2.5-flash" });
 
-        const r = await step("respond", "Assembling the answer document");
+        const r = await step("respond", "Assembling the document");
         const used = citations.filter((c) => output.includes(`[${c.n}]`));
         await supabase
           .from("agent_runs")
