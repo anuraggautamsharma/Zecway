@@ -112,10 +112,11 @@ function SidebarContent({
   return (
     <div className="flex h-full flex-col p-4">
       <div className="mb-6 px-3 pt-2">
-        <Link href="/" className="block">
-          <img src="/brand/zecway-horizontal.png" alt="Zecway" className="h-6 w-auto" />
+        {/* mark + workspace name — the workspace is the identity in-product */}
+        <Link href="/" className="flex items-center gap-2.5">
+          <img src="/brand/zecway-mark.png" alt="Zecway" className="h-6 w-auto" />
+          <span className="truncate text-sm font-semibold text-ink">{workspaceName}</span>
         </Link>
-        <p className="mt-3 truncate text-sm font-semibold text-ink">{workspaceName}</p>
       </div>
       <Nav onNavigate={onNavigate} isFounder={isFounder} />
       <div className="mt-auto border-t border-line px-3 pt-4">
