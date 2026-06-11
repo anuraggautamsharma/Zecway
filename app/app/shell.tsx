@@ -57,6 +57,17 @@ const NAV = [
   },
 ];
 
+const SETTINGS_ITEM = {
+  href: "/app/settings",
+  label: "Settings",
+  icon: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  ),
+};
+
 const ADMIN_ITEM = {
   href: "/app/admin",
   label: "Founder console",
@@ -67,9 +78,21 @@ const ADMIN_ITEM = {
   ),
 };
 
-function Nav({ onNavigate, isFounder }: { onNavigate?: () => void; isFounder?: boolean }) {
+function Nav({
+  onNavigate,
+  isFounder,
+  isAdmin,
+}: {
+  onNavigate?: () => void;
+  isFounder?: boolean;
+  isAdmin?: boolean;
+}) {
   const pathname = usePathname();
-  const items = isFounder ? [...NAV, ADMIN_ITEM] : NAV;
+  const items = [
+    ...NAV,
+    ...(isAdmin ? [SETTINGS_ITEM] : []),
+    ...(isFounder ? [ADMIN_ITEM] : []),
+  ];
   return (
     <nav className="flex flex-col gap-0.5">
       {items.map((item) => {
@@ -111,11 +134,13 @@ function SidebarContent({
   workspaceName,
   email,
   isFounder,
+  isAdmin,
   onNavigate,
 }: {
   workspaceName: string;
   email: string;
   isFounder?: boolean;
+  isAdmin?: boolean;
   onNavigate?: () => void;
 }) {
   return (
@@ -127,7 +152,7 @@ function SidebarContent({
           <span className="truncate text-sm font-semibold text-ink">{workspaceName}</span>
         </Link>
       </div>
-      <Nav onNavigate={onNavigate} isFounder={isFounder} />
+      <Nav onNavigate={onNavigate} isFounder={isFounder} isAdmin={isAdmin} />
       <div className="mt-auto border-t border-line px-3 pt-4">
         <p className="truncate text-xs text-mist">{email}</p>
         <form action={signOut} className="mt-2">
@@ -144,11 +169,13 @@ export default function Shell({
   workspaceName,
   email,
   isFounder,
+  isAdmin,
   children,
 }: {
   workspaceName: string;
   email: string;
   isFounder?: boolean;
+  isAdmin?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -157,7 +184,7 @@ export default function Shell({
     <div className="app-surface flex min-h-screen bg-paper">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-60 border-r border-line bg-cream md:block">
-        <SidebarContent workspaceName={workspaceName} email={email} isFounder={isFounder} />
+        <SidebarContent workspaceName={workspaceName} email={email} isFounder={isFounder} isAdmin={isAdmin} />
       </aside>
 
       {/* Mobile top bar + drawer */}
@@ -186,6 +213,7 @@ export default function Shell({
               workspaceName={workspaceName}
               email={email}
               isFounder={isFounder}
+              isAdmin={isAdmin}
               onNavigate={() => setOpen(false)}
             />
           </aside>
