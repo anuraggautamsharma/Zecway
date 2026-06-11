@@ -49,12 +49,14 @@ export default function SearchAsk({
   workspaceId,
   hasDocuments,
   sources = [],
+  initialQuery = "",
 }: {
   workspaceId: string;
   hasDocuments: boolean;
   sources?: string[];
+  initialQuery?: string;
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<Result[]>([]);
   const [searching, setSearching] = useState(false);
   const [asking, setAsking] = useState(false);

@@ -6,7 +6,12 @@ import SearchAsk from "./search-ask";
 
 type Invite = { id: string; workspace_id: string; workspace_name: string; role: string };
 
-export default async function AppHome() {
+export default async function AppHome({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
   const { workspace } = await getAppContext();
   const supabase = await createClient();
 
@@ -91,7 +96,12 @@ export default async function AppHome() {
           </>
         )}
       </p>
-      <SearchAsk workspaceId={workspace.id} hasDocuments={docCount > 0} sources={sources} />
+      <SearchAsk
+        workspaceId={workspace.id}
+        hasDocuments={docCount > 0}
+        sources={sources}
+        initialQuery={q ?? ""}
+      />
     </div>
   );
 }
