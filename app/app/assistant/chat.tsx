@@ -8,6 +8,7 @@ export type ChatMessage = {
   content: string;
   citations?: Citation[];
   searching?: string; // transient: the retrieval query, shown while it runs
+  work?: { query: string }; // kept after the answer: the "show work" receipt
 };
 type Conversation = { id: string; title: string; updated_at: string };
 
@@ -145,7 +146,17 @@ export default function Chat({
             acc += m.text;
             patchLast({ content: acc });
           } else if (m.type === "done") {
-            patchLast({ citations: m.citations ?? [], searching: undefined });
+            setMsgs((mm) => {
+              const next = [...mm];
+              const last = next[next.length - 1];
+              next[next.length - 1] = {
+                ...last,
+                citations: m.citations ?? [],
+                work: last.searching ? { query: last.searching } : undefined,
+                searching: undefined,
+              };
+              return next;
+            });
           } else if (m.type === "error" && m.error) {
             setError(m.error);
             if (!acc) setMsgs((mm) => mm.slice(0, -1));
@@ -219,6 +230,17 @@ export default function Chat({
                   <p className="mb-2 font-mono text-[11px] text-mist">
                     <span className="text-accent">⌕</span> searching the graph:{" "}
                     {m.searching}
+                  </p>
+                )}
+                {m.work && (
+                  <p className="mb-2 font-mono text-[11px] text-mist/80">
+                    <span className="text-accent">⌕</span> searched:{" "}
+                    <a
+                      href={`/app?q=${encodeURIComponent(m.work.query)}`}
+                      className="underline decoration-line underline-offset-2 hover:text-accent"
+                    >
+                      {m.work.query}
+                    </a>
                   </p>
                 )}
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
