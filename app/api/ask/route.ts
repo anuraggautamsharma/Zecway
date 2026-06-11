@@ -19,7 +19,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
 
-  let body: { workspace_id?: string; question?: string };
+  let body: {
+    workspace_id?: string;
+    question?: string;
+    sources?: string[];
+    days?: number;
+  };
   try {
     body = await request.json();
   } catch {
@@ -30,6 +35,12 @@ export async function POST(request: Request) {
   if (!workspaceId || !question) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
+  const srcFilter =
+    Array.isArray(body.sources) && body.sources.length > 0 ? body.sources : null;
+  const afterTs =
+    typeof body.days === "number" && body.days > 0
+      ? new Date(Date.now() - body.days * 86400 * 1000).toISOString()
+      : null;
 
   // Retrieval is permission-filtered in the database: match_chunks verifies
   // membership and only returns chunks this user's principals may see.
@@ -44,6 +55,8 @@ export async function POST(request: Request) {
     ws: workspaceId,
     query_embedding: JSON.stringify(embedding),
     user_principals: [user.email],
+    src_filter: srcFilter,
+    after_ts: afterTs,
   });
   if (matchError) {
     return NextResponse.json({ error: matchError.message }, { status: 500 });

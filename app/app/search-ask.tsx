@@ -30,12 +30,29 @@ function Snippet({ text }: { text: string }) {
   );
 }
 
+const SOURCE_LABELS: Record<string, string> = {
+  upload: "Uploads",
+  gdrive: "Google Drive",
+  slack: "Slack",
+  notion: "Notion",
+};
+const sourceLabel = (s: string) =>
+  SOURCE_LABELS[s] ?? s.charAt(0).toUpperCase() + s.slice(1);
+
+const TIME_SCOPES = [
+  { days: 0, label: "All time" },
+  { days: 30, label: "Past 30 days" },
+  { days: 7, label: "Past week" },
+] as const;
+
 export default function SearchAsk({
   workspaceId,
   hasDocuments,
+  sources = [],
 }: {
   workspaceId: string;
   hasDocuments: boolean;
+  sources?: string[];
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Result[]>([]);
@@ -44,6 +61,9 @@ export default function SearchAsk({
   const [answer, setAnswer] = useState<string | null>(null);
   const [citations, setCitations] = useState<Citation[]>([]);
   const [askError, setAskError] = useState("");
+  // scope: 0 = all time; empty source list = all sources
+  const [days, setDays] = useState(0);
+  const [selSources, setSelSources] = useState<string[]>([]);
 
   // Instant search: debounce keystrokes, drop stale responses
   const searchSeq = useRef(0);
@@ -60,8 +80,11 @@ export default function SearchAsk({
     const seq = ++searchSeq.current;
     const t = setTimeout(async () => {
       try {
+        const scope =
+          (days > 0 ? `&days=${days}` : "") +
+          (selSources.length > 0 ? `&sources=${selSources.join(",")}` : "");
         const res = await fetch(
-          `/api/search?workspace_id=${workspaceId}&q=${encodeURIComponent(q)}`,
+          `/api/search?workspace_id=${workspaceId}&q=${encodeURIComponent(q)}${scope}`,
         );
         const data = await res.json();
         if (seq === searchSeq.current) {
@@ -73,7 +96,7 @@ export default function SearchAsk({
       }
     }, 250);
     return () => clearTimeout(t);
-  }, [query, workspaceId]);
+  }, [query, workspaceId, days, selSources]);
 
   async function ask(e: React.FormEvent) {
     e.preventDefault();
@@ -86,7 +109,12 @@ export default function SearchAsk({
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspace_id: workspaceId, question: query }),
+        body: JSON.stringify({
+          workspace_id: workspaceId,
+          question: query,
+          ...(days > 0 ? { days } : {}),
+          ...(selSources.length > 0 ? { sources: selSources } : {}),
+        }),
       });
       if (!res.ok || !res.body) {
         const data = await res.json().catch(() => ({}) as { error?: string });
@@ -163,6 +191,50 @@ export default function SearchAsk({
           {asking ? "Thinking…" : "Ask AI"}
         </button>
       </form>
+
+      {/* scope panel: time + source filters, permission-checked server-side */}
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+        {TIME_SCOPES.map((t) => (
+          <button
+            key={t.days}
+            type="button"
+            onClick={() => setDays(t.days)}
+            className={`rounded-full border px-3 py-1 text-[11px] font-medium transition active:scale-[0.97] ${
+              days === t.days
+                ? "border-accent/60 bg-accent-soft text-accent-deep"
+                : "border-line bg-paper text-mist hover:text-ink"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+        {sources.length > 1 && (
+          <>
+            <span className="mx-1 h-4 w-px bg-line" aria-hidden />
+            {sources.map((s) => {
+              const on = selSources.includes(s);
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() =>
+                    setSelSources(
+                      on ? selSources.filter((x) => x !== s) : [...selSources, s],
+                    )
+                  }
+                  className={`rounded-full border px-3 py-1 text-[11px] font-medium transition active:scale-[0.97] ${
+                    on
+                      ? "border-accent/60 bg-accent-soft text-accent-deep"
+                      : "border-line bg-paper text-mist hover:text-ink"
+                  }`}
+                >
+                  {sourceLabel(s)}
+                </button>
+              );
+            })}
+          </>
+        )}
+      </div>
 
       {askError && <p className="mt-3 text-xs text-red-500">{askError}</p>}
 
