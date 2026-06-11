@@ -1,0 +1,196 @@
+import { NextResponse } from "next/server";
+import { ai } from "@/lib/ai";
+import { createClient } from "@/lib/supabase/server";
+
+const NO_ANSWER =
+  "The graph doesn't contain anything about this yet. Add the relevant documents and ask again.";
+
+const AI_BUSY =
+  "The AI service is briefly overloaded — please try again in a few seconds.";
+
+const SYSTEM = `You are Zecway, a company's knowledge assistant, in an ongoing conversation. Answer the user's latest message using ONLY the numbered sources provided, considering the conversation so far for context. After every claim, cite its source like [1] or [2]. Be direct and concise. If the sources do not contain the answer, say exactly: "${NO_ANSWER}" Never invent facts that are not in the sources.`;
+
+type Msg = { role: "user" | "assistant"; content: string };
+
+export async function POST(request: Request) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+
+  let body: {
+    workspace_id?: string;
+    conversation_id?: string;
+    message?: string;
+    sources?: string[];
+    days?: number;
+  };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+  const workspaceId = body.workspace_id;
+  const message = body.message?.trim();
+  if (!workspaceId || !message) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+  const srcFilter =
+    Array.isArray(body.sources) && body.sources.length > 0 ? body.sources : null;
+  const afterTs =
+    typeof body.days === "number" && body.days > 0
+      ? new Date(Date.now() - body.days * 86400 * 1000).toISOString()
+      : null;
+
+  // Find or start the conversation (RLS guarantees it's the caller's own).
+  let conversationId = body.conversation_id ?? null;
+  let history: Msg[] = [];
+  if (conversationId) {
+    const { data: msgs, error } = await supabase
+      .from("messages")
+      .select("role, content")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    history = (msgs ?? []) as Msg[];
+  } else {
+    const { data: conv, error } = await supabase
+      .from("conversations")
+      .insert({
+        workspace_id: workspaceId,
+        user_id: user.id,
+        title: message.slice(0, 80),
+      })
+      .select("id")
+      .single();
+    if (error || !conv) {
+      return NextResponse.json(
+        { error: error?.message ?? "Could not start chat" },
+        { status: 500 },
+      );
+    }
+    conversationId = conv.id;
+  }
+
+  await supabase.from("messages").insert({
+    conversation_id: conversationId,
+    role: "user",
+    content: message,
+  });
+
+  // Follow-ups are often elliptical ("and for part-timers?"); fold the
+  // previous user question into the retrieval text so the right chunks
+  // still surface, while the model answers only the new message.
+  const prevUserQ = [...history].reverse().find((m) => m.role === "user")?.content;
+  const retrievalText =
+    message.split(/\s+/).length < 8 && prevUserQ ? `${prevUserQ}\n${message}` : message;
+
+  let embedding: number[];
+  try {
+    [embedding] = await ai().embedTexts([retrievalText]);
+  } catch (e) {
+    console.error("chat: embedding failed:", e);
+    return NextResponse.json({ error: AI_BUSY }, { status: 503 });
+  }
+  const { data: matches, error: matchError } = await supabase.rpc("match_chunks", {
+    ws: workspaceId,
+    query_embedding: JSON.stringify(embedding),
+    user_principals: [user.email],
+    src_filter: srcFilter,
+    after_ts: afterTs,
+  });
+  if (matchError) {
+    return NextResponse.json({ error: matchError.message }, { status: 500 });
+  }
+
+  type Match = {
+    chunk_id: string;
+    document_id: string;
+    content: string;
+    title: string;
+    url: string | null;
+    similarity: number;
+  };
+  const chunks = (matches ?? []) as Match[];
+
+  const citations: { n: number; title: string; url: string | null; document_id: string }[] =
+    [];
+  const docNumbers = new Map<string, number>();
+  for (const c of chunks) {
+    if (!docNumbers.has(c.document_id)) {
+      docNumbers.set(c.document_id, docNumbers.size + 1);
+      citations.push({
+        n: docNumbers.size,
+        title: c.title,
+        url: c.url,
+        document_id: c.document_id,
+      });
+    }
+  }
+  const sources = chunks
+    .map((c) => `[${docNumbers.get(c.document_id)}] ${c.title}\n${c.content}`)
+    .join("\n\n---\n\n");
+
+  const transcript = history
+    .slice(-6)
+    .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
+    .join("\n\n");
+
+  const prompt =
+    `Sources:\n\n${sources || "(none)"}\n\n` +
+    (transcript ? `Conversation so far:\n\n${transcript}\n\n` : "") +
+    `User's new message: ${message}`;
+
+  const encoder = new TextEncoder();
+  const convId = conversationId;
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (obj: unknown) =>
+        controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
+      let answer = "";
+      try {
+        send({ type: "meta", conversation_id: convId });
+        if (chunks.length === 0) {
+          answer = NO_ANSWER;
+          send({ type: "delta", text: NO_ANSWER });
+        } else {
+          for await (const delta of ai().generateTextStream(prompt, SYSTEM)) {
+            answer += delta;
+            send({ type: "delta", text: delta });
+          }
+        }
+        const used = answer.includes(NO_ANSWER)
+          ? []
+          : citations.filter((c) => answer.includes(`[${c.n}]`));
+        send({ type: "done", citations: used });
+        await supabase.from("messages").insert({
+          conversation_id: convId,
+          role: "assistant",
+          content: answer,
+          citations: used,
+        });
+        await supabase
+          .from("conversations")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", convId);
+      } catch (e) {
+        console.error("chat: generation failed:", e);
+        send({ type: "error", error: AI_BUSY });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "application/x-ndjson; charset=utf-8",
+      "Cache-Control": "no-cache",
+    },
+  });
+}
