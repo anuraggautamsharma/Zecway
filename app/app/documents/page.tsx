@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import PageBody from "../page-body";
 import { createClient } from "@/lib/supabase/server";
 import { getAppContext } from "@/lib/app-context";
 import Upload from "../upload";
@@ -17,7 +18,7 @@ export default async function DocumentsPage() {
   const docs = documents ?? [];
 
   return (
-    <div className="space-y-8">
+    <PageBody><div className="space-y-8">
       <div>
         <h1 className="text-lg font-semibold tracking-tight text-ink">Library</h1>
         <p className="mt-1 text-sm text-mist">
@@ -56,6 +57,6 @@ export default async function DocumentsPage() {
           ))}
         </ul>
       )}
-    </div>
+    </div></PageBody>
   );
 }

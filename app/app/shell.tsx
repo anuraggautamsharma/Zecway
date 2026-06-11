@@ -220,10 +220,8 @@ export default function Shell({
         </div>
       )}
 
-      {/* Content */}
-      <main className="min-w-0 flex-1 pt-14 md:ml-60 md:pt-0">
-        <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 md:py-10">{children}</div>
-      </main>
+      {/* Content — pages wrap themselves in PageBody, or go full-bleed */}
+      <main className="min-w-0 flex-1 pt-14 md:ml-60 md:pt-0">{children}</main>
     </div>
   );
 }

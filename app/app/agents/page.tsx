@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PageBody from "../page-body";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAppContext } from "@/lib/app-context";
@@ -31,6 +32,8 @@ export default async function AgentsLibraryPage() {
   const total = (agents?.length ?? 0) + 1;
 
   return (
+    <PageBody>
+
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -113,5 +116,6 @@ export default async function AgentsLibraryPage() {
         </Link>
       </div>
     </div>
+    </PageBody>
   );
 }
