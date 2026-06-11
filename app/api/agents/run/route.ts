@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { workspaceAi, KEY_REJECTED } from "@/lib/workspace-ai";
+import { workspaceAi, KEY_REJECTED, TRIAL_CAPPED } from "@/lib/workspace-ai";
 import { createClient } from "@/lib/supabase/server";
 
 const AI_BUSY =
@@ -146,7 +146,14 @@ export async function POST(request: Request) {
     );
   }
   const runId = run.id;
-  const { provider, ownKey } = await workspaceAi(supabase, workspaceId);
+  const { provider, ownKey, capped } = await workspaceAi(supabase, workspaceId);
+  if (capped) {
+    await supabase
+      .from("agent_runs")
+      .update({ status: "failed", finished_at: new Date().toISOString() })
+      .eq("id", runId);
+    return NextResponse.json({ error: TRIAL_CAPPED }, { status: 429 });
+  }
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({

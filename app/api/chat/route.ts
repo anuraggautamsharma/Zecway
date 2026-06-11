@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { workspaceAi, KEY_REJECTED } from "@/lib/workspace-ai";
+import { workspaceAi, KEY_REJECTED, TRIAL_CAPPED } from "@/lib/workspace-ai";
 import { createClient } from "@/lib/supabase/server";
 
 const NO_ANSWER =
@@ -98,7 +98,10 @@ export async function POST(request: Request) {
     .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
     .join("\n\n");
 
-  const { provider, ownKey } = await workspaceAi(supabase, workspaceId);
+  const { provider, ownKey, capped } = await workspaceAi(supabase, workspaceId);
+  if (capped) {
+    return NextResponse.json({ error: TRIAL_CAPPED }, { status: 429 });
+  }
 
   const encoder = new TextEncoder();
   const convId = conversationId;

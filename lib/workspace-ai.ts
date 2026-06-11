@@ -6,6 +6,8 @@ export type WorkspaceAi = {
   provider: AiProvider;
   // true when the workspace's own key is in use — error copy differs
   ownKey: boolean;
+  // true when the shared trial key's daily allowance is exhausted
+  capped: boolean;
 };
 
 // Resolve which AI key serves this workspace: its own (BYOK) when set and
@@ -22,10 +24,20 @@ export async function workspaceAi(
   const cipher = data?.ai_key_cipher as string | null | undefined;
   if (cipher) {
     const key = decryptSecret(cipher);
-    if (key) return { provider: aiWithKey(key), ownKey: true };
+    if (key) return { provider: aiWithKey(key), ownKey: true, capped: false };
   }
-  return { provider: ai(), ownKey: false };
+  const { data: used } = await supabase.rpc("ai_actions_today", { ws: workspaceId });
+  return {
+    provider: ai(),
+    ownKey: false,
+    capped: typeof used === "number" && used >= TRIAL_DAILY_ALLOWANCE,
+  };
 }
+
+export const TRIAL_DAILY_ALLOWANCE = 50;
+
+export const TRIAL_CAPPED =
+  "This workspace has used today's free AI allowance. A workspace admin can add your own free Gemini key in Settings — unlimited use, still free.";
 
 export const KEY_REJECTED =
   "Your workspace's AI key was rejected — an admin can fix it in Settings.";
