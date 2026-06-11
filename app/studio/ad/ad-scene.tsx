@@ -11,41 +11,75 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
 
-const exo = gsap.parseEase("expo.out");
-const pun = gsap.parseEase("back.out(2.2)");
-const cub = gsap.parseEase("power3.out");
 const c01 = (x: number) => Math.min(1, Math.max(0, x));
+// GSAP eases are only defined on [0,1] — extrapolating power3.out (a quart)
+// past 2 goes negative, which reads as opacity:0. Clamp at the wrapper.
+const exoRaw = gsap.parseEase("expo.out");
+const punRaw = gsap.parseEase("back.out(2.2)");
+const cubRaw = gsap.parseEase("power3.out");
+const exo = (x: number) => exoRaw(c01(x));
+const pun = (x: number) => punRaw(c01(x));
+const cub = (x: number) => cubRaw(c01(x));
 
 // Beat grid fitted from the track: stomps at 0.3690s, felt beat 0.7380s.
 const B8 = 0.369;
 const B = 0.738;
-export const AD_DURATION = 40.5 * B; // 29.889s
+export const AD_DURATION = 46 * B; // 33.948s
 
+// Variable rhythm: each scene gets the bars its content earns. Questions
+// accelerate (1.5 → 1 → 0.5 beats), the turn breathes (3.5 quiet beats), the
+// answer holds longest, the end mark gets a 5-beat hold so the brand lands.
+// All cuts stay quantized to half-beats — stomp ticks.
 const BEATS: Record<string, [number, number]> = {
-  open: [0, 2],
-  q1: [2, 3],
-  q2: [3, 4],
-  q3: [4, 5],
-  chaos: [5, 7.5],
-  cost: [7.5, 10],
-  beat: [10, 12],
-  hare: [12, 14],
-  search: [14, 16.5],
-  answer: [16.5, 20],
-  claim1: [20, 21.5],
-  claim2: [21.5, 23],
-  perm: [23, 26],
-  climb: [26, 28.5],
-  agent: [28.5, 31.5],
-  connect: [31.5, 33.5],
-  ask: [33.5, 36],
-  end: [36, 40.51],
+  open: [0, 3],
+  q1: [3, 4.5],
+  q2: [4.5, 5.5],
+  q3: [5.5, 6],
+  chaos: [6, 9],
+  cost: [9, 11.5],
+  beat: [11.5, 15],
+  hare: [15, 18],
+  search: [18, 20.5],
+  answer: [20.5, 25],
+  claim1: [25, 26],
+  claim2: [26, 27.5],
+  perm: [27.5, 31.5],
+  climb: [31.5, 34],
+  agent: [34, 37],
+  connect: [37, 38.5],
+  ask: [38.5, 41],
+  end: [41, 46.01],
 };
 const CUTS = Object.fromEntries(
   Object.entries(BEATS).map(([k, [a, b]]) => [k, [a * B, b * B]]),
 ) as Record<string, [number, number]>;
 const ORDER = Object.keys(CUTS);
 const BOUNDS = ORDER.slice(1).map((k) => CUTS[k][0]);
+// Transition per boundary: hard cut, slash wipe (ember/ink), or soft color-melt.
+const TRANS: Record<string, "hard" | "ember" | "ink" | "soft"> = {
+  q1: "hard", q2: "hard", q3: "hard", chaos: "hard",
+  cost: "ember", beat: "soft", hare: "soft", search: "soft",
+  answer: "hard", claim1: "hard", claim2: "hard", perm: "ink",
+  climb: "ember", agent: "hard", connect: "ember", ask: "soft", end: "ember",
+};
+const SOFT_W = 0.32; // crossfade window (s)
+function hexMix(a: string, b: string, k: number) {
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  return `rgb(${pa.map((v, i) => Math.round(v + (pb[i] - v) * k)).join(",")})`;
+}
+// piecewise keyframes for carry elements: [time, xvw, yvh, scale, opacity]
+function kfAt(t: number, stops: [number, number, number, number, number][]) {
+  if (t <= stops[0][0]) return stops[0];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const A = stops[i], Bk = stops[i + 1];
+    if (t >= A[0] && t < Bk[0]) {
+      const k = 1 - Math.pow(1 - (t - A[0]) / (Bk[0] - A[0]), 3);
+      return A.map((v, j) => (j === 0 ? t : v + (Bk[j] - v) * k)) as typeof A;
+    }
+  }
+  return stops[stops.length - 1];
+}
 
 const BGS: Record<string, string> = {
   open: "#181715", q1: "#faf9f5", q2: "#f5f0e8", q3: "#faf9f5",
@@ -144,7 +178,32 @@ export default function AdScene() {
     });
     scene3.add(new THREE.Points(dgeo, dmat));
 
+    // Carry anchors are measured from the real layout so the hand-off points
+    // stay glued to their source elements at any aspect ratio (4:5/9:16/16:9).
+    type Pt = { x: number; y: number };
+    let anchors: { hare: Pt; rcpt: Pt; drop: Pt; end: Pt } | null = null;
+    const measure = () => {
+      const shown = ["sc-hare", "sc-answer", "sc-perm", "sc-end"];
+      const savedD = shown.map((k) => el(k)?.style.display ?? "");
+      shown.forEach((k) => sty(k, { display: "flex" }));
+      const savedT = el("perm-l")?.style.transform ?? "";
+      sty("perm-l", { transform: "none" });
+      const c = (k: string): Pt => {
+        const e = el(k);
+        if (!e) return { x: 50, y: 50 };
+        const r = e.getBoundingClientRect();
+        return { x: ((r.left + r.width / 2) / W) * 100, y: ((r.top + r.height / 2) / H) * 100 };
+      };
+      const out = { hare: c("hare-img"), rcpt: c("ans-c1"), drop: c("perm-rcpt"), end: c("end-mark") };
+      sty("perm-l", { transform: savedT });
+      shown.forEach((k, i) => sty(k, { display: savedD[i] }));
+      return out;
+    };
+    if (typeof document !== "undefined" && document.fonts?.ready)
+      document.fonts.ready.then(() => { anchors = measure(); });
+
     const seek = (t: number) => {
+      const A = anchors ?? (anchors = measure());
       let scene = "end";
       for (const id of ORDER) {
         const [a, b] = CUTS[id];
@@ -153,8 +212,22 @@ export default function AdScene() {
       const [a, b] = CUTS[scene];
       const p = c01((t - a) / (b - a));
       const tone = TONE[scene];
-      if (root.current) root.current.style.background = BGS[scene];
-      for (const id of ORDER) sty("sc-" + id, { display: id === scene ? "flex" : "none" });
+      const sIdx = ORDER.indexOf(scene);
+      const prev = sIdx > 0 ? ORDER[sIdx - 1] : null;
+      const soft = TRANS[scene] === "soft" && prev && t - a < SOFT_W;
+      const mix = soft ? c01((t - a) / SOFT_W) : 1;
+      if (root.current)
+        root.current.style.background = soft
+          ? hexMix(BGS[prev!], BGS[scene], mix)
+          : BGS[scene];
+      for (const id of ORDER) {
+        const isCur = id === scene;
+        const isPrev = soft && id === prev;
+        sty("sc-" + id, {
+          display: isCur || isPrev ? "flex" : "none",
+          opacity: isCur ? String(soft ? mix : 1) : isPrev ? String(1 - mix) : "1",
+        });
+      }
 
       /* beat pulses */
       const pulse = Math.pow(1 - ((t / B) % 1), 3); // felt beat
@@ -353,6 +426,7 @@ export default function AdScene() {
           break;
         }
         case "ask": {
+          sty("ask-ring", { opacity: String((1 - c01(p * 2.2)) * 0.5), transform: `translate(-50%,-50%) scale(${1 - cub(c01(p * 2)) * 0.86})` });
           const l1 = pun(c01(p * 2.2));
           const l2 = pun(c01((p - 0.16) * 2.2));
           const dot = pun(c01((p - 0.4) * 3));
@@ -363,10 +437,14 @@ export default function AdScene() {
           break;
         }
         case "end": {
-          const k = pun(c01(p * 1.7));
-          sty("end-mark", { transform: `scale(${(0.5 + k * 0.5) * (1 + pulse * 0.02)})`, opacity: String(cub(p * 4)) });
-          sty("end-word", { opacity: String(c01((p - 0.2) * 3.2)), transform: `translateY(${(1 - cub(c01((p - 0.2) * 3.2))) * 30}px)` });
-          sty("end-cta", { opacity: String(c01((p - 0.38) * 3)) });
+          // scene-local seconds, not p — the 5-beat hold shouldn't slow the pop
+          const tt = t - a;
+          const k = pun(c01(tt / 1.05));
+          sty("end-mark", { transform: `scale(${(0.5 + k * 0.5) * (1 + pulse * 0.02)})`, opacity: String(cub(c01(tt / 0.55))) });
+          const w = c01((tt - 0.5) / 0.7);
+          sty("end-word", { opacity: String(w), transform: `translateY(${(1 - cub(w)) * 30}px)` });
+          sty("end-cta", { opacity: String(c01((tt - 0.95) / 0.7)) });
+          sty("end-trust", { opacity: String(c01((tt - 1.4) / 0.7) * 0.75) });
           const ring = (t * 0.8) % 1;
           sty("end-ring", { transform: `translate(-50%,-50%) scale(${1 + ring * 1.6})`, opacity: String((1 - ring) * 0.35) });
           const ring2 = (t * 0.8 + 0.5) % 1;
@@ -375,19 +453,63 @@ export default function AdScene() {
         }
       }
 
-      /* slash-wipe transitions on every cut boundary (= on a beat) */
+      /* slash-wipes — only where the edit calls for violence */
       let wOpacity = 0, wX = -130;
       for (let i = 0; i < BOUNDS.length; i++) {
+        const into = ORDER[i + 1];
+        const type = TRANS[into];
+        if (type !== "ember" && type !== "ink") continue;
         const tb = BOUNDS[i];
         if (t > tb - 0.1 && t < tb + 0.13) {
           const w = (t - (tb - 0.1)) / 0.23;
           wX = -130 + cub(w) * 260;
           wOpacity = 1;
-          sty("wipe", { background: i % 2 === 0 ? "#e8540a" : "#181715" });
+          sty("wipe", { background: type === "ember" ? "#e8540a" : "#181715" });
           break;
         }
       }
       sty("wipe", { opacity: String(wOpacity), transform: `translateX(${wX}%) skewX(-14deg)` });
+
+      /* carry layer: elements that travel across cuts */
+      // the hare: scene reveal → docks top-center like a channel bug → flies home
+      {
+        const hb = CUTS.hare[1]; // hare→search boundary
+        const eb = CUTS.end[0];
+        const dockY = (62 / H) * 100;
+        const [, x, y, sc, op] = kfAt(t, [
+          [hb - 0.2, A.hare.x, A.hare.y, 1, 0],
+          [hb + 0.05, A.hare.x, A.hare.y, 1, 1],
+          [hb + 0.75, 50, dockY, 0.17, 1],
+          [eb - 0.05, 50, dockY, 0.17, 1],
+          [eb + 0.45, A.end.x, A.end.y, 0.9, 0],
+        ]);
+        sty("carry-hare", {
+          opacity: String(op),
+          transform: `translate(-50%,-50%) scale(${sc})`,
+          left: `${x}vw`, top: `${y}vh`,
+          // the mark has to survive every background it docks over
+          filter: tone === "light" ? "none" : "brightness(0) invert(1)",
+        });
+      }
+      // the [1] receipt: born on the answer card → rides the corner → lands in clearance
+      {
+        const ab = CUTS.answer[1];
+        const drop = CUTS.perm[0] + 0.44 * (CUTS.perm[1] - CUTS.perm[0]);
+        const rideX = ((W - 170) / W) * 100;
+        const rideY = (118 / H) * 100;
+        const [, x, y, sc, op] = kfAt(t, [
+          [ab - 0.3, A.rcpt.x, A.rcpt.y, 1, 0],
+          [ab - 0.05, A.rcpt.x, A.rcpt.y, 1, 1],
+          [ab + 0.6, rideX, rideY, 0.72, 1],
+          [drop - 0.2, rideX, rideY, 0.72, 1],
+          [drop + 0.5, A.drop.x, A.drop.y, 0.8, 0],
+        ]);
+        sty("carry-rcpt", {
+          opacity: String(op),
+          transform: `translate(-50%,-50%) scale(${sc})`,
+          left: `${x}vw`, top: `${y}vh`,
+        });
+      }
 
       /* opening fade from black */
       sty("fade", { opacity: String(c01(1 - t / 0.45)) });
@@ -440,7 +562,7 @@ export default function AdScene() {
         </span>
         <span ref={reg("open-clock")} className="font-mono text-[11rem] font-medium text-on-dark" />
         <div ref={reg("open-strip")} className={`${mono} absolute bottom-28 whitespace-nowrap font-mono text-xl tracking-[0.3em] text-on-dark-soft`}>
-          monday 9:14 am · 47 tabs · 12 tools · 3 “quick questions” · monday 9:14 am · 47 tabs · 12 tools ·
+          monday 9:14 am · 47 tabs · 12 tools · 3 “quick questions” · monday 9:14 am · 47 tabs · 12 tools · 3 “quick questions” · monday 9:14 am · 47 tabs · 12 tools ·
         </div>
       </div>
 
@@ -473,7 +595,7 @@ export default function AdScene() {
           ))}
         </div>
         <div ref={reg("cost-strip")} className={`${mono} absolute top-32 whitespace-nowrap font-mono text-2xl tracking-[0.4em] text-white/30`}>
-          time lost · time lost · time lost · time lost · time lost · time lost · time lost ·
+          time lost · time lost · time lost · time lost · time lost · time lost · time lost · time lost · time lost · time lost · time lost · time lost ·
         </div>
         <span ref={reg("cost-n")} className="relative font-display text-[12rem] leading-none text-white" />
         <p ref={reg("cost-s1")} className={`${mono} relative mt-8 text-2xl tracking-[0.3em] text-white/90`}>lost per person · every day</p>
@@ -546,7 +668,7 @@ export default function AdScene() {
           <p className={`${mono} absolute left-1/2 top-[30%] -translate-x-1/2 text-xl tracking-[0.25em] text-mist`}>finance · full clearance</p>
           <div ref={reg("perm-ok")} className="absolute left-1/2 top-[56%] w-[72%] -translate-x-1/2 rounded-xl border border-line bg-white p-7 text-left shadow-lg" style={{ opacity: 0 }}>
             <p className="font-display text-3xl text-ink">19 months of runway.</p>
-            <p className="mt-3 font-mono text-lg text-mist">[1] Runway model · Sheets</p>
+            <p ref={reg("perm-rcpt")} className="mt-3 font-mono text-lg text-mist">[1] Runway model · Sheets</p>
           </div>
         </div>
         <div ref={reg("perm-r")} className="absolute inset-y-0 right-0 w-1/2 bg-dark" style={{ transform: "translateX(100%)" }}>
@@ -594,18 +716,18 @@ export default function AdScene() {
       </div>
 
       <div ref={reg("sc-connect")} className={scene}>
-        <span ref={reg("conn-ring")} className="absolute left-1/2 top-1/2 h-[58vh] w-[58vh] rounded-full border border-dashed border-accent/50" style={{ opacity: 0 }} />
+        <span ref={reg("conn-ring")} className="absolute left-1/2 top-1/2 h-[58vmin] w-[58vmin] rounded-full border border-dashed border-accent/50" style={{ opacity: 0 }} />
         {Array.from({ length: 8 }).map((_, i) => (
-          <span key={`l${i}`} ref={reg(`conn-line-${i}`)} className="absolute left-1/2 top-1/2 h-0.5 w-[32vw] origin-left bg-accent/30" style={{ transform: `rotate(${i * 45}deg) scaleX(0)` }} />
+          <span key={`l${i}`} ref={reg(`conn-line-${i}`)} className="absolute left-1/2 top-1/2 h-0.5 w-[34vmin] origin-left bg-accent/30" style={{ transform: `rotate(${i * 45}deg) scaleX(0)` }} />
         ))}
         <img ref={reg("conn-hare")} src="/brand/zecway-mark.png" alt="" className="absolute left-1/2 top-1/2 h-28 w-auto" style={{ opacity: 0, transform: "translate(-50%,-50%) scale(0)" }} />
-        <p ref={reg("conn-t")} className="relative mt-[52vh] font-display text-6xl text-ink">connects everything.</p>
+        <p ref={reg("conn-t")} className="relative mt-[64vmin] font-display text-6xl text-ink">connects everything.</p>
         {APPS.slice(0, 8).map((aname, i) => {
           const ang = (i / 8) * Math.PI * 2 - Math.PI / 2;
           return (
             <span key={aname} ref={reg(`conn-${i}`)}
               className="absolute rounded-xl border border-line bg-white px-6 py-3 font-mono text-2xl text-body shadow-md"
-              style={{ left: `calc(50% + ${Math.cos(ang) * 30}vw)`, top: `calc(50% + ${Math.sin(ang) * 26}vh)`, transform: "translate(-50%,-50%) scale(0)", opacity: 0 }}>
+              style={{ left: `calc(50% + ${Math.cos(ang) * 36}vmin)`, top: `calc(50% + ${Math.sin(ang) * 24}vmin)`, transform: "translate(-50%,-50%) scale(0)", opacity: 0 }}>
               {aname}
             </span>
           );
@@ -613,6 +735,7 @@ export default function AdScene() {
       </div>
 
       <div ref={reg("sc-ask")} className={scene}>
+        <span ref={reg("ask-ring")} className="absolute left-1/2 top-1/2 h-[58vmin] w-[58vmin] rounded-full border border-dashed border-accent/50" style={{ opacity: 0 }} />
         <span ref={reg("ask-ghost")} className={ghost} style={{ ...ghostStroke, fontSize: "44rem" }}>?</span>
         <p ref={reg("ask-1")} className="relative font-display text-8xl leading-tight text-ink">Ask your company</p>
         <p ref={reg("ask-2")} className="relative font-display text-8xl leading-tight text-ink">
@@ -626,9 +749,16 @@ export default function AdScene() {
         <img ref={reg("end-mark")} src="/brand/zecway-mark.png" alt="" className="h-60 w-auto" style={{ filter: "brightness(0) invert(1)" }} />
         <span ref={reg("end-word")} className="mt-6 font-display text-8xl text-white" style={{ opacity: 0 }}>Zecway</span>
         <p ref={reg("end-cta")} className={`${mono} mt-10 text-2xl tracking-[0.4em] text-white/85`} style={{ opacity: 0 }}>
-          early access open · zecway.com
+          zecway.com · early access for teams
+        </p>
+        <p ref={reg("end-trust")} className={`${mono} mt-5 text-lg tracking-[0.3em] text-white/60`} style={{ opacity: 0 }}>
+          your permissions, enforced on every answer
         </p>
       </div>
+
+      {/* carry layer — travels across cuts */}
+      <img ref={reg("carry-hare")} src="/brand/zecway-mark.png" alt="" className="pointer-events-none absolute z-20 h-64 w-auto" style={{ opacity: 0 }} aria-hidden />
+      <span ref={reg("carry-rcpt")} className="pointer-events-none absolute z-20 rounded-lg bg-accent px-5 py-2.5 font-mono text-xl text-white" style={{ opacity: 0 }} aria-hidden>[1] Drive</span>
 
       {/* L5 HUD telemetry */}
       <div className="pointer-events-none absolute inset-0 z-20" aria-hidden>
