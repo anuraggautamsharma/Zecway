@@ -19,10 +19,20 @@ export async function GET(request: Request) {
     return NextResponse.json({ results: [] });
   }
 
+  // optional scope: ?sources=upload,gdrive and ?days=30
+  const sources = url.searchParams.get("sources")?.split(",").filter(Boolean) ?? null;
+  const days = Number(url.searchParams.get("days"));
+  const afterTs =
+    Number.isFinite(days) && days > 0
+      ? new Date(Date.now() - days * 86400 * 1000).toISOString()
+      : null;
+
   const { data, error } = await supabase.rpc("search_chunks", {
     ws: workspaceId,
     search_query: q,
     user_principals: [user.email],
+    src_filter: sources && sources.length > 0 ? sources : null,
+    after_ts: afterTs,
   });
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

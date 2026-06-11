@@ -58,11 +58,15 @@ export default async function AppHome() {
     );
   }
 
-  const { count } = await supabase
-    .from("documents")
-    .select("id", { count: "exact", head: true })
-    .eq("workspace_id", workspace.id);
+  const [{ count }, { data: sourceRows }] = await Promise.all([
+    supabase
+      .from("documents")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", workspace.id),
+    supabase.from("documents").select("source").eq("workspace_id", workspace.id),
+  ]);
   const docCount = count ?? 0;
+  const sources = [...new Set((sourceRows ?? []).map((r) => r.source))].sort();
 
   return (
     <div className="pt-4 md:pt-16">
@@ -87,7 +91,7 @@ export default async function AppHome() {
           </>
         )}
       </p>
-      <SearchAsk workspaceId={workspace.id} hasDocuments={docCount > 0} />
+      <SearchAsk workspaceId={workspace.id} hasDocuments={docCount > 0} sources={sources} />
     </div>
   );
 }
