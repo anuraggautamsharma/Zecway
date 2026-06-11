@@ -2,9 +2,32 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getAppContext } from "@/lib/app-context";
 import { acceptInvite, createWorkspace } from "./actions";
-import SearchAsk from "./search-ask";
+import HomeHero from "./home-hero";
 
 type Invite = { id: string; workspace_id: string; workspace_name: string; role: string };
+
+const SOURCE_LABELS: Record<string, string> = {
+  upload: "Upload",
+  gdrive: "Google Drive",
+  slack: "Slack",
+  notion: "Notion",
+};
+
+function SourceBadge({ source }: { source: string }) {
+  return (
+    <span className="rounded-md border border-line px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-mist">
+      {SOURCE_LABELS[source] ?? source}
+    </span>
+  );
+}
+
+function timeAgo(iso: string) {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (days === 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
 
 export default async function AppHome({
   searchParams,
@@ -12,7 +35,7 @@ export default async function AppHome({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  const { workspace } = await getAppContext();
+  const { user, workspace } = await getAppContext();
   const supabase = await createClient();
 
   const { data: pendingInvites } = await supabase.rpc("list_pending_invites");
@@ -63,45 +86,157 @@ export default async function AppHome({
     );
   }
 
-  const [{ count }, { data: sourceRows }] = await Promise.all([
+  const [
+    { count },
+    { data: sourceRows },
+    { data: recentDocs },
+    { data: recentChats },
+  ] = await Promise.all([
     supabase
       .from("documents")
       .select("id", { count: "exact", head: true })
       .eq("workspace_id", workspace.id),
     supabase.from("documents").select("source").eq("workspace_id", workspace.id),
+    supabase
+      .from("documents")
+      .select("id, title, source, url, created_at")
+      .eq("workspace_id", workspace.id)
+      .order("created_at", { ascending: false })
+      .limit(6),
+    supabase
+      .from("conversations")
+      .select("id, title, updated_at")
+      .eq("workspace_id", workspace.id)
+      .order("updated_at", { ascending: false })
+      .limit(4),
   ]);
   const docCount = count ?? 0;
   const sources = [...new Set((sourceRows ?? []).map((r) => r.source))].sort();
 
+  const suggestions = (recentDocs ?? [])
+    .slice(0, 3)
+    .map((d) => d.title)
+    .filter(Boolean)
+    .map((t) => {
+      const short = t.length > 38 ? `${t.slice(0, 38)}…` : t;
+      return `What does “${short}” cover?`;
+    });
+
+  // first name from the email's local part — good enough until profiles exist
+  const userName = (user?.email ?? "there")
+    .split("@")[0]
+    .split(/[._\d]/)[0]
+    .replace(/^./, (c) => c.toUpperCase());
+
   return (
-    <div className="pt-4 md:pt-16">
-      <h1 className="text-center font-display text-3xl text-ink sm:text-4xl">
-        Ask {workspace.name} anything
-      </h1>
-      <p className="mb-8 mt-2 text-center font-mono text-xs text-mist">
-        {docCount === 0 ? (
-          <>
-            The library is empty —{" "}
-            <Link href="/app/documents" className="font-medium text-accent">
-              add the first documents
-            </Link>{" "}
-            to start asking.
-          </>
-        ) : (
-          <>
-            Searching {docCount} document{docCount === 1 ? "" : "s"} ·{" "}
-            <Link href="/app/documents" className="text-accent hover:text-accent-deep">
-              manage the library
-            </Link>
-          </>
-        )}
-      </p>
-      <SearchAsk
+    <div className="pt-2 md:pt-8">
+      <HomeHero
         workspaceId={workspace.id}
         hasDocuments={docCount > 0}
         sources={sources}
+        suggestions={suggestions}
         initialQuery={q ?? ""}
+        userName={userName}
       />
+
+      {/* below the bar: the workspace, alive */}
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
+        <section>
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-mist">
+              Recent in the library
+            </h2>
+            <Link
+              href="/app/documents"
+              className="text-xs text-accent hover:text-accent-deep"
+            >
+              {docCount > 0 ? `all ${docCount} →` : "open library →"}
+            </Link>
+          </div>
+          <div className="mt-3 divide-y divide-line rounded-2xl border border-line bg-paper">
+            {(recentDocs ?? []).map((d) => (
+              <div key={d.id} className="flex items-center gap-3 px-5 py-3.5">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cream text-mist">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <path d="M14 2v6h6" />
+                  </svg>
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-ink">
+                    {d.url ? (
+                      <a href={d.url} className="hover:text-accent">
+                        {d.title}
+                      </a>
+                    ) : (
+                      d.title
+                    )}
+                  </p>
+                  <p className="mt-0.5 font-mono text-[11px] text-mist">
+                    added {timeAgo(d.created_at)}
+                  </p>
+                </div>
+                <SourceBadge source={d.source} />
+              </div>
+            ))}
+            {(recentDocs ?? []).length === 0 && (
+              <p className="px-5 py-8 text-center text-sm text-mist">
+                The library is empty —{" "}
+                <Link href="/app/documents" className="font-medium text-accent">
+                  add the first documents
+                </Link>{" "}
+                to start asking.
+              </p>
+            )}
+          </div>
+        </section>
+
+        <aside className="space-y-6">
+          <section>
+            <div className="flex items-baseline justify-between">
+              <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-mist">
+                Recent chats
+              </h2>
+              <Link href="/app/assistant" className="text-xs text-accent hover:text-accent-deep">
+                open →
+              </Link>
+            </div>
+            <div className="mt-3 space-y-1.5">
+              {(recentChats ?? []).map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/app/assistant?c=${c.id}`}
+                  className="block truncate rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink transition hover:border-accent/40"
+                >
+                  {c.title}
+                </Link>
+              ))}
+              {(recentChats ?? []).length === 0 && (
+                <Link
+                  href="/app/assistant"
+                  className="block rounded-xl border border-dashed border-line px-4 py-3 text-sm text-mist transition hover:border-accent/40 hover:text-accent"
+                >
+                  Start your first chat →
+                </Link>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-line bg-cream p-5">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-accent">agent</p>
+            <h3 className="mt-1.5 text-sm font-semibold text-ink">RFP answerer</h3>
+            <p className="mt-1 text-xs leading-relaxed text-mist">
+              Paste a questionnaire, get cited answers from your own knowledge.
+            </p>
+            <Link
+              href="/app/agents"
+              className="mt-3 inline-block rounded-lg bg-ink px-3.5 py-2 text-xs font-medium text-white transition active:scale-[0.97]"
+            >
+              Run agent →
+            </Link>
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }

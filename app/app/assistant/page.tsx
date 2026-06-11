@@ -8,13 +8,13 @@ export const metadata = { title: "Zecway — Assistant" };
 export default async function AssistantPage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string }>;
+  searchParams: Promise<{ c?: string; ask?: string }>;
 }) {
   const { user, workspace } = await getAppContext();
   if (!user) redirect("/login");
   if (!workspace) redirect("/app");
 
-  const { c } = await searchParams;
+  const { c, ask } = await searchParams;
   const supabase = await createClient();
 
   const { data: sourceRows } = await supabase
@@ -47,6 +47,7 @@ export default async function AssistantPage({
       initialId={c ?? null}
       initialMessages={initialMessages}
       sources={sources}
+      initialAsk={!c ? (ask ?? null) : null}
     />
   );
 }

@@ -54,12 +54,14 @@ export default function Chat({
   initialId,
   initialMessages,
   sources = [],
+  initialAsk = null,
 }: {
   workspaceId: string;
   conversations: Conversation[];
   initialId: string | null;
   initialMessages: ChatMessage[];
   sources?: string[];
+  initialAsk?: string | null;
 }) {
   const [convId, setConvId] = useState<string | null>(initialId);
   const [msgs, setMsgs] = useState<ChatMessage[]>(initialMessages);
@@ -76,13 +78,20 @@ export default function Chat({
     endRef.current?.scrollIntoView({ block: "end" });
   }, [msgs]);
 
-  async function send(e: React.FormEvent) {
-    e.preventDefault();
-    const message = input.trim();
+  // a question handed over from the Home bar starts the chat immediately
+  const autoSent = useRef(false);
+  useEffect(() => {
+    if (initialAsk && initialMessages.length === 0 && !autoSent.current) {
+      autoSent.current = true;
+      sendMessage(initialAsk);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function sendMessage(message: string) {
     if (!message || busy) return;
     setError("");
     setBusy(true);
-    setInput("");
     setMsgs((m) => [...m, { role: "user", content: message }, { role: "assistant", content: "" }]);
 
     const patchLast = (patch: Partial<ChatMessage>) =>
@@ -256,7 +265,12 @@ export default function Chat({
         {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
 
         <form
-          onSubmit={send}
+          onSubmit={(e) => {
+            e.preventDefault();
+            const m = input.trim();
+            setInput("");
+            sendMessage(m);
+          }}
           className="sticky bottom-4 mt-6 flex items-center gap-2 rounded-xl border border-line bg-paper p-1.5 shadow-[0_8px_24px_-12px_rgba(20,20,19,0.25)] transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10"
         >
           <div className="relative">
