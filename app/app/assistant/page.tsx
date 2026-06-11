@@ -17,11 +17,23 @@ export default async function AssistantPage({
   const { c, ask } = await searchParams;
   const supabase = await createClient();
 
-  const { data: sourceRows } = await supabase
-    .from("documents")
-    .select("source")
-    .eq("workspace_id", workspace.id);
+  const [{ data: sourceRows }, { data: recentDocs }] = await Promise.all([
+    supabase.from("documents").select("source").eq("workspace_id", workspace.id),
+    supabase
+      .from("documents")
+      .select("title")
+      .eq("workspace_id", workspace.id)
+      .order("created_at", { ascending: false })
+      .limit(3),
+  ]);
   const sources = [...new Set((sourceRows ?? []).map((r) => r.source))].sort();
+  const suggestions = (recentDocs ?? [])
+    .map((d) => d.title)
+    .filter(Boolean)
+    .map((t) => {
+      const short = t.length > 38 ? `${t.slice(0, 38)}…` : t;
+      return `Summarize “${short}” for me`;
+    });
 
   const { data: convs } = await supabase
     .from("conversations")
@@ -48,6 +60,7 @@ export default async function AssistantPage({
       initialMessages={initialMessages}
       sources={sources}
       initialAsk={!c ? (ask ?? null) : null}
+      suggestions={suggestions}
     />
   );
 }

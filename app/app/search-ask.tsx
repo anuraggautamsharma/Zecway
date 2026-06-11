@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Markdown from "react-markdown";
 
 type Citation = { n: number; title: string; url: string | null };
 type Result = {
@@ -9,7 +10,17 @@ type Result = {
   url: string | null;
   source: string;
   snippet: string;
+  created_at?: string;
 };
+
+function timeAgo(iso?: string) {
+  if (!iso) return "";
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (days === 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
 
 // Snippets arrive with [[term]] markers from Postgres; render them as
 // highlights without ever injecting HTML.
@@ -246,7 +257,9 @@ export default function SearchAsk({
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
             Answer
           </div>
-          <p className="mt-3 whitespace-pre-wrap font-display text-lg leading-relaxed text-ink">{answer}</p>
+          <div className="md-body mt-3 font-display text-lg leading-relaxed text-ink">
+            <Markdown>{answer}</Markdown>
+          </div>
           {citations.length > 0 && (
             <div className="mt-4 border-t border-line pt-3">
               <ul className="space-y-1">
@@ -275,22 +288,32 @@ export default function SearchAsk({
           {results.length > 0 ? (
             <ul className="divide-y divide-line rounded-xl border border-line bg-paper shadow-[0_1px_1px_rgba(20,20,19,0.03),0_12px_24px_-16px_rgba(20,20,19,0.25)]">
               {results.map((r) => (
-                <li key={r.document_id} className="px-5 py-3.5">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="truncate text-sm font-medium text-ink">
-                      {r.url ? (
-                        <a href={r.url} className="hover:text-accent">
-                          {r.title}
-                        </a>
-                      ) : (
-                        r.title
-                      )}
-                    </span>
-                    <span className="shrink-0 font-mono text-[11px] text-mist">{r.source}</span>
+                <li key={r.document_id} className="flex gap-3 px-5 py-3.5">
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cream text-mist">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <path d="M14 2v6h6" />
+                    </svg>
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="truncate text-sm font-medium text-ink">
+                        {r.url ? (
+                          <a href={r.url} className="hover:text-accent">
+                            {r.title}
+                          </a>
+                        ) : (
+                          r.title
+                        )}
+                      </span>
+                      <span className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-mist">
+                        {sourceLabel(r.source)}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ""}
+                      </span>
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-mist">
+                      <Snippet text={r.snippet} />
+                    </p>
                   </div>
-                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-mist">
-                    <Snippet text={r.snippet} />
-                  </p>
                 </li>
               ))}
             </ul>

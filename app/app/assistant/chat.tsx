@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Markdown from "react-markdown";
 
 type Citation = { n: number; title: string; url: string | null };
 export type ChatMessage = {
@@ -55,6 +56,7 @@ export default function Chat({
   initialMessages,
   sources = [],
   initialAsk = null,
+  suggestions = [],
 }: {
   workspaceId: string;
   conversations: Conversation[];
@@ -62,6 +64,7 @@ export default function Chat({
   initialMessages: ChatMessage[];
   sources?: string[];
   initialAsk?: string | null;
+  suggestions?: string[];
 }) {
   const [convId, setConvId] = useState<string | null>(initialId);
   const [msgs, setMsgs] = useState<ChatMessage[]>(initialMessages);
@@ -221,6 +224,20 @@ export default function Chat({
                 then ask follow-ups — every claim cited, permissions always
                 respected.
               </p>
+              {suggestions.length > 0 && (
+                <div className="mx-auto mt-6 flex max-w-md flex-wrap justify-center gap-1.5">
+                  {suggestions.map((sg) => (
+                    <button
+                      key={sg}
+                      type="button"
+                      onClick={() => sendMessage(sg)}
+                      className="rounded-full border border-line bg-paper px-3.5 py-1.5 text-xs text-mist transition hover:border-accent/50 hover:text-accent active:scale-[0.97]"
+                    >
+                      {sg}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           {msgs.map((m, i) =>
@@ -252,9 +269,15 @@ export default function Chat({
                     </a>
                   </p>
                 )}
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
-                  {m.content || (busy && i === msgs.length - 1 && !m.searching ? "…" : "")}
-                </p>
+                {m.content ? (
+                  <div className="md-body text-sm leading-relaxed text-ink">
+                    <Markdown>{m.content}</Markdown>
+                  </div>
+                ) : (
+                  <p className="text-sm text-mist">
+                    {busy && i === msgs.length - 1 && !m.searching ? "…" : ""}
+                  </p>
+                )}
                 <Citations list={m.citations ?? []} />
               </div>
             ),
