@@ -179,3 +179,83 @@ body {
   --color-paper: #ffffff;
   --color-cream: #faf9f5;
 }
+
+/* ───────────────────────── Zecway Glass ─────────────────────────
+   Dark luminous theme: a deep aurora field with translucent glass
+   chrome floating above it. Reading surfaces stay solid and calm;
+   glass is reserved for navigation, bars, drawers and composers. */
+.theme-glass {
+  --color-paper: #16181d; /* solid panel — cards, reading surfaces */
+  --color-cream: #1d2027; /* soft surface — inputs, chips */
+  --color-card: #252a33; /* active nav, selected rows */
+  --color-cream-strong: #2c323d;
+
+  --color-ink: #f4f5f7;
+  --color-body: #c6cad2;
+  --color-mist: #969da9;
+  --color-mist-soft: #6b7280;
+
+  --color-line: rgba(255, 255, 255, 0.09);
+  --color-line-soft: rgba(255, 255, 255, 0.06);
+
+  --color-accent: #ff6b1f; /* ember burns brighter on dark */
+  --color-accent-deep: #ff8b4d; /* hover/emphasis lifts toward light */
+  --color-accent-soft: rgba(255, 107, 31, 0.16);
+
+  color: var(--color-ink);
+}
+
+/* The aurora field behind everything */
+.theme-glass.glass-bg {
+  background:
+    radial-gradient(1000px 640px at 88% -12%, rgba(255, 107, 31, 0.14), transparent 62%),
+    radial-gradient(900px 640px at -12% 28%, rgba(76, 100, 255, 0.13), transparent 60%),
+    radial-gradient(800px 560px at 55% 115%, rgba(158, 80, 255, 0.11), transparent 62%),
+    #0a0b0f;
+  background-attachment: fixed;
+}
+
+/* Glass material for chrome. In the light theme it stays a quiet soft
+   surface; inside .theme-glass it becomes translucent and refractive. */
+.glass-chrome {
+  background: var(--color-cream);
+}
+.theme-glass .glass-chrome {
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.085),
+    rgba(255, 255, 255, 0.028) 38%,
+    rgba(255, 255, 255, 0.05)
+  );
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0.5px rgba(255, 255, 255, 0.18),
+    0 18px 44px -22px rgba(0, 0, 0, 0.75);
+}
+
+/* Ember controls glow on the dark field */
+.theme-glass .bg-accent {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 4px 26px -6px rgba(255, 107, 31, 0.55);
+}
+
+/* Solid panels get a hairline top highlight for depth */
+.theme-glass .bg-paper {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.theme-glass .dot-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+}
+
+.theme-glass .nav-blur {
+  background: rgba(13, 14, 18, 0.7);
+}
+
+.theme-glass ::selection {
+  background: rgba(255, 107, 31, 0.35);
+}

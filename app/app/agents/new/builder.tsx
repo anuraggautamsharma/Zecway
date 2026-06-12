@@ -906,7 +906,7 @@ export default function Builder({
   return (
     <div className="flex h-[calc(100svh-3.5rem)] flex-col md:h-svh">
       {/* top bar */}
-      <div className="flex shrink-0 items-center gap-3 border-b border-line bg-paper px-4 py-2">
+      <div className="glass-chrome relative z-10 flex shrink-0 items-center gap-3 border-b border-line px-4 py-2">
         <a href="/app/agents" aria-label="Back to agents" className="flex h-9 w-9 items-center justify-center rounded-lg text-mist transition hover:bg-cream hover:text-ink">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m12 19-7-7 7-7M19 12H5" />
@@ -1147,7 +1147,7 @@ export default function Builder({
         </div>
 
         {/* zoom controls */}
-        <div className="absolute bottom-4 left-4 z-10 flex items-center gap-0.5 rounded-xl border border-line bg-paper p-1 shadow-lg">
+        <div className="glass-chrome absolute bottom-4 left-4 z-10 flex items-center gap-0.5 rounded-xl border border-line p-1 shadow-lg">
           <button
             type="button"
             onClick={() => zoomCenter(1 / 1.2)}
@@ -1191,7 +1191,7 @@ export default function Builder({
 
         {/* right drawer */}
         {drawer && (
-          <div className="animate-pop absolute inset-y-0 right-0 flex w-full max-w-[400px] flex-col border-l border-line bg-paper shadow-2xl">
+          <div className="glass-chrome animate-pop absolute inset-y-0 right-0 flex w-full max-w-[400px] flex-col border-l border-line shadow-2xl">
             <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3.5">
               <h2 className="font-mono text-[11px] uppercase tracking-wider text-mist">{drawerTitle}</h2>
               <button

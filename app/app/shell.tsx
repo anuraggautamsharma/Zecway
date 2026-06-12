@@ -181,14 +181,14 @@ export default function Shell({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="app-surface flex min-h-screen bg-paper">
+    <div className="app-surface theme-glass glass-bg flex min-h-screen">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 hidden w-60 border-r border-line bg-cream md:block">
+      <aside className="glass-chrome fixed inset-y-0 left-0 hidden w-60 border-r border-line md:block">
         <SidebarContent workspaceName={workspaceName} email={email} isFounder={isFounder} isAdmin={isAdmin} />
       </aside>
 
       {/* Mobile top bar + drawer */}
-      <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-line bg-paper/80 px-4 py-3 backdrop-blur md:hidden">
+      <div className="glass-chrome fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-line px-4 py-3 md:hidden">
         <button
           onClick={() => setOpen(true)}
           aria-label="Open menu"
@@ -208,7 +208,7 @@ export default function Shell({
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <aside className="animate-pop absolute inset-y-0 left-0 w-64 border-r border-line bg-cream shadow-xl">
+          <aside className="glass-chrome animate-pop absolute inset-y-0 left-0 w-64 border-r border-line shadow-xl">
             <SidebarContent
               workspaceName={workspaceName}
               email={email}

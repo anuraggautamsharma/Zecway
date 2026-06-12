@@ -203,7 +203,7 @@ export default function Chat({
           setInput("");
           sendMessage(m);
         }}
-        className="mx-auto flex w-full max-w-2xl items-center gap-1.5 rounded-2xl border border-line bg-paper p-2 shadow-[0_12px_32px_-12px_rgba(20,20,19,0.25)] transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10"
+        className="glass-chrome mx-auto flex w-full max-w-2xl items-center gap-1.5 rounded-2xl border border-line p-2 shadow-[0_12px_32px_-12px_rgba(20,20,19,0.25)] transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10"
       >
         <div className="relative">
           <button
@@ -303,7 +303,7 @@ export default function Chat({
   return (
     <div className="flex h-[calc(100svh-3.5rem)] md:h-svh">
       {/* conversations sidebar — the chat app's own rail */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-cream/50 lg:flex">
+      <aside className="glass-chrome hidden w-64 shrink-0 flex-col border-r border-line lg:flex">
         <div className="p-3">
           <a
             href="/app/assistant"
