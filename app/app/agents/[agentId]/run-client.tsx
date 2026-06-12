@@ -17,7 +17,12 @@ export type AgentView = {
   steps: StepDef[];
   builtin: boolean;
 };
-export type RunSummary = { id: string; status: string; created_at: string };
+export type RunSummary = {
+  id: string;
+  status: string;
+  created_at: string;
+  triggered_by?: string;
+};
 export type RunDetail = {
   id: string;
   status: string;
@@ -239,6 +244,7 @@ export default function RunClient({
                 }`}
               >
                 {r.status === "failed" ? "✕ " : ""}
+                {r.triggered_by === "schedule" ? "⏱ " : ""}
                 {new Date(r.created_at).toLocaleString("en-IN", {
                   day: "numeric",
                   month: "short",

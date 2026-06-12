@@ -9,6 +9,7 @@ import {
   STEP_META,
   fieldKey,
 } from "@/lib/agent-def";
+import { type Schedule, DAY_NAMES, describeSchedule } from "@/lib/schedule";
 
 type Citation = { n: number; title: string; url: string | null };
 export type DocOption = { id: string; title: string };
@@ -20,6 +21,8 @@ export type AgentDraft = {
   splitLines: boolean;
   fields: FieldDef[];
   steps: StepDef[];
+  schedule: Schedule | null;
+  scheduleInputs: Record<string, string>;
 };
 
 const EMPTY: AgentDraft = {
@@ -32,6 +35,8 @@ const EMPTY: AgentDraft = {
     { kind: "search", query: "[[input]]" },
     { kind: "respond", instructions: "" },
   ],
+  schedule: null,
+  scheduleInputs: {},
 };
 
 export function StepGlyph({ kind, active }: { kind: string; active?: boolean }) {
@@ -322,6 +327,8 @@ export default function Builder({
     if (d.splitLines) fd.set("split_lines", "on");
     fd.set("fields", JSON.stringify(fields));
     fd.set("steps", JSON.stringify(d.steps));
+    fd.set("schedule", d.schedule ? JSON.stringify(d.schedule) : "");
+    fd.set("schedule_inputs", JSON.stringify(d.scheduleInputs));
     // legacy columns mirror the first field for older surfaces
     fd.set("input_label", fields[0]?.label ?? "Input");
     fd.set("input_placeholder", fields[0]?.placeholder ?? "");
@@ -508,6 +515,82 @@ export default function Builder({
             </span>
           </span>
         </label>
+
+        <div className="rounded-xl border border-line p-3">
+          <label className="flex items-start gap-2.5 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={Boolean(d.schedule)}
+              onChange={(e) =>
+                set({ schedule: e.target.checked ? { freq: "weekly", day: 1 } : null })
+              }
+              className="mt-0.5 accent-[#e8540a]"
+            />
+            <span>
+              Also run on a schedule
+              <span className="block text-xs text-mist">
+                unattended, each morning (~9am IST) — results land in run history
+              </span>
+            </span>
+          </label>
+          {d.schedule && (
+            <div className="mt-3 space-y-3 border-t border-line pt-3">
+              <div className="flex gap-2">
+                <select
+                  value={d.schedule.freq}
+                  onChange={(e) =>
+                    set({
+                      schedule: { ...d.schedule!, freq: e.target.value as Schedule["freq"] },
+                    })
+                  }
+                  className={inputCls}
+                >
+                  <option value="daily">Every day</option>
+                  <option value="weekly">Weekly</option>
+                </select>
+                {d.schedule.freq === "weekly" && (
+                  <select
+                    value={d.schedule.day ?? 1}
+                    onChange={(e) =>
+                      set({ schedule: { ...d.schedule!, day: Number(e.target.value) } })
+                    }
+                    className={inputCls}
+                  >
+                    {DAY_NAMES.map((day, di) => (
+                      <option key={day} value={di}>
+                        {day}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <div>
+                <span className="mb-1.5 block text-xs font-medium text-ink">
+                  Inputs for scheduled runs
+                </span>
+                {d.fields.map((f, i) => (
+                  <input
+                    key={i}
+                    value={d.scheduleInputs[f.key || fieldKey(f.label, i)] ?? ""}
+                    onChange={(e) =>
+                      set({
+                        scheduleInputs: {
+                          ...d.scheduleInputs,
+                          [f.key || fieldKey(f.label, i)]: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder={f.label || `Field ${i + 1}`}
+                    className={`mb-2 ${inputCls}`}
+                  />
+                ))}
+                <p className="text-[11px] leading-relaxed text-mist">
+                  Scheduled runs use these values since nobody is there to type.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   } else if (drawer === "step" && selStep) {
@@ -815,6 +898,7 @@ export default function Builder({
                   Runs manually with{" "}
                   {d.fields.map((f) => `“${f.label || "…"}”`).join(", ")}
                   {d.splitLines ? " · first field one item per line" : ""}
+                  {d.schedule ? ` · also ${describeSchedule(d.schedule)}` : ""}
                 </span>
               </span>
             </button>
