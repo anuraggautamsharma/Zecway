@@ -42,21 +42,10 @@ function PillPrimary({ href, children }: { href: string; children: React.ReactNo
   );
 }
 
-function PillSecondary({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <a
-      href={href}
-      className="inline-block rounded-full border border-line bg-paper px-6 py-2.5 text-base font-[480] text-ink transition hover:border-ink active:scale-[0.98] sm:text-lg"
-    >
-      {children}
-    </a>
-  );
-}
-
-// Embedded product mocks — flat compositions that sit on color blocks
+// Embedded product mocks — frosted glass, so the universe stays visible
 function SearchMock() {
   return (
-    <div className="rounded-lg bg-paper p-5 text-left shadow-[0_4px_16px_rgba(0,0,0,0.06)] sm:p-6">
+    <div className="rounded-lg border border-white/60 bg-paper/60 p-5 text-left shadow-[0_4px_16px_rgba(0,0,0,0.06)] backdrop-blur-[2px] sm:p-6">
       <div className="flex items-center gap-3 rounded-full border border-line px-4 py-2.5">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-ink">
           <circle cx="11" cy="11" r="7" />
@@ -79,7 +68,7 @@ function SearchMock() {
 
 function AssistantMock() {
   return (
-    <div className="rounded-lg bg-paper p-5 text-left shadow-[0_4px_16px_rgba(0,0,0,0.06)] sm:p-6">
+    <div className="rounded-lg border border-white/60 bg-paper/60 p-5 text-left shadow-[0_4px_16px_rgba(0,0,0,0.06)] backdrop-blur-[2px] sm:p-6">
       <p className="ml-auto w-fit max-w-[80%] rounded-2xl bg-card px-4 py-2.5 text-sm text-ink">
         Draft a reply to the Hartman RFP — security section
       </p>
@@ -117,7 +106,7 @@ function AgentsMock() {
   );
 }
 
-// A full-width pastel story panel — the system's signature surface
+// A full-width pastel story panel — tinted glass over the living universe
 function ColorBlock({
   bg,
   light = false,
@@ -135,7 +124,7 @@ function ColorBlock({
 }) {
   return (
     <section className="mx-auto max-w-[1280px] px-4 sm:px-10">
-      <div className={`${bg} grid items-center gap-10 rounded-none p-8 sm:rounded-3xl sm:p-12 lg:grid-cols-2 lg:gap-16 lg:p-16`}>
+      <div className={`${bg} grid items-center gap-10 rounded-none p-8 backdrop-blur-[3px] sm:rounded-3xl sm:p-12 lg:grid-cols-2 lg:gap-16 lg:p-16`}>
         <div>
           <Eyebrow light={light}>{eyebrow}</Eyebrow>
           <h2 className={`mt-4 text-3xl font-[540] leading-[1.15] tracking-[-0.01em] sm:text-4xl ${light ? "text-on-dark" : "text-ink"}`}>
@@ -156,27 +145,6 @@ export default function Home() {
     <div className="bg-paper text-ink">
       <WorldCanvas />
 
-      {/* top nav */}
-      <header className="nav-blur sticky top-0 z-40 border-b border-line-soft">
-        <div className="mx-auto flex h-14 max-w-[1280px] items-center justify-between px-4 sm:px-10">
-          <a href="/" className="flex items-center gap-2.5">
-            <img src="/brand/zecway-mark.png" alt="" className="h-6 w-auto" />
-            <span className="text-base font-[540] text-ink">Zecway</span>
-          </a>
-          <nav className="flex items-center gap-2 sm:gap-4">
-            <a href="/login" className="rounded-full px-3 py-2 text-sm font-[480] text-ink hover:bg-cream sm:text-base">
-              Sign in
-            </a>
-            <a
-              href="#join"
-              className="bg-accent rounded-full px-4 py-2 text-sm font-[480] text-white transition hover:bg-accent-deep sm:px-5 sm:text-base"
-            >
-              Get early access
-            </a>
-          </nav>
-        </div>
-      </header>
-
       <main className="relative z-10">
         {/* ACT 0 — chaos: every point of light is a piece of your company */}
         <section data-act="0" className="relative mx-auto flex min-h-[88svh] max-w-[1280px] flex-col items-center justify-center px-4 py-16 text-center sm:px-10">
@@ -196,7 +164,6 @@ export default function Home() {
           <RiseIn delay={0.4}>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
               <PillPrimary href="#join">Get early access</PillPrimary>
-              <PillSecondary href="/login">Sign in</PillSecondary>
             </div>
           </RiseIn>
           <p className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[11px] uppercase tracking-[0.24em] text-ink/50">
@@ -254,7 +221,7 @@ export default function Home() {
         {/* 01 — search, on lime */}
         <RiseIn>
           <ColorBlock
-            bg="bg-lime"
+            bg="bg-lime/70"
             eyebrow="01 · search"
             title="Find anything, instantly."
             body="One bar across every tool your company uses — results as you type, only from what you're allowed to see."
@@ -280,7 +247,7 @@ export default function Home() {
         {/* 02 — assistant, on lilac */}
         <RiseIn>
           <ColorBlock
-            bg="bg-lilac"
+            bg="bg-lilac/70"
             eyebrow="02 · assistant"
             title="An expert by your side."
             body="Drafts, summaries, and decisions grounded in your company's real knowledge — in your voice, with receipts."
@@ -309,7 +276,7 @@ export default function Home() {
         {/* 03 — agents, on navy (the only dark block) */}
         <RiseIn>
           <ColorBlock
-            bg="bg-navy"
+            bg="bg-navy/85"
             light
             eyebrow="03 · agents"
             title="Describe a chore. Get a worker."
@@ -322,7 +289,7 @@ export default function Home() {
         {/* ACT 5 — the halo; closing CTA on cream */}
         <section data-act="5" id="join" className="mx-auto max-w-[1280px] px-4 py-24 sm:px-10 sm:py-32">
           <RiseIn>
-            <div className="bg-blockcream rounded-none p-8 text-center sm:rounded-3xl sm:p-16">
+            <div className="bg-blockcream/70 rounded-none p-8 text-center backdrop-blur-[3px] sm:rounded-3xl sm:p-16">
               <WordsRise
                 text="Give your team one search bar for everything."
                 className="mx-auto max-w-2xl font-display text-4xl leading-[1.08] text-ink sm:text-6xl sm:tracking-[-0.96px]"
