@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getAppContext } from "@/lib/app-context";
 import { signOut } from "./actions";
 import Shell from "./shell";
+import WakeScheduler from "./wake-scheduler";
 
 export const metadata = { title: "Zecway — Workspace" };
 
@@ -36,6 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <Shell workspaceName={workspace.name} email={user.email ?? ""} isFounder={isFounder} isAdmin={role === "owner" || role === "admin"}>
+      <WakeScheduler workspaceId={workspace.id} />
       {children}
     </Shell>
   );

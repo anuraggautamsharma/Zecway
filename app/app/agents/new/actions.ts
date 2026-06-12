@@ -19,14 +19,20 @@ export async function saveAgent(formData: FormData) {
 
   let fields: unknown = [];
   let steps: unknown = [];
+  let schedule: unknown = null;
+  let scheduleInputs: unknown = {};
   try {
     fields = JSON.parse(get("fields") || "[]");
     steps = JSON.parse(get("steps") || "[]");
+    schedule = get("schedule") ? JSON.parse(get("schedule")) : null;
+    scheduleInputs = JSON.parse(get("schedule_inputs") || "{}");
   } catch {
     throw new Error("invalid recipe");
   }
 
   const values = {
+    schedule,
+    schedule_inputs: scheduleInputs,
     name,
     description: get("description"),
     emoji: get("emoji") || "🤖",

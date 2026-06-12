@@ -68,7 +68,7 @@ export default async function AgentDetailPage({
 
   let runsQuery = supabase
     .from("agent_runs")
-    .select("id, status, created_at")
+    .select("id, status, created_at, triggered_by")
     .eq("workspace_id", workspace.id)
     .order("created_at", { ascending: false })
     .limit(15);
