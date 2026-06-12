@@ -268,6 +268,25 @@ export async function executeAgentRun(opts: {
         }
         ctx[varName] = summary;
         return summary;
+      } else if (sd.kind === "send_slack") {
+        const sIdx = await step("action", "Drafting a Slack message — needs approval");
+        const message = template(sd.message, ctx).trim().slice(0, 4000);
+        const { data: action } = await supabase
+          .from("agent_run_actions")
+          .insert({
+            run_id: runId,
+            workspace_id: workspaceId,
+            kind: "send_slack",
+            payload: { message },
+          })
+          .select("id")
+          .single();
+        await finishStep(sIdx, { pending: true });
+        if (action) {
+          send({ type: "action", id: action.id, kind: "send_slack", payload: { message } });
+        }
+        ctx[varName] = message;
+        return message;
       }
       return "";
   };

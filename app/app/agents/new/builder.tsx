@@ -92,6 +92,18 @@ export function StepGlyph({ kind, active }: { kind: string; active?: boolean }) 
         <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
       </>
     ),
+    action: (
+      <>
+        <path d="m22 2-11 11" />
+        <path d="M22 2 15 22l-4-9-9-4z" />
+      </>
+    ),
+    send_slack: (
+      <>
+        <path d="m22 2-11 11" />
+        <path d="M22 2 15 22l-4-9-9-4z" />
+      </>
+    ),
   };
   return (
     <span
@@ -130,12 +142,16 @@ function stepSummary(s: StepDef): string {
       return s.goal
         ? `Goal: “${s.goal.slice(0, 60)}${s.goal.length > 60 ? "…" : ""}”`
         : "Set the goal it should investigate on its own";
+    case "send_slack":
+      return s.message
+        ? `Drafts: “${s.message.slice(0, 60)}${s.message.length > 60 ? "…" : ""}”`
+        : "Set the message it should draft for approval";
   }
 }
 
-const CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "auto", "branch", "respond"];
+const CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "auto", "branch", "respond", "send_slack"];
 // lanes hold simple steps only — no branches inside branches
-const LANE_CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "auto", "respond"];
+const LANE_CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "auto", "respond", "send_slack"];
 
 type BranchStep = Extract<StepDef, { kind: "branch" }>;
 type Lane = "if_true" | "if_false";
@@ -231,7 +247,9 @@ export default function Builder({
           ? "condition"
           : s.kind === "auto"
             ? "goal"
-            : "instructions";
+            : s.kind === "send_slack"
+              ? "message"
+              : "instructions";
     const cur = ((s as Record<string, unknown>)[key] as string) ?? "";
     if (el && document.activeElement === el) {
       const at = el.selectionStart ?? cur.length;
@@ -253,6 +271,8 @@ export default function Builder({
         return { kind, condition: "", if_true: [], if_false: [] };
       case "auto":
         return { kind, goal: "" };
+      case "send_slack":
+        return { kind, message: "" };
       case "think":
         return { kind, instructions: "" };
       case "respond":
@@ -670,6 +690,25 @@ export default function Builder({
             <p className="mt-3 rounded-xl bg-cream px-3 py-2.5 text-xs leading-relaxed text-mist">
               The agent plans its own company and web searches toward this goal
               — up to 6 actions, each shown as a receipt while it runs.
+            </p>
+          </div>
+        )}
+        {s.kind === "send_slack" && (
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-ink">Message *</label>
+            <textarea
+              ref={areaRef}
+              value={s.message}
+              onChange={(e) => patchSel({ message: e.target.value })}
+              rows={4}
+              placeholder="e.g. Weekly digest is ready:\n\n[[step_2]]"
+              className={`${inputCls} rounded-xl leading-relaxed`}
+            />
+            <Chips />
+            <p className="mt-3 rounded-xl bg-cream px-3 py-2.5 text-xs leading-relaxed text-mist">
+              Nothing is posted automatically: the drafted message waits on the
+              run page until a teammate approves it. The Slack webhook is set
+              once in Settings.
             </p>
           </div>
         )}
