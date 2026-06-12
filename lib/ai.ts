@@ -9,18 +9,32 @@ export interface AiProvider {
 }
 
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
-const GENERATION_MODEL = "gemini-2.5-flash";
+// Each model has its own free-tier quota bucket (per-minute AND per-day), so
+// when one is rate-limited or exhausted the next keeps the product alive.
+// Embeddings never fall back: stored vectors must all come from one model.
+const GENERATION_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"];
 const EMBEDDING_MODEL = "gemini-embedding-001";
 export const EMBEDDING_DIMS = 768;
 
-// The free tier returns 429/503 ("model overloaded" / per-minute rate limit);
-// the last wait must outlast the RPM window so multi-step agent runs survive.
-const RETRY_WAITS = [2000, 8000, 25000];
+// The free tier intermittently returns 429/503; brief retries absorb blips,
+// and persistent limits are handled by falling through to the next model.
+const RETRY_WAITS = [2000, 8000];
 async function fetchWithRetry(makeRequest: () => Promise<Response>): Promise<Response> {
   let res = await makeRequest();
   for (let attempt = 0; attempt < RETRY_WAITS.length && (res.status === 429 || res.status === 503); attempt++) {
     await new Promise((resolve) => setTimeout(resolve, RETRY_WAITS[attempt]));
     res = await makeRequest();
+  }
+  return res;
+}
+
+async function fetchAcrossModels(
+  makeRequest: (model: string) => Promise<Response>,
+): Promise<Response> {
+  let res!: Response;
+  for (const model of GENERATION_MODELS) {
+    res = await fetchWithRetry(() => makeRequest(model));
+    if (res.status !== 429 && res.status !== 503) return res;
   }
   return res;
 }
@@ -33,8 +47,8 @@ class GeminiProvider implements AiProvider {
   }
 
   async generateText(prompt: string, system?: string): Promise<string> {
-    const res = await fetchWithRetry(() =>
-      fetch(`${GEMINI_BASE}/models/${GENERATION_MODEL}:generateContent?key=${this.key}`, {
+    const res = await fetchAcrossModels((model) =>
+      fetch(`${GEMINI_BASE}/models/${model}:generateContent?key=${this.key}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -59,9 +73,9 @@ class GeminiProvider implements AiProvider {
 
   // Same generation, but yielded as deltas while the model writes.
   async *generateTextStream(prompt: string, system?: string): AsyncIterable<string> {
-    const res = await fetchWithRetry(() =>
+    const res = await fetchAcrossModels((model) =>
       fetch(
-        `${GEMINI_BASE}/models/${GENERATION_MODEL}:streamGenerateContent?alt=sse&key=${this.key}`,
+        `${GEMINI_BASE}/models/${model}:streamGenerateContent?alt=sse&key=${this.key}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -108,8 +122,8 @@ class GeminiProvider implements AiProvider {
 
   // Web-grounded generation via Gemini's built-in Google Search tool.
   async generateWithWebSearch(prompt: string): Promise<string> {
-    const res = await fetchWithRetry(() =>
-      fetch(`${GEMINI_BASE}/models/${GENERATION_MODEL}:generateContent?key=${this.key}`, {
+    const res = await fetchAcrossModels((model) =>
+      fetch(`${GEMINI_BASE}/models/${model}:generateContent?key=${this.key}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
