@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
 import { saveAgent } from "./actions";
 import {
@@ -175,6 +175,60 @@ export default function Builder({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const areaRef = useRef<HTMLTextAreaElement>(null);
+
+  // ── viewport: pan + zoom, like a real node editor ──
+  const vpRef = useRef<HTMLDivElement>(null);
+  const worldRef = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState({ x: 0, y: 0, z: 1 });
+  const [panning, setPanning] = useState(false);
+  const panFrom = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
+
+  const clampZ = (z: number) => Math.min(1.75, Math.max(0.35, z));
+  const zoomAt = (cx: number, cy: number, factor: number) =>
+    setView((v) => {
+      const z = clampZ(v.z * factor);
+      const k = z / v.z;
+      return { x: cx - (cx - v.x) * k, y: cy - (cy - v.y) * k, z };
+    });
+  const zoomCenter = (factor: number) => {
+    const vp = vpRef.current;
+    if (!vp) return;
+    zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, factor);
+  };
+  const fitView = () => {
+    const vp = vpRef.current;
+    const w = worldRef.current;
+    if (!vp || !w) return;
+    const z = clampZ(
+      Math.min(1, 0.92 * Math.min(vp.clientWidth / 460, vp.clientHeight / w.offsetHeight)),
+    );
+    setView({
+      x: (vp.clientWidth - 460 * z) / 2,
+      y: Math.max(20, (vp.clientHeight - w.offsetHeight * z) / 2),
+      z,
+    });
+  };
+
+  useEffect(() => {
+    const vp = vpRef.current;
+    if (!vp) return;
+    // open centered at 100%
+    setView({ x: (vp.clientWidth - 460) / 2, y: 28, z: 1 });
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const r = vp.getBoundingClientRect();
+      if (e.ctrlKey || e.metaKey) {
+        // pinch / ctrl+scroll zooms around the cursor
+        zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.002));
+      } else {
+        setView((v) => ({ ...v, x: v.x - e.deltaX, y: v.y - e.deltaY }));
+      }
+    };
+    vp.addEventListener("wheel", onWheel, { passive: false });
+    return () => vp.removeEventListener("wheel", onWheel);
+    // zoomAt only touches state via functional updates — safe to close over
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // preview state
   const [pvInputs, setPvInputs] = useState<Record<string, string>>({});
@@ -907,8 +961,48 @@ export default function Builder({
 
       {/* viewport */}
       <div className="relative min-h-0 flex-1 overflow-hidden">
-        <div className="dot-grid h-full overflow-y-auto bg-cream/30">
-          <div className="mx-auto w-[460px] max-w-full px-4 pb-16 pt-10">
+        <div
+          ref={vpRef}
+          className="dot-grid h-full select-none overflow-hidden bg-cream/30"
+          style={{
+            backgroundSize: `${18 * view.z}px ${18 * view.z}px`,
+            backgroundPosition: `${view.x}px ${view.y}px`,
+            cursor: panning ? "grabbing" : "grab",
+            touchAction: "none",
+          }}
+          onPointerDown={(e) => {
+            if (e.button !== 0 && e.button !== 1) return;
+            const el = e.target as HTMLElement;
+            // drag the background (or middle-click anywhere) to pan
+            if (e.button === 0 && el.closest("button, input, textarea, select, a, label")) return;
+            e.preventDefault();
+            e.currentTarget.setPointerCapture(e.pointerId);
+            panFrom.current = { px: e.clientX, py: e.clientY, ox: view.x, oy: view.y };
+            setPanning(true);
+          }}
+          onPointerMove={(e) => {
+            const p = panFrom.current;
+            if (!p) return;
+            setView((v) => ({ ...v, x: p.ox + e.clientX - p.px, y: p.oy + e.clientY - p.py }));
+          }}
+          onPointerUp={() => {
+            panFrom.current = null;
+            setPanning(false);
+          }}
+          onPointerCancel={() => {
+            panFrom.current = null;
+            setPanning(false);
+          }}
+        >
+          <div
+            ref={worldRef}
+            className="absolute left-0 top-0 w-[460px] px-4 pb-16"
+            style={{
+              transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})`,
+              transformOrigin: "0 0",
+              willChange: "transform",
+            }}
+          >
             <span className="mb-3 inline-block rounded-md bg-accent-soft px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-widest text-accent-deep">
               start
             </span>
@@ -1050,6 +1144,49 @@ export default function Builder({
               </p>
             )}
           </div>
+        </div>
+
+        {/* zoom controls */}
+        <div className="absolute bottom-4 left-4 z-10 flex items-center gap-0.5 rounded-xl border border-line bg-paper p-1 shadow-lg">
+          <button
+            type="button"
+            onClick={() => zoomCenter(1 / 1.2)}
+            aria-label="Zoom out"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-mist transition hover:bg-cream hover:text-ink"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M5 12h14" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => setView((v) => ({ ...v, z: 1 }))}
+            aria-label="Reset zoom"
+            className="w-11 rounded-lg py-1 text-center font-mono text-[11px] text-mist transition hover:bg-cream hover:text-ink"
+          >
+            {Math.round(view.z * 100)}%
+          </button>
+          <button
+            type="button"
+            onClick={() => zoomCenter(1.2)}
+            aria-label="Zoom in"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-mist transition hover:bg-cream hover:text-ink"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+          <span className="mx-0.5 h-5 w-px bg-line" aria-hidden />
+          <button
+            type="button"
+            onClick={fitView}
+            aria-label="Fit view"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-mist transition hover:bg-cream hover:text-ink"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" />
+            </svg>
+          </button>
         </div>
 
         {/* right drawer */}
