@@ -122,8 +122,21 @@ export default function WorldCanvas() {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    // soft round sprite so points render as dots, not hard squares
+    const sprite = document.createElement("canvas");
+    sprite.width = sprite.height = 64;
+    const sctx = sprite.getContext("2d")!;
+    const grad = sctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, "rgba(255,255,255,1)");
+    grad.addColorStop(0.6, "rgba(255,255,255,1)");
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+    sctx.fillStyle = grad;
+    sctx.fillRect(0, 0, 64, 64);
+    const dotTex = new THREE.CanvasTexture(sprite);
     const mat = new THREE.PointsMaterial({
-      size: isMobile ? 0.105 : 0.09,
+      size: isMobile ? 0.13 : 0.11,
+      map: dotTex,
+      alphaTest: 0.3,
       vertexColors: true,
       transparent: true,
       opacity: 0.85,
@@ -257,6 +270,7 @@ export default function WorldCanvas() {
       window.removeEventListener("resize", onResize);
       geo.dispose();
       mat.dispose();
+      dotTex.dispose();
       lineGeo.dispose();
       lineMat.dispose();
       renderer.dispose();
