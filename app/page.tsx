@@ -4,6 +4,7 @@ import QuestionType from "./question-type";
 import FloatingCta from "./floating-cta";
 import ActNav from "./act-nav";
 import Magnetic from "./magnetic";
+import ScrollProgress from "./scroll-progress";
 import { RiseIn, WordsRise } from "./scroll-story";
 
 const WorldCanvas = dynamic(() => import("./world-canvas"));
@@ -149,6 +150,7 @@ export default function Home() {
       <WorldCanvas />
       <div className="grain" aria-hidden />
       <ActNav />
+      <ScrollProgress />
 
       <main className="relative z-10">
         {/* ACT 0 — chaos: every point of light is a piece of your company */}

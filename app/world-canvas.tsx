@@ -189,20 +189,47 @@ export default function WorldCanvas() {
     let s = 0; // smoothed stateFloat
     let px = 0;
     let py = 0;
-    // pointer in world coordinates — the field parts around the cursor
-    let hasMouse = false;
+    // pointer in world coordinates — the field parts around cursor or finger
+    let repel = 0; // smoothed strength so the pocket opens/closes softly
+    let repelTarget = 0;
     let mwx = 0;
     let mwy = 0;
     const halfH = Math.tan(((55 / 2) * Math.PI) / 180) * 16;
+    const setPointerWorld = (clientX: number, clientY: number) => {
+      mwx = ((clientX / window.innerWidth) * 2 - 1) * halfH * camera.aspect;
+      mwy = -((clientY / window.innerHeight) * 2 - 1) * halfH;
+    };
     const onMove = (e: PointerEvent) => {
       px = (e.clientX / window.innerWidth - 0.5) * 1.6;
       py = (e.clientY / window.innerHeight - 0.5) * 1.1;
-      hasMouse = true;
-      mwx = ((e.clientX / window.innerWidth) * 2 - 1) * halfH * camera.aspect;
-      mwy = -((e.clientY / window.innerHeight) * 2 - 1) * halfH;
+      repelTarget = 1;
+      setPointerWorld(e.clientX, e.clientY);
     };
-    if (!isMobile) window.addEventListener("pointermove", onMove);
-    const REPEL_R2 = 4.4; // squared radius of the cursor's influence
+    // touch: the universe parts under the finger, closes on lift
+    const onTouch = (e: PointerEvent) => {
+      repelTarget = 1;
+      setPointerWorld(e.clientX, e.clientY);
+    };
+    const onTouchEnd = () => {
+      repelTarget = 0;
+    };
+    // tilt parallax where the gyroscope is available without a permission
+    // prompt (we never interrupt a visitor to ask)
+    const onOrient = (e: DeviceOrientationEvent) => {
+      if (e.gamma == null || e.beta == null) return;
+      px = Math.max(-1, Math.min(1, e.gamma / 35)) * 0.9;
+      py = Math.max(-1, Math.min(1, (e.beta - 45) / 35)) * 0.6;
+    };
+    if (isMobile) {
+      window.addEventListener("pointerdown", onTouch);
+      window.addEventListener("pointermove", onTouch);
+      window.addEventListener("pointerup", onTouchEnd);
+      window.addEventListener("pointercancel", onTouchEnd);
+      window.addEventListener("deviceorientation", onOrient);
+    } else {
+      window.addEventListener("pointermove", onMove);
+    }
+    const REPEL_R2 = isMobile ? 1.7 : 4.4; // squared influence radius
 
     let raf = 0;
     let running = true;
@@ -229,6 +256,8 @@ export default function WorldCanvas() {
       const sin = Math.sin(spin);
 
       const pos = geo.attributes.position.array as Float32Array;
+      repel += (repelTarget - repel) * 0.1;
+      const repelOn = repel > 0.02;
       for (let i = 0; i < COUNT; i++) {
         const sd = seeds[i];
         const bx = A[i * 3] * (1 - frac) + B[i * 3] * frac;
@@ -238,12 +267,12 @@ export default function WorldCanvas() {
         const rz = bx * sin + bz * cos;
         let x = rx + Math.sin(time * 0.35 + sd) * amp;
         let y = by + Math.cos(time * 0.28 + sd * 1.7) * amp;
-        if (hasMouse) {
+        if (repelOn) {
           const dxm = x - mwx;
           const dym = y - mwy;
           const d2 = dxm * dxm + dym * dym;
           if (d2 < REPEL_R2 && d2 > 0.0001) {
-            const push = ((REPEL_R2 - d2) / REPEL_R2) ** 2 * 0.9;
+            const push = ((REPEL_R2 - d2) / REPEL_R2) ** 2 * 0.9 * repel;
             const inv = push / Math.sqrt(d2);
             x += dxm * inv;
             y += dym * inv;
@@ -289,6 +318,11 @@ export default function WorldCanvas() {
       cancelAnimationFrame(raf);
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onTouch);
+      window.removeEventListener("pointermove", onTouch);
+      window.removeEventListener("pointerup", onTouchEnd);
+      window.removeEventListener("pointercancel", onTouchEnd);
+      window.removeEventListener("deviceorientation", onOrient);
       window.removeEventListener("resize", onResize);
       geo.dispose();
       mat.dispose();
