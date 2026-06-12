@@ -148,7 +148,7 @@ export default function Home() {
 
       <main className="relative z-10">
         {/* ACT 0 — chaos: every point of light is a piece of your company */}
-        <section data-act="0" className="relative mx-auto flex min-h-[88svh] max-w-[1280px] flex-col items-center justify-center px-4 py-16 text-center sm:px-10">
+        <section data-act="0" className="relative mx-auto flex min-h-[100svh] max-w-[1280px] flex-col items-center justify-center px-4 py-16 text-center sm:min-h-[88svh] sm:px-10">
           <div className="animate-fade-up">
             <img
               src="/brand/zecway-vertical.png"
@@ -177,8 +177,8 @@ export default function Home() {
           </p>
         </section>
 
-        {/* marquee strip */}
-        <div className="overflow-hidden bg-dark py-2.5">
+        {/* marquee strip — desktop only; on a phone it's a stray black band */}
+        <div className="hidden overflow-hidden bg-dark py-2.5 sm:block">
           <div className="animate-ticker flex w-max gap-10 whitespace-nowrap">
             {[0, 1].map((dup) => (
               <div key={dup} className="flex gap-10" aria-hidden={dup === 1}>
@@ -311,25 +311,22 @@ export default function Home() {
         </section>
       </main>
 
-      {/* footer — white canvas, dense caption type */}
+      {/* footer — a composed sign-off, centered at every width */}
       <footer className="relative z-10 border-t border-line-soft bg-paper">
-        <div className="mx-auto max-w-[1280px] px-4 py-16 sm:px-10">
-          <div className="flex flex-col justify-between gap-10 sm:flex-row sm:items-end">
-            <div>
-              <span className="flex items-center gap-3">
-                <img src="/brand/zecway-mark.png" alt="" className="h-7 w-auto" />
-                <span className="font-display text-3xl text-ink">Zecway</span>
-              </span>
-              <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.14em] text-ink/60">
-                the company brain
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-x-10 gap-y-2 font-mono text-[11px] uppercase tracking-[0.14em] text-ink/60">
-              <a href="/login" className="hover:text-ink">sign in</a>
-              <a href="#join" className="hover:text-ink">early access</a>
-              <span>permissions enforced on every result</span>
-              <span>© {new Date().getFullYear()} zecway</span>
-            </div>
+        <div className="mx-auto flex max-w-[1280px] flex-col items-center gap-5 px-6 py-14 text-center">
+          <span className="flex items-center gap-3">
+            <img src="/brand/zecway-mark.png" alt="" className="h-6 w-auto" />
+            <span className="font-display text-2xl text-ink">Zecway</span>
+          </span>
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/60">
+            the company brain
+          </p>
+          <div className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.14em] text-ink/60">
+            <a href="/login" className="py-2 hover:text-ink">sign in</a>
+            <span aria-hidden>·</span>
+            <a href="#join" className="py-2 hover:text-ink">early access</a>
+            <span aria-hidden>·</span>
+            <span>© {new Date().getFullYear()}</span>
           </div>
         </div>
       </footer>
