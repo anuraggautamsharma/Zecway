@@ -73,6 +73,14 @@ export function StepGlyph({ kind, active }: { kind: string; active?: boolean }) 
         <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
       </>
     ),
+    branch: (
+      <>
+        <path d="M6 3v12" />
+        <circle cx="18" cy="6" r="3" />
+        <circle cx="6" cy="18" r="3" />
+        <path d="M18 9a9 9 0 0 1-9 9" />
+      </>
+    ),
   };
   return (
     <span
@@ -103,10 +111,20 @@ function stepSummary(s: StepDef): string {
       return s.instructions
         ? `“${s.instructions.slice(0, 60)}${s.instructions.length > 60 ? "…" : ""}”`
         : "Set what the final document should be";
+    case "branch":
+      return s.condition
+        ? `Asks: “${s.condition.slice(0, 60)}${s.condition.length > 60 ? "…" : ""}”`
+        : "Set the yes/no question that picks the lane";
   }
 }
 
-const CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "respond"];
+const CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "branch", "respond"];
+// lanes hold simple steps only — no branches inside branches
+const LANE_CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "respond"];
+
+type BranchStep = Extract<StepDef, { kind: "branch" }>;
+type Lane = "if_true" | "if_false";
+type SubRef = { lane: Lane; idx: number };
 
 export default function Builder({
   workspaceId,
@@ -119,8 +137,10 @@ export default function Builder({
 }) {
   const [d, setD] = useState<AgentDraft>(initial ?? EMPTY);
   const [sel, setSel] = useState<number>(-1); // -1 = trigger
+  const [sub, setSub] = useState<SubRef | null>(null); // step inside a branch lane
   const [drawer, setDrawer] = useState<"step" | "catalog" | "preview" | null>("step");
   const [catalogAt, setCatalogAt] = useState(0);
+  const [catalogLane, setCatalogLane] = useState<{ stepIdx: number; lane: Lane } | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const areaRef = useRef<HTMLTextAreaElement>(null);
@@ -139,48 +159,130 @@ export default function Builder({
       steps: x.steps.map((s, j) => (j === i ? ({ ...s, ...patch } as StepDef) : s)),
     }));
 
-  const hasRespond = d.steps.some((s) => s.kind === "respond");
+  // the step the drawer is editing — possibly inside a branch lane
+  const selStep: StepDef | null =
+    sel >= 0 && d.steps[sel]
+      ? sub && d.steps[sel].kind === "branch"
+        ? ((d.steps[sel] as BranchStep)[sub.lane][sub.idx] ?? null)
+        : d.steps[sel]
+      : null;
+  const patchSel = (patch: Partial<StepDef>) => {
+    if (sel < 0) return;
+    if (sub) {
+      setD((x) => ({
+        ...x,
+        steps: x.steps.map((s, j) =>
+          j === sel && s.kind === "branch"
+            ? {
+                ...s,
+                [sub.lane]: s[sub.lane].map((t, k) =>
+                  k === sub.idx ? ({ ...t, ...patch } as StepDef) : t,
+                ),
+              }
+            : s,
+        ),
+      }));
+    } else {
+      setStep(sel, patch);
+    }
+  };
+
+  const hasRespond = d.steps.some(
+    (s) =>
+      s.kind === "respond" ||
+      (s.kind === "branch" &&
+        [...s.if_true, ...s.if_false].some((t) => t.kind === "respond")),
+  );
   const canSave = d.name.trim().length > 0 && hasRespond;
   const canPreview = hasRespond;
 
   // variables available to the step being configured
-  const varsFor = (stepIndex: number) => [
+  const varsFor = (stepIndex: number, subRef: SubRef | null) => [
     ...d.fields.map((f) => f.key),
     ...d.steps.slice(0, Math.max(stepIndex, 0)).map((_, i) => `step_${i + 1}`),
+    ...(subRef
+      ? Array.from({ length: subRef.idx }, (_, k) => `step_${stepIndex + 1}_${k + 1}`)
+      : []),
   ];
   const insertVar = (v: string) => {
     const el = areaRef.current;
     const tag = `[[${v}]]`;
-    if (sel < 0) return;
-    const s = d.steps[sel];
-    const key = s.kind === "search" || s.kind === "web_search" ? "query" : "instructions";
-    const cur = (s as Record<string, unknown>)[key] as string ?? "";
+    const s = selStep;
+    if (!s) return;
+    const key =
+      s.kind === "search" || s.kind === "web_search"
+        ? "query"
+        : s.kind === "branch"
+          ? "condition"
+          : "instructions";
+    const cur = ((s as Record<string, unknown>)[key] as string) ?? "";
     if (el && document.activeElement === el) {
       const at = el.selectionStart ?? cur.length;
-      setStep(sel, { [key]: cur.slice(0, at) + tag + cur.slice(at) } as Partial<StepDef>);
+      patchSel({ [key]: cur.slice(0, at) + tag + cur.slice(at) } as Partial<StepDef>);
     } else {
-      setStep(sel, { [key]: (cur ? cur + " " : "") + tag } as Partial<StepDef>);
+      patchSel({ [key]: (cur ? cur + " " : "") + tag } as Partial<StepDef>);
+    }
+  };
+
+  const blankStep = (kind: StepDef["kind"]): StepDef => {
+    switch (kind) {
+      case "search":
+        return { kind, query: d.fields[0] ? `[[${d.fields[0].key}]]` : "" };
+      case "web_search":
+        return { kind, query: "" };
+      case "read_doc":
+        return { kind, document_id: documents[0]?.id ?? "", title: documents[0]?.title };
+      case "branch":
+        return { kind, condition: "", if_true: [], if_false: [] };
+      case "think":
+        return { kind, instructions: "" };
+      case "respond":
+        return { kind, instructions: "" };
     }
   };
 
   function addStep(kind: StepDef["kind"], at: number) {
-    const blank: StepDef =
-      kind === "search"
-        ? { kind, query: d.fields[0] ? `[[${d.fields[0].key}]]` : "" }
-        : kind === "web_search"
-          ? { kind, query: "" }
-          : kind === "read_doc"
-            ? { kind, document_id: documents[0]?.id ?? "", title: documents[0]?.title }
-            : { kind, instructions: "" };
     const steps = [...d.steps];
-    steps.splice(at, 0, blank);
+    steps.splice(at, 0, blankStep(kind));
     set({ steps });
     setSel(at);
+    setSub(null);
+    setDrawer("step");
+  }
+  function addLaneStep(kind: StepDef["kind"]) {
+    if (!catalogLane) return;
+    const { stepIdx, lane } = catalogLane;
+    const at = (d.steps[stepIdx] as BranchStep | undefined)?.[lane].length ?? 0;
+    setD((x) => ({
+      ...x,
+      steps: x.steps.map((s, j) =>
+        j === stepIdx && s.kind === "branch"
+          ? { ...s, [lane]: [...s[lane], blankStep(kind)] }
+          : s,
+      ),
+    }));
+    setSel(stepIdx);
+    setSub({ lane, idx: at });
+    setCatalogLane(null);
     setDrawer("step");
   }
   const removeStep = (i: number) => {
     set({ steps: d.steps.filter((_, j) => j !== i) });
     setSel(-1);
+    setSub(null);
+    setDrawer(null);
+  };
+  const removeSub = () => {
+    if (sel < 0 || !sub) return;
+    setD((x) => ({
+      ...x,
+      steps: x.steps.map((s, j) =>
+        j === sel && s.kind === "branch"
+          ? { ...s, [sub.lane]: s[sub.lane].filter((_, k) => k !== sub.idx) }
+          : s,
+      ),
+    }));
+    setSub(null);
     setDrawer(null);
   };
   const moveStep = (i: number, dir: -1 | 1) => {
@@ -283,10 +385,10 @@ export default function Builder({
     }
   }
 
-  const Chips = ({ at }: { at: number }) => (
+  const Chips = () => (
     <div className="mt-2 flex flex-wrap items-center gap-1.5">
       <span className="font-mono text-[10px] uppercase tracking-wider text-mist">insert:</span>
-      {varsFor(at).map((v) => (
+      {varsFor(sel, sub).map((v) => (
         <button
           key={v}
           type="button"
@@ -394,9 +496,11 @@ export default function Builder({
         </label>
       </div>
     );
-  } else if (drawer === "step" && sel >= 0 && d.steps[sel]) {
-    const s = d.steps[sel];
-    drawerTitle = `configure · ${STEP_META[s.kind].label}`;
+  } else if (drawer === "step" && selStep) {
+    const s = selStep;
+    drawerTitle = `configure · ${STEP_META[s.kind].label}${
+      sub ? ` · ${sub.lane === "if_true" ? "yes" : "no"} lane` : ""
+    }`;
     drawerBody = (
       <div className="space-y-4">
         <p className="text-xs leading-relaxed text-mist">{STEP_META[s.kind].blurb}.</p>
@@ -406,12 +510,12 @@ export default function Builder({
             <textarea
               ref={areaRef}
               value={s.query}
-              onChange={(e) => setStep(sel, { query: e.target.value })}
+              onChange={(e) => patchSel({ query: e.target.value })}
               rows={3}
               placeholder={s.kind === "search" ? "what to look for in the graph…" : "what to look for on the web…"}
               className={inputCls}
             />
-            <Chips at={sel} />
+            <Chips />
           </div>
         )}
         {s.kind === "read_doc" && (
@@ -421,7 +525,7 @@ export default function Builder({
               value={s.document_id}
               onChange={(e) => {
                 const doc = documents.find((x) => x.id === e.target.value);
-                setStep(sel, { document_id: e.target.value, title: doc?.title });
+                patchSel({ document_id: e.target.value, title: doc?.title });
               }}
               className={inputCls}
             >
@@ -433,6 +537,27 @@ export default function Builder({
             </select>
           </div>
         )}
+        {s.kind === "branch" && (
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-ink">
+              Condition — a yes/no question *
+            </label>
+            <textarea
+              ref={areaRef}
+              value={s.condition}
+              onChange={(e) => patchSel({ condition: e.target.value })}
+              rows={3}
+              placeholder="e.g. Did the company search in [[step_1]] find a relevant policy?"
+              className={inputCls}
+            />
+            <Chips />
+            <p className="mt-3 rounded-xl bg-cream px-3 py-2.5 text-xs leading-relaxed text-mist">
+              At run time the agent answers this question with yes or no, then
+              follows the matching lane on the canvas. Add steps to each lane
+              there.
+            </p>
+          </div>
+        )}
         {(s.kind === "think" || s.kind === "respond") && (
           <div>
             <label className="mb-1.5 block text-xs font-medium text-ink">
@@ -441,7 +566,7 @@ export default function Builder({
             <textarea
               ref={areaRef}
               value={s.instructions}
-              onChange={(e) => setStep(sel, { instructions: e.target.value })}
+              onChange={(e) => patchSel({ instructions: e.target.value })}
               rows={6}
               placeholder={
                 s.kind === "think"
@@ -450,26 +575,36 @@ export default function Builder({
               }
               className={`${inputCls} rounded-xl leading-relaxed`}
             />
-            <Chips at={sel} />
+            <Chips />
           </div>
         )}
         <div className="flex items-center gap-2 border-t border-line pt-3">
-          <button type="button" onClick={() => moveStep(sel, -1)} className="rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:text-ink">↑ up</button>
-          <button type="button" onClick={() => moveStep(sel, 1)} className="rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:text-ink">↓ down</button>
-          <button type="button" onClick={() => removeStep(sel)} className="ml-auto rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:border-red-300 hover:text-red-500">delete step</button>
+          {!sub && (
+            <>
+              <button type="button" onClick={() => moveStep(sel, -1)} className="rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:text-ink">↑ up</button>
+              <button type="button" onClick={() => moveStep(sel, 1)} className="rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:text-ink">↓ down</button>
+            </>
+          )}
+          <button type="button" onClick={() => (sub ? removeSub() : removeStep(sel))} className="ml-auto rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:border-red-300 hover:text-red-500">delete step</button>
         </div>
       </div>
     );
   } else if (drawer === "catalog") {
-    drawerTitle = "select step";
+    drawerTitle = catalogLane
+      ? `add to the ${catalogLane.lane === "if_true" ? "yes" : "no"} lane`
+      : "select step";
     drawerBody = (
       <div className="space-y-2">
-        <p className="text-xs leading-relaxed text-mist">Define what the agent does at this point.</p>
-        {CATALOG.map((kind) => (
+        <p className="text-xs leading-relaxed text-mist">
+          {catalogLane
+            ? "This step only runs when the branch picks this lane."
+            : "Define what the agent does at this point."}
+        </p>
+        {(catalogLane ? LANE_CATALOG : CATALOG).map((kind) => (
           <button
             key={kind}
             type="button"
-            onClick={() => addStep(kind, catalogAt)}
+            onClick={() => (catalogLane ? addLaneStep(kind) : addStep(kind, catalogAt))}
             className="flex w-full items-start gap-3 rounded-xl border border-line p-3 text-left transition hover:border-accent/40"
           >
             <StepGlyph kind={kind} />
@@ -546,6 +681,7 @@ export default function Builder({
         type="button"
         onClick={() => {
           setCatalogAt(at);
+          setCatalogLane(null);
           setDrawer("catalog");
         }}
         aria-label="Add step"
@@ -628,6 +764,7 @@ export default function Builder({
               type="button"
               onClick={() => {
                 setSel(-1);
+                setSub(null);
                 setDrawer("step");
               }}
               className={`flex w-full items-start gap-3 rounded-2xl border bg-paper p-4 text-left shadow-sm transition ${
@@ -658,15 +795,16 @@ export default function Builder({
                   type="button"
                   onClick={() => {
                     setSel(i);
+                    setSub(null);
                     setDrawer("step");
                   }}
                   className={`flex w-full items-start gap-3 rounded-2xl border bg-paper p-4 text-left shadow-sm transition ${
-                    sel === i && drawer === "step"
+                    sel === i && !sub && drawer === "step"
                       ? "border-accent/60 shadow-[0_12px_28px_-14px_rgba(232,84,10,0.4)]"
                       : "border-line hover:border-accent/35"
                   }`}
                 >
-                  <StepGlyph kind={s.kind} active={sel === i && drawer === "step"} />
+                  <StepGlyph kind={s.kind} active={sel === i && !sub && drawer === "step"} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline gap-2">
                       <span className="font-mono text-[10px] text-mist">{i + 1}.</span>
@@ -680,6 +818,72 @@ export default function Builder({
                     </span>
                   </span>
                 </button>
+
+                {s.kind === "branch" && (
+                  <div className="mt-2 grid grid-cols-2 gap-2.5">
+                    {(["if_true", "if_false"] as const).map((lane) => (
+                      <div
+                        key={lane}
+                        className="rounded-xl border border-dashed border-line bg-paper/60 p-2"
+                      >
+                        <span
+                          className={`mb-1.5 block px-1 font-mono text-[10px] font-semibold uppercase tracking-widest ${
+                            lane === "if_true" ? "text-emerald-600" : "text-mist"
+                          }`}
+                        >
+                          {lane === "if_true" ? "yes ↳" : "no ↳"}
+                        </span>
+                        <div className="space-y-1.5">
+                          {(s as BranchStep)[lane].map((t, k) => {
+                            const active =
+                              sel === i && sub?.lane === lane && sub?.idx === k && drawer === "step";
+                            return (
+                              <button
+                                key={k}
+                                type="button"
+                                onClick={() => {
+                                  setSel(i);
+                                  setSub({ lane, idx: k });
+                                  setDrawer("step");
+                                }}
+                                className={`flex w-full items-center gap-2 rounded-lg border bg-paper p-2 text-left transition ${
+                                  active
+                                    ? "border-accent/60 shadow-[0_8px_20px_-12px_rgba(232,84,10,0.4)]"
+                                    : "border-line hover:border-accent/35"
+                                }`}
+                              >
+                                <StepGlyph kind={t.kind} active={active} />
+                                <span className="min-w-0">
+                                  <span className="block truncate text-xs font-medium text-ink">
+                                    {STEP_META[t.kind].label}
+                                  </span>
+                                  <span className="block font-mono text-[9px] uppercase tracking-wide text-mist/70">
+                                    [[step_{i + 1}_{k + 1}]]
+                                  </span>
+                                </span>
+                              </button>
+                            );
+                          })}
+                          {(s as BranchStep)[lane].length < 3 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSel(i);
+                                setSub(null);
+                                setCatalogLane({ stepIdx: i, lane });
+                                setDrawer("catalog");
+                              }}
+                              className="w-full rounded-lg border border-dashed border-line px-2 py-1.5 text-[11px] text-mist transition hover:border-accent/50 hover:text-accent"
+                            >
+                              + add
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <AddConnector at={i + 1} />
               </div>
             ))}

@@ -235,22 +235,11 @@ export async function POST(request: Request) {
       };
 
       let finalOutput = "";
-      try {
-        send({ type: "meta", run_id: runId });
+      // collected numbered sources for respond steps
+      const sourceBlocks: string[] = [];
 
-        const t = await step(
-          "trigger",
-          `Input received${items.length > 1 ? ` — ${items.length} items` : ""}`,
-        );
-        await finishStep(t, { fields: Object.keys(ctx) });
-
-        // collected numbered sources for the respond step
-        const sourceBlocks: string[] = [];
-
-        for (let si = 0; si < def.steps.length; si++) {
-          const sd = def.steps[si];
-          const varName = `step_${si + 1}`;
-
+      // executes one step, returns its output (lanes reuse this)
+      const execStep = async (sd: StepDef, varName: string): Promise<string> => {
           if (sd.kind === "search") {
             const sIdx = await step("search", `Searching the graph`);
             const topK = sd.top_k ?? (items.length > 1 ? 3 : 6);
@@ -271,15 +260,18 @@ export async function POST(request: Request) {
             ctx[varName] = output;
             sourceBlocks.push(output);
             await finishStep(sIdx, { hits: docNumbers.size });
+            return output;
           } else if (sd.kind === "web_search") {
             const sIdx = await step("search", "Searching the web", { web: true });
             const q = template(sd.query, ctx);
             const summary = await provider.generateWithWebSearch(
               `Search the web and summarize what you find, with key facts, for: ${q}`,
             );
-            ctx[varName] = `(from the web)\n${summary}`;
+            const out = `(from the web)\n${summary}`;
+            ctx[varName] = out;
             sourceBlocks.push(`(from the web — not a company source)\n${summary}`);
             await finishStep(sIdx, { web: true });
+            return out;
           } else if (sd.kind === "read_doc") {
             const sIdx = await step("read", `Reading “${sd.title ?? "document"}”`);
             const { data: doc } = await supabase
@@ -293,15 +285,17 @@ export async function POST(request: Request) {
               ctx[varName] = text;
               sourceBlocks.push(text);
               await finishStep(sIdx);
-            } else {
-              ctx[varName] = "(document not found)";
-              await finishStep(sIdx, { missing: true }, "failed");
+              return text;
             }
+            ctx[varName] = "(document not found)";
+            await finishStep(sIdx, { missing: true }, "failed");
+            return "(document not found)";
           } else if (sd.kind === "think") {
             const sIdx = await step("think", "Reasoning (hidden step)");
             const out = await provider.generateText(template(sd.instructions, ctx), thinkSystem);
             ctx[varName] = out;
             await finishStep(sIdx);
+            return out;
           } else if (sd.kind === "respond") {
             const sIdx = await step("respond", "Writing the answer document");
             const instructions = template(sd.instructions, ctx);
@@ -322,7 +316,37 @@ export async function POST(request: Request) {
             ctx[varName] = out;
             finalOutput = out;
             await finishStep(sIdx);
+            return out;
+          } else if (sd.kind === "branch") {
+            const bIdx = await step("think", "Deciding which path to follow");
+            const ans = await provider.generateText(
+              `Question: ${template(sd.condition, ctx)}\n\nRecent context:\n${sourceBlocks.slice(-2).join("\n\n").slice(0, 6000) || "(none)"}`,
+              'You are a router inside an agent pipeline. Answer STRICTLY with the single word "YES" or "NO".',
+            );
+            const yes = /^\s*y/i.test(ans);
+            await finishStep(bIdx, { decision: yes ? "yes" : "no" });
+            const lane = (yes ? sd.if_true : sd.if_false).slice(0, 3);
+            let last = "";
+            for (let li = 0; li < lane.length; li++) {
+              last = await execStep(lane[li], `${varName}_${li + 1}`);
+            }
+            ctx[varName] = last;
+            return last;
           }
+          return "";
+      };
+
+      try {
+        send({ type: "meta", run_id: runId });
+
+        const t = await step(
+          "trigger",
+          `Input received${items.length > 1 ? ` — ${items.length} items` : ""}`,
+        );
+        await finishStep(t, { fields: Object.keys(ctx) });
+
+        for (let si = 0; si < def.steps.length; si++) {
+          await execStep(def.steps[si], `step_${si + 1}`);
         }
 
         const used = finalOutput.includes(NO_ANSWER)
