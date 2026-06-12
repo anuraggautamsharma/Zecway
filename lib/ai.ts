@@ -13,12 +13,13 @@ const GENERATION_MODEL = "gemini-2.5-flash";
 const EMBEDDING_MODEL = "gemini-embedding-001";
 export const EMBEDDING_DIMS = 768;
 
-// The free tier intermittently returns 429/503 ("model overloaded") for a
-// second or two; retrying absorbs those instead of failing the user's request.
+// The free tier returns 429/503 ("model overloaded" / per-minute rate limit);
+// the last wait must outlast the RPM window so multi-step agent runs survive.
+const RETRY_WAITS = [2000, 8000, 25000];
 async function fetchWithRetry(makeRequest: () => Promise<Response>): Promise<Response> {
   let res = await makeRequest();
-  for (let attempt = 1; attempt <= 2 && (res.status === 429 || res.status === 503); attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
+  for (let attempt = 0; attempt < RETRY_WAITS.length && (res.status === 429 || res.status === 503); attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, RETRY_WAITS[attempt]));
     res = await makeRequest();
   }
   return res;
