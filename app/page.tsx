@@ -45,7 +45,7 @@ function PillPrimary({ href, children }: { href: string; children: React.ReactNo
 // Embedded product mocks — frosted glass, so the universe stays visible
 function SearchMock() {
   return (
-    <div className="rounded-lg border border-white/60 bg-paper/60 p-5 text-left shadow-[0_4px_16px_rgba(0,0,0,0.06)] backdrop-blur-[2px] sm:p-6">
+    <div className="glass-panel rounded-lg bg-paper/55 p-5 text-left sm:p-6">
       <div className="flex items-center gap-3 rounded-full border border-line px-4 py-2.5">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-ink">
           <circle cx="11" cy="11" r="7" />
@@ -68,7 +68,7 @@ function SearchMock() {
 
 function AssistantMock() {
   return (
-    <div className="rounded-lg border border-white/60 bg-paper/60 p-5 text-left shadow-[0_4px_16px_rgba(0,0,0,0.06)] backdrop-blur-[2px] sm:p-6">
+    <div className="glass-panel rounded-lg bg-paper/55 p-5 text-left sm:p-6">
       <p className="ml-auto w-fit max-w-[80%] rounded-2xl bg-card px-4 py-2.5 text-sm text-ink">
         Draft a reply to the Hartman RFP — security section
       </p>
@@ -124,7 +124,7 @@ function ColorBlock({
 }) {
   return (
     <section className="mx-auto max-w-[1280px] px-4 sm:px-10">
-      <div className={`${bg} grid items-center gap-10 rounded-none p-8 backdrop-blur-[3px] sm:rounded-3xl sm:p-12 lg:grid-cols-2 lg:gap-16 lg:p-16`}>
+      <div className={`${bg} glass-panel grid items-center gap-10 rounded-none p-8 sm:rounded-3xl sm:p-12 lg:grid-cols-2 lg:gap-16 lg:p-16`}>
         <div>
           <Eyebrow light={light}>{eyebrow}</Eyebrow>
           <h2 className={`mt-4 text-3xl font-[540] leading-[1.15] tracking-[-0.01em] sm:text-4xl ${light ? "text-on-dark" : "text-ink"}`}>
@@ -149,6 +149,11 @@ export default function Home() {
         {/* ACT 0 — chaos: every point of light is a piece of your company */}
         <section data-act="0" className="relative mx-auto flex min-h-[88svh] max-w-[1280px] flex-col items-center justify-center px-4 py-16 text-center sm:px-10">
           <div className="animate-fade-up">
+            <img
+              src="/brand/zecway-vertical.png"
+              alt="Zecway"
+              className="mx-auto mb-8 h-24 w-auto sm:h-28"
+            />
             <Eyebrow>the company brain · early access 2026</Eyebrow>
           </div>
           <WordsRise
@@ -289,7 +294,7 @@ export default function Home() {
         {/* ACT 5 — the halo; closing CTA on cream */}
         <section data-act="5" id="join" className="mx-auto max-w-[1280px] px-4 py-24 sm:px-10 sm:py-32">
           <RiseIn>
-            <div className="bg-blockcream/70 rounded-none p-8 text-center backdrop-blur-[3px] sm:rounded-3xl sm:p-16">
+            <div className="bg-blockcream/65 glass-panel rounded-none p-8 text-center sm:rounded-3xl sm:p-16">
               <WordsRise
                 text="Give your team one search bar for everything."
                 className="mx-auto max-w-2xl font-display text-4xl leading-[1.08] text-ink sm:text-6xl sm:tracking-[-0.96px]"
