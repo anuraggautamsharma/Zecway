@@ -43,18 +43,19 @@ function PillPrimary({ href, children }: { href: string; children: React.ReactNo
   );
 }
 
-// Embedded product mocks — frosted glass, so the universe stays visible
+// Embedded product moments — frameless, floating on the universe; only the
+// smallest frosted elements (a pill, a chip) touch the field
 function SearchMock() {
   return (
-    <div className="glass-panel rounded-lg bg-paper/55 p-5 text-left sm:p-6">
-      <div className="flex items-center gap-3 rounded-full border border-line px-4 py-2.5">
+    <div className="w-full max-w-md text-left">
+      <div className="flex max-w-md items-center gap-3 rounded-full border border-line bg-paper/70 px-4 py-2.5 backdrop-blur-[2px]">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-ink">
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.5-3.5" />
         </svg>
         <span className="text-sm text-ink sm:text-base">where is the latest pricing deck?</span>
       </div>
-      <p className="mt-5 text-sm leading-relaxed text-ink sm:text-base">
+      <p className="mt-5 max-w-md text-sm leading-relaxed text-ink sm:text-base">
         Pricing v4.2, updated Tuesday by Marcus — here&apos;s the deck, and the
         thread explaining what changed{" "}
         <span className="ml-1 inline-flex h-4.5 items-center rounded-full bg-card px-1.5 align-middle font-mono text-[10px] font-medium">1</span>
@@ -69,8 +70,8 @@ function SearchMock() {
 
 function AssistantMock() {
   return (
-    <div className="glass-panel rounded-lg bg-paper/55 p-5 text-left sm:p-6">
-      <p className="ml-auto w-fit max-w-[80%] rounded-2xl bg-card px-4 py-2.5 text-sm text-ink">
+    <div className="w-full max-w-md text-left">
+      <p className="ml-auto w-fit max-w-[80%] rounded-2xl bg-card/80 px-4 py-2.5 text-sm text-ink backdrop-blur-[2px]">
         Draft a reply to the Hartman RFP — security section
       </p>
       <div className="mt-4 max-w-[90%]">
@@ -93,50 +94,49 @@ function AgentsMock() {
     ["post to slack", "You approve, it sends"],
   ];
   return (
-    <div className="space-y-2.5 text-left">
+    <div className="w-fit text-left">
       {steps.map(([k, v], i) => (
         <div key={k}>
-          <div className="rounded-lg bg-white/10 px-4 py-3 backdrop-blur-[2px]">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-on-dark-soft">{k}</p>
-            <p className="mt-0.5 text-sm font-[480] text-on-dark sm:text-base">{v}</p>
+          <div className="w-fit min-w-[240px] rounded-lg border border-line bg-paper/70 px-4 py-3 backdrop-blur-[2px]">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/60">{k}</p>
+            <p className="mt-0.5 text-sm font-[480] text-ink sm:text-base">{v}</p>
           </div>
-          {i < steps.length - 1 && <div className="ml-6 h-2.5 w-px bg-white/25" />}
+          {i < steps.length - 1 && <div className="ml-6 h-3 w-px bg-line" />}
         </div>
       ))}
     </div>
   );
 }
 
-// A full-width pastel story panel — tinted glass over the living universe
-function ColorBlock({
-  bg,
-  light = false,
-  eyebrow,
+// An open story section — type floating on the universe; the brand pastel
+// survives as a small chip, never as a slab that hides the field
+function Story({
+  chip,
+  chipClass,
   title,
   body,
   children,
 }: {
-  bg: string;
-  light?: boolean;
-  eyebrow: string;
+  chip: string;
+  chipClass: string;
   title: string;
   body: string;
   children?: React.ReactNode;
 }) {
   return (
-    <section className="mx-auto max-w-[1280px] px-0 sm:px-10">
-      <div className={`${bg} glass-panel grid items-center gap-10 rounded-none p-8 sm:rounded-3xl sm:p-12 lg:grid-cols-2 lg:gap-16 lg:p-16`}>
-        <div>
-          <Eyebrow light={light}>{eyebrow}</Eyebrow>
-          <h2 className={`mt-4 text-3xl font-[540] leading-[1.15] tracking-[-0.01em] sm:text-4xl ${light ? "text-on-dark" : "text-ink"}`}>
-            {title}
-          </h2>
-          <p className={`mt-4 max-w-md text-lg font-[340] leading-[1.4] sm:text-xl ${light ? "text-on-dark-soft" : "text-ink"}`}>
-            {body}
-          </p>
-        </div>
-        <div>{children}</div>
+    <section className="mx-auto grid max-w-[1280px] items-center gap-10 px-6 py-16 text-center sm:px-10 sm:py-24 lg:grid-cols-2 lg:gap-16 lg:text-left">
+      <div>
+        <span className={`${chipClass} inline-block rounded-full px-3.5 py-1.5 font-mono text-xs uppercase tracking-[0.18em]`}>
+          {chip}
+        </span>
+        <h2 className="mt-5 text-3xl font-[540] leading-[1.15] tracking-[-0.01em] text-ink sm:text-4xl">
+          {title}
+        </h2>
+        <p className="mx-auto mt-4 max-w-md text-lg font-[340] leading-[1.4] text-ink sm:text-xl lg:mx-0">
+          {body}
+        </p>
       </div>
+      <div className="flex justify-center lg:justify-start">{children}</div>
     </section>
   );
 }
@@ -224,16 +224,16 @@ export default function Home() {
           </RiseIn>
         </section>
 
-        {/* 01 — search, on lime */}
+        {/* 01 — search */}
         <RiseIn>
-          <ColorBlock
-            bg="bg-lime/70"
-            eyebrow="01 · search"
+          <Story
+            chip="01 · search"
+            chipClass="bg-lime text-ink"
             title="Find anything, instantly."
             body="One bar across every tool your company uses — results as you type, only from what you're allowed to see."
           >
             <SearchMock />
-          </ColorBlock>
+          </Story>
         </RiseIn>
 
         {/* ACT 3 — three layers; the universe separates into planes */}
@@ -250,16 +250,16 @@ export default function Home() {
           </RiseIn>
         </section>
 
-        {/* 02 — assistant, on lilac */}
+        {/* 02 — assistant */}
         <RiseIn>
-          <ColorBlock
-            bg="bg-lilac/70"
-            eyebrow="02 · assistant"
+          <Story
+            chip="02 · assistant"
+            chipClass="bg-lilac text-ink"
             title="An expert by your side."
             body="Drafts, summaries, and decisions grounded in your company's real knowledge — in your voice, with receipts."
           >
             <AssistantMock />
-          </ColorBlock>
+          </Story>
         </RiseIn>
 
         {/* ACT 4 — clearance; the universe splits into two clusters */}
@@ -279,34 +279,36 @@ export default function Home() {
           </RiseIn>
         </section>
 
-        {/* 03 — agents, on navy (the only dark block) */}
+        {/* 03 — agents */}
         <RiseIn>
-          <ColorBlock
-            bg="bg-navy/85"
-            light
-            eyebrow="03 · agents"
+          <Story
+            chip="03 · agents"
+            chipClass="bg-navy text-on-dark"
             title="Describe a chore. Get a worker."
             body="AI teammates that take on real work — scheduled mornings, autonomous research, actions a human approves. Every claim cited."
           >
             <AgentsMock />
-          </ColorBlock>
+          </Story>
         </RiseIn>
 
-        {/* ACT 5 — the halo; closing CTA on cream */}
-        <section data-act="5" id="join" className="mx-auto max-w-[1280px] px-0 py-20 sm:px-10 sm:py-32">
+        {/* ACT 5 — the halo; closing CTA floating in the open */}
+        <section data-act="5" id="join" className="mx-auto flex min-h-[70svh] max-w-[1280px] flex-col items-center justify-center px-6 py-20 text-center sm:px-10 sm:py-32">
           <RiseIn>
-            <div className="bg-blockcream/65 glass-panel rounded-none p-8 text-center sm:rounded-3xl sm:p-16">
-              <WordsRise
-                text="Give your team one search bar for everything."
-                className="mx-auto max-w-2xl font-display text-4xl leading-[1.08] text-ink sm:text-6xl sm:tracking-[-0.96px]"
-              />
-              <div className="mt-9 flex justify-center">
-                <WaitlistForm />
-              </div>
-              <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.14em] text-ink/60">
-                early access is limited · no credit card
-              </p>
-            </div>
+            <span className="bg-blockcream inline-block rounded-full px-3.5 py-1.5 font-mono text-xs uppercase tracking-[0.18em] text-ink">
+              early access
+            </span>
+          </RiseIn>
+          <WordsRise
+            text="Give your team one search bar for everything."
+            className="mx-auto mt-6 max-w-2xl font-display text-4xl leading-[1.08] text-ink sm:text-6xl sm:tracking-[-0.96px]"
+          />
+          <RiseIn delay={0.2} className="mt-9 flex w-full justify-center">
+            <WaitlistForm />
+          </RiseIn>
+          <RiseIn delay={0.3}>
+            <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.14em] text-ink/60">
+              early access is limited · no credit card
+            </p>
           </RiseIn>
         </section>
       </main>
