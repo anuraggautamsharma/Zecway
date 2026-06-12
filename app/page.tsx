@@ -2,6 +2,8 @@ import dynamic from "next/dynamic";
 import WaitlistForm from "./waitlist-form";
 import QuestionType from "./question-type";
 import FloatingCta from "./floating-cta";
+import ActNav from "./act-nav";
+import Magnetic from "./magnetic";
 import { RiseIn, WordsRise } from "./scroll-story";
 
 const WorldCanvas = dynamic(() => import("./world-canvas"));
@@ -145,6 +147,8 @@ export default function Home() {
   return (
     <div className="bg-paper text-ink">
       <WorldCanvas />
+      <div className="grain" aria-hidden />
+      <ActNav />
 
       <main className="relative z-10">
         {/* ACT 0 — chaos: every point of light is a piece of your company */}
@@ -169,10 +173,12 @@ export default function Home() {
           </RiseIn>
           <RiseIn delay={0.4}>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-              <PillPrimary href="#join">Get early access</PillPrimary>
+              <Magnetic>
+                <PillPrimary href="#join">Get early access</PillPrimary>
+              </Magnetic>
             </div>
           </RiseIn>
-          <p className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[11px] uppercase tracking-[0.24em] text-ink/50">
+          <p className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-pulse font-mono text-[11px] uppercase tracking-[0.24em] text-ink/50 [animation-duration:2.6s]">
             scroll ↓
           </p>
         </section>
