@@ -9,9 +9,25 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-// Monochrome universe: gray dust, black evidence nodes — per DESIGNfigma.md
+// Monochrome dust + black evidence nodes, sprinkled with the brand's block
+// palette (deepened so the pastel hues read at particle size) and the rare
+// magenta — per DESIGNfigma.md
 const NODE = new THREE.Color("#000000");
 const DUST = new THREE.Color("#a3a3a3");
+const deepen = (hex: string) => {
+  const c = new THREE.Color(hex);
+  c.offsetHSL(0, 0.22, -0.16);
+  return c;
+};
+const BRAND = [
+  deepen("#dceeb1"), // lime
+  deepen("#c5b0f4"), // lilac
+  deepen("#c8e6cd"), // mint
+  deepen("#f3c9b6"), // coral
+  deepen("#efd4d4"), // pink
+  new THREE.Color("#1f1d3d"), // navy
+  new THREE.Color("#ff3d8b"), // magenta — the rare spark
+];
 
 function bell(s: number, k: number) {
   return Math.max(0, 1 - Math.abs(s - k));
@@ -89,7 +105,12 @@ export default function WorldCanvas() {
       halo[i * 3 + 1] = Math.sin(angle) * hR * 0.45;
       halo[i * 3 + 2] = Math.sin(angle * 3) * 0.5;
 
-      const c = i % 6 === 0 ? NODE : DUST;
+      const c =
+        i % 6 === 0
+          ? NODE
+          : i % 3 === 1
+            ? BRAND[(i / 3) % BRAND.length | 0]
+            : DUST;
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
       colors[i * 3 + 2] = c.b;
