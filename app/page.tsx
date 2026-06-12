@@ -1,8 +1,14 @@
+import dynamic from "next/dynamic";
 import WaitlistForm from "./waitlist-form";
+import QuestionType from "./question-type";
+import { RiseIn, WordsRise } from "./scroll-story";
 
-// The landing follows DESIGNfigma.md: a monochrome editorial frame (white
-// canvas, black ink, pill CTAs, mono eyebrows) interrupted by oversized
-// pastel color blocks — one block per story, white canvas between them.
+const WorldCanvas = dynamic(() => import("./world-canvas"));
+
+// The landing follows DESIGNfigma.md — monochrome editorial frame, pill
+// CTAs, pastel color blocks — staged as one continuous scroll story: a
+// monochrome particle universe behind the page morphs from chaos to graph
+// to layers to clearance to halo as the narrative advances ([data-act]).
 
 const MARQUEE_ITEMS = [
   "one search bar for everything",
@@ -148,6 +154,8 @@ function ColorBlock({
 export default function Home() {
   return (
     <div className="bg-paper text-ink">
+      <WorldCanvas />
+
       {/* top nav */}
       <header className="nav-blur sticky top-0 z-40 border-b border-line-soft">
         <div className="mx-auto flex h-14 max-w-[1280px] items-center justify-between px-4 sm:px-10">
@@ -169,21 +177,31 @@ export default function Home() {
         </div>
       </header>
 
-      <main>
-        {/* hero — white canvas, oversized light display type */}
-        <section className="mx-auto max-w-[1280px] px-4 pb-20 pt-16 text-center sm:px-10 sm:pb-28 sm:pt-24">
-          <Eyebrow>the company brain · early access 2026</Eyebrow>
-          <h1 className="animate-fade-up mx-auto mt-6 max-w-4xl font-display text-5xl leading-[1.02] text-ink sm:text-7xl lg:text-[86px] lg:leading-[1.0] lg:tracking-[-1.72px]">
-            Your company already knows the answer.
-          </h1>
-          <p className="mx-auto mt-7 max-w-xl text-lg font-[330] leading-[1.4] text-ink sm:text-xl">
-            Zecway connects everything your team knows and turns it into
-            instant, cited answers — and into agents that do the work.
-          </p>
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-            <PillPrimary href="#join">Get early access</PillPrimary>
-            <PillSecondary href="/login">Sign in</PillSecondary>
+      <main className="relative z-10">
+        {/* ACT 0 — chaos: every point of light is a piece of your company */}
+        <section data-act="0" className="relative mx-auto flex min-h-[88svh] max-w-[1280px] flex-col items-center justify-center px-4 py-16 text-center sm:px-10">
+          <div className="animate-fade-up">
+            <Eyebrow>the company brain · early access 2026</Eyebrow>
           </div>
+          <WordsRise
+            text="Your company already knows the answer."
+            className="mx-auto mt-6 max-w-4xl font-display text-5xl leading-[1.02] text-ink sm:text-7xl lg:text-[86px] lg:leading-[1.0] lg:tracking-[-1.72px]"
+          />
+          <RiseIn delay={0.3}>
+            <p className="mx-auto mt-7 max-w-xl text-lg font-[330] leading-[1.4] text-ink sm:text-xl">
+              Every point of light around you is a piece of it — scattered
+              across ten tools. Keep scrolling.
+            </p>
+          </RiseIn>
+          <RiseIn delay={0.4}>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+              <PillPrimary href="#join">Get early access</PillPrimary>
+              <PillSecondary href="/login">Sign in</PillSecondary>
+            </div>
+          </RiseIn>
+          <p className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[11px] uppercase tracking-[0.24em] text-ink/50">
+            scroll ↓
+          </p>
         </section>
 
         {/* marquee strip */}
@@ -201,80 +219,127 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 01 — search, on lime */}
-        <div className="pt-24 sm:pt-32" />
-        <ColorBlock
-          bg="bg-lime"
-          eyebrow="01 · search"
-          title="Find anything, instantly."
-          body="One bar across every tool your company uses — results as you type, only from what you're allowed to see."
-        >
-          <SearchMock />
-        </ColorBlock>
+        {/* ACT 1 — the question, typed live; the universe stirs */}
+        <section data-act="1" className="flex min-h-[92svh] flex-col items-center justify-center px-4 text-center sm:px-10">
+          <RiseIn>
+            <p className="mb-8 font-mono text-xs uppercase tracking-[0.24em] text-ink/60">
+              then, someone asks
+            </p>
+          </RiseIn>
+          <QuestionType />
+        </section>
 
-        {/* white interlude */}
-        <section className="mx-auto max-w-[1280px] px-4 py-24 text-center sm:px-10 sm:py-32">
-          <h2 className="mx-auto max-w-3xl font-display text-4xl leading-[1.1] text-ink sm:text-6xl sm:tracking-[-0.96px]">
-            The brain has three layers.
-          </h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg font-[330] leading-[1.4] text-ink sm:text-xl">
-            Search is day one. The assistant turns answers into work. Agents
-            turn work into something that runs without you.
-          </p>
+        {/* ACT 2 — the answer; chaos organizes into the graph */}
+        <section data-act="2" className="flex min-h-[92svh] flex-col items-center justify-center px-4 text-center sm:px-10">
+          <RiseIn>
+            <p className="mb-7 font-mono text-xs uppercase tracking-[0.24em] text-ink">
+              ● answer · 0.4s
+            </p>
+          </RiseIn>
+          <WordsRise
+            text="Pricing v4.2, updated Tuesday by Marcus — here's the deck, and the thread explaining what changed."
+            className="mx-auto max-w-3xl font-display text-3xl leading-snug text-ink sm:text-5xl sm:tracking-[-0.96px]"
+          />
+          <RiseIn delay={0.4}>
+            <p className="mt-8 font-mono text-xs uppercase tracking-[0.1em] text-ink/60">
+              [1] pricing v4.2 · drive&nbsp;&nbsp;&nbsp;[2] #go-to-market · slack
+            </p>
+            <p className="mx-auto mt-9 max-w-sm text-sm font-[330] leading-relaxed text-ink/70">
+              Watch the chaos organize. Every answer is built from the graph —
+              cited, current, permitted.
+            </p>
+          </RiseIn>
+        </section>
+
+        {/* 01 — search, on lime */}
+        <RiseIn>
+          <ColorBlock
+            bg="bg-lime"
+            eyebrow="01 · search"
+            title="Find anything, instantly."
+            body="One bar across every tool your company uses — results as you type, only from what you're allowed to see."
+          >
+            <SearchMock />
+          </ColorBlock>
+        </RiseIn>
+
+        {/* ACT 3 — three layers; the universe separates into planes */}
+        <section data-act="3" className="mx-auto flex min-h-[80svh] max-w-[1280px] flex-col items-center justify-center px-4 py-24 text-center sm:px-10">
+          <WordsRise
+            text="The brain has three layers."
+            className="mx-auto max-w-3xl font-display text-4xl leading-[1.1] text-ink sm:text-6xl sm:tracking-[-0.96px]"
+          />
+          <RiseIn delay={0.25}>
+            <p className="mx-auto mt-6 max-w-xl text-lg font-[330] leading-[1.4] text-ink sm:text-xl">
+              Search is day one. The assistant turns answers into work. Agents
+              turn work into something that runs without you.
+            </p>
+          </RiseIn>
         </section>
 
         {/* 02 — assistant, on lilac */}
-        <ColorBlock
-          bg="bg-lilac"
-          eyebrow="02 · assistant"
-          title="An expert by your side."
-          body="Drafts, summaries, and decisions grounded in your company's real knowledge — in your voice, with receipts."
-        >
-          <AssistantMock />
-        </ColorBlock>
+        <RiseIn>
+          <ColorBlock
+            bg="bg-lilac"
+            eyebrow="02 · assistant"
+            title="An expert by your side."
+            body="Drafts, summaries, and decisions grounded in your company's real knowledge — in your voice, with receipts."
+          >
+            <AssistantMock />
+          </ColorBlock>
+        </RiseIn>
 
-        {/* white interlude — permissions */}
-        <section className="mx-auto max-w-[1280px] px-4 py-24 text-center sm:px-10 sm:py-32">
-          <Eyebrow>the part enterprises ask first</Eyebrow>
-          <h2 className="mx-auto mt-5 max-w-2xl font-display text-4xl leading-[1.1] text-ink sm:text-6xl sm:tracking-[-0.96px]">
-            Same question. Different clearance.
-          </h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg font-[330] leading-[1.4] text-ink sm:text-xl">
-            Permissions are enforced in the database — before anything ever
-            reaches an AI. Everyone sees only what they&apos;re allowed to see.
-          </p>
+        {/* ACT 4 — clearance; the universe splits into two clusters */}
+        <section data-act="4" className="mx-auto flex min-h-[80svh] max-w-[1280px] flex-col items-center justify-center px-4 py-24 text-center sm:px-10">
+          <RiseIn>
+            <Eyebrow>the part enterprises ask first</Eyebrow>
+          </RiseIn>
+          <WordsRise
+            text="Same question. Different clearance."
+            className="mx-auto mt-5 max-w-2xl font-display text-4xl leading-[1.1] text-ink sm:text-6xl sm:tracking-[-0.96px]"
+          />
+          <RiseIn delay={0.25}>
+            <p className="mx-auto mt-6 max-w-xl text-lg font-[330] leading-[1.4] text-ink sm:text-xl">
+              Permissions are enforced in the database — before anything ever
+              reaches an AI. Everyone sees only what they&apos;re allowed to see.
+            </p>
+          </RiseIn>
         </section>
 
         {/* 03 — agents, on navy (the only dark block) */}
-        <ColorBlock
-          bg="bg-navy"
-          light
-          eyebrow="03 · agents"
-          title="Describe a chore. Get a worker."
-          body="AI teammates that take on real work — scheduled mornings, autonomous research, actions a human approves. Every claim cited."
-        >
-          <AgentsMock />
-        </ColorBlock>
+        <RiseIn>
+          <ColorBlock
+            bg="bg-navy"
+            light
+            eyebrow="03 · agents"
+            title="Describe a chore. Get a worker."
+            body="AI teammates that take on real work — scheduled mornings, autonomous research, actions a human approves. Every claim cited."
+          >
+            <AgentsMock />
+          </ColorBlock>
+        </RiseIn>
 
-        {/* closing CTA on cream */}
-        <div className="pt-24 sm:pt-32" />
-        <section id="join" className="mx-auto max-w-[1280px] px-4 pb-24 sm:px-10 sm:pb-32">
-          <div className="bg-blockcream rounded-none p-8 text-center sm:rounded-3xl sm:p-16">
-            <h2 className="mx-auto max-w-2xl font-display text-4xl leading-[1.08] text-ink sm:text-6xl sm:tracking-[-0.96px]">
-              Give your team one search bar for everything.
-            </h2>
-            <div className="mt-9 flex justify-center">
-              <WaitlistForm />
+        {/* ACT 5 — the halo; closing CTA on cream */}
+        <section data-act="5" id="join" className="mx-auto max-w-[1280px] px-4 py-24 sm:px-10 sm:py-32">
+          <RiseIn>
+            <div className="bg-blockcream rounded-none p-8 text-center sm:rounded-3xl sm:p-16">
+              <WordsRise
+                text="Give your team one search bar for everything."
+                className="mx-auto max-w-2xl font-display text-4xl leading-[1.08] text-ink sm:text-6xl sm:tracking-[-0.96px]"
+              />
+              <div className="mt-9 flex justify-center">
+                <WaitlistForm />
+              </div>
+              <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.14em] text-ink/60">
+                early access is limited · no credit card
+              </p>
             </div>
-            <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.14em] text-ink/60">
-              early access is limited · no credit card
-            </p>
-          </div>
+          </RiseIn>
         </section>
       </main>
 
       {/* footer — white canvas, dense caption type */}
-      <footer className="border-t border-line-soft">
+      <footer className="relative z-10 border-t border-line-soft bg-paper">
         <div className="mx-auto max-w-[1280px] px-4 py-16 sm:px-10">
           <div className="flex flex-col justify-between gap-10 sm:flex-row sm:items-end">
             <div>
