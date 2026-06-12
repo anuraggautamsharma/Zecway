@@ -189,11 +189,20 @@ export default function WorldCanvas() {
     let s = 0; // smoothed stateFloat
     let px = 0;
     let py = 0;
+    // pointer in world coordinates — the field parts around the cursor
+    let hasMouse = false;
+    let mwx = 0;
+    let mwy = 0;
+    const halfH = Math.tan(((55 / 2) * Math.PI) / 180) * 16;
     const onMove = (e: PointerEvent) => {
       px = (e.clientX / window.innerWidth - 0.5) * 1.6;
       py = (e.clientY / window.innerHeight - 0.5) * 1.1;
+      hasMouse = true;
+      mwx = ((e.clientX / window.innerWidth) * 2 - 1) * halfH * camera.aspect;
+      mwy = -((e.clientY / window.innerHeight) * 2 - 1) * halfH;
     };
     if (!isMobile) window.addEventListener("pointermove", onMove);
+    const REPEL_R2 = 4.4; // squared radius of the cursor's influence
 
     let raf = 0;
     let running = true;
@@ -227,8 +236,21 @@ export default function WorldCanvas() {
         const bz = A[i * 3 + 2] * (1 - frac) + B[i * 3 + 2] * frac;
         const rx = bx * cos - bz * sin;
         const rz = bx * sin + bz * cos;
-        pos[i * 3] = rx + Math.sin(time * 0.35 + sd) * amp;
-        pos[i * 3 + 1] = by + Math.cos(time * 0.28 + sd * 1.7) * amp;
+        let x = rx + Math.sin(time * 0.35 + sd) * amp;
+        let y = by + Math.cos(time * 0.28 + sd * 1.7) * amp;
+        if (hasMouse) {
+          const dxm = x - mwx;
+          const dym = y - mwy;
+          const d2 = dxm * dxm + dym * dym;
+          if (d2 < REPEL_R2 && d2 > 0.0001) {
+            const push = ((REPEL_R2 - d2) / REPEL_R2) ** 2 * 0.9;
+            const inv = push / Math.sqrt(d2);
+            x += dxm * inv;
+            y += dym * inv;
+          }
+        }
+        pos[i * 3] = x;
+        pos[i * 3 + 1] = y;
         pos[i * 3 + 2] = rz;
       }
       geo.attributes.position.needsUpdate = true;
