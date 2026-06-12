@@ -39,13 +39,16 @@ function Flow({ agent }: { agent: AgentView }) {
     ...agent.steps.map((s) => ({
       kind: s.kind,
       label: STEP_META[s.kind].label,
-      text: STEP_META[s.kind].blurb,
+      text:
+        s.kind === "branch"
+          ? `Picks a lane — yes (${s.if_true.length} step${s.if_true.length === 1 ? "" : "s"}) or no (${s.if_false.length})`
+          : STEP_META[s.kind].blurb,
     })),
   ];
   return (
     <ol className="relative space-y-0">
       {steps.map((s, i) => (
-        <li key={s.kind} className="relative flex gap-3 pb-4">
+        <li key={i} className="relative flex gap-3 pb-4">
           {i < steps.length - 1 && (
             <span className="absolute left-[15px] top-8 h-full w-px bg-line" aria-hidden />
           )}
@@ -127,6 +130,7 @@ export default function RunClient({
             type: string; idx?: number; kind?: string; title?: string;
             status?: string; text?: string; done?: number; total?: number;
             run_id?: string; citations?: Citation[]; error?: string;
+            detail?: { decision?: string };
           };
           try {
             m = JSON.parse(line);
@@ -141,7 +145,13 @@ export default function RunClient({
               const next = [...s];
               const at = next.findIndex((x) => x.idx === idx);
               if (at >= 0) {
-                next[at] = { ...next[at], status: m.status ?? next[at].status };
+                next[at] = {
+                  ...next[at],
+                  status: m.status ?? next[at].status,
+                  title: m.detail?.decision
+                    ? `${next[at].title} — took the ${m.detail.decision} lane`
+                    : next[at].title,
+                };
               } else {
                 next.push({
                   idx,

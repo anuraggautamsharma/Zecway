@@ -14,7 +14,8 @@ export type StepDef =
   | { kind: "web_search"; query: string }
   | { kind: "read_doc"; document_id: string; title?: string }
   | { kind: "think"; instructions: string }
-  | { kind: "respond"; instructions: string };
+  | { kind: "respond"; instructions: string }
+  | { kind: "branch"; condition: string; if_true: StepDef[]; if_false: StepDef[] };
 
 export type AgentDefV2 = {
   id: string | null;
@@ -111,5 +112,9 @@ export const STEP_META: Record<
   respond: {
     label: "Respond",
     blurb: "Writes the final cited document for the user",
+  },
+  branch: {
+    label: "Branch",
+    blurb: "Decides which path to follow, with a fallback lane",
   },
 };
