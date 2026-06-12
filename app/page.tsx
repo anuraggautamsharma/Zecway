@@ -322,8 +322,6 @@ export default function Home() {
             the company brain
           </p>
           <div className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.14em] text-ink/60">
-            <a href="/login" className="py-2 hover:text-ink">sign in</a>
-            <span aria-hidden>·</span>
             <a href="#join" className="py-2 hover:text-ink">early access</a>
             <span aria-hidden>·</span>
             <span>© {new Date().getFullYear()}</span>
