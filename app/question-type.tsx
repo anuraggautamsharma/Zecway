@@ -27,7 +27,7 @@ export default function QuestionType() {
   }, [typed, qi]);
 
   return (
-    <p className="caret mx-auto max-w-3xl font-display text-3xl leading-snug text-ink sm:text-6xl">
+    <p className="caret mx-auto min-h-[2.6em] max-w-3xl font-display text-3xl leading-snug text-ink sm:text-6xl">
       {typed}
     </p>
   );

@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import WaitlistForm from "./waitlist-form";
 import QuestionType from "./question-type";
+import FloatingCta from "./floating-cta";
 import { RiseIn, WordsRise } from "./scroll-story";
 
 const WorldCanvas = dynamic(() => import("./world-canvas"));
@@ -123,7 +124,7 @@ function ColorBlock({
   children?: React.ReactNode;
 }) {
   return (
-    <section className="mx-auto max-w-[1280px] px-4 sm:px-10">
+    <section className="mx-auto max-w-[1280px] px-0 sm:px-10">
       <div className={`${bg} glass-panel grid items-center gap-10 rounded-none p-8 sm:rounded-3xl sm:p-12 lg:grid-cols-2 lg:gap-16 lg:p-16`}>
         <div>
           <Eyebrow light={light}>{eyebrow}</Eyebrow>
@@ -192,7 +193,7 @@ export default function Home() {
         </div>
 
         {/* ACT 1 — the question, typed live; the universe stirs */}
-        <section data-act="1" className="flex min-h-[92svh] flex-col items-center justify-center px-4 text-center sm:px-10">
+        <section data-act="1" className="flex min-h-[72svh] flex-col items-center justify-center px-4 text-center sm:min-h-[92svh] sm:px-10">
           <RiseIn>
             <p className="mb-8 font-mono text-xs uppercase tracking-[0.24em] text-ink/60">
               then, someone asks
@@ -202,7 +203,7 @@ export default function Home() {
         </section>
 
         {/* ACT 2 — the answer; chaos organizes into the graph */}
-        <section data-act="2" className="flex min-h-[92svh] flex-col items-center justify-center px-4 text-center sm:px-10">
+        <section data-act="2" className="flex min-h-[72svh] flex-col items-center justify-center px-4 text-center sm:min-h-[92svh] sm:px-10">
           <RiseIn>
             <p className="mb-7 font-mono text-xs uppercase tracking-[0.24em] text-ink">
               ● answer · 0.4s
@@ -236,7 +237,7 @@ export default function Home() {
         </RiseIn>
 
         {/* ACT 3 — three layers; the universe separates into planes */}
-        <section data-act="3" className="mx-auto flex min-h-[80svh] max-w-[1280px] flex-col items-center justify-center px-4 py-24 text-center sm:px-10">
+        <section data-act="3" className="mx-auto flex min-h-[55svh] max-w-[1280px] flex-col items-center justify-center px-4 py-20 text-center sm:min-h-[80svh] sm:px-10 sm:py-24">
           <WordsRise
             text="The brain has three layers."
             className="mx-auto max-w-3xl font-display text-4xl leading-[1.1] text-ink sm:text-6xl sm:tracking-[-0.96px]"
@@ -262,7 +263,7 @@ export default function Home() {
         </RiseIn>
 
         {/* ACT 4 — clearance; the universe splits into two clusters */}
-        <section data-act="4" className="mx-auto flex min-h-[80svh] max-w-[1280px] flex-col items-center justify-center px-4 py-24 text-center sm:px-10">
+        <section data-act="4" className="mx-auto flex min-h-[55svh] max-w-[1280px] flex-col items-center justify-center px-4 py-20 text-center sm:min-h-[80svh] sm:px-10 sm:py-24">
           <RiseIn>
             <Eyebrow>the part enterprises ask first</Eyebrow>
           </RiseIn>
@@ -292,7 +293,7 @@ export default function Home() {
         </RiseIn>
 
         {/* ACT 5 — the halo; closing CTA on cream */}
-        <section data-act="5" id="join" className="mx-auto max-w-[1280px] px-4 py-24 sm:px-10 sm:py-32">
+        <section data-act="5" id="join" className="mx-auto max-w-[1280px] px-0 py-20 sm:px-10 sm:py-32">
           <RiseIn>
             <div className="bg-blockcream/65 glass-panel rounded-none p-8 text-center sm:rounded-3xl sm:p-16">
               <WordsRise
@@ -333,13 +334,8 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Mobile thumb-zone CTA — always one tap away */}
-      <a
-        href="#join"
-        className="bg-accent fixed inset-x-4 bottom-4 z-40 rounded-full py-3.5 text-center text-sm font-[480] text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)] active:scale-[0.97] md:hidden"
-      >
-        Get early access
-      </a>
+      {/* Floating CTA — appears after the hero, hides at the join form */}
+      <FloatingCta />
     </div>
   );
 }
