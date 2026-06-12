@@ -555,7 +555,7 @@ export default function Builder({
                   fields[i] = { ...f, long: e.target.checked };
                   set({ fields });
                 }}
-                className="accent-[#e8540a]"
+                className="accent-black"
               />
               Multi-line field
             </label>
@@ -580,7 +580,7 @@ export default function Builder({
             type="checkbox"
             checked={d.splitLines}
             onChange={(e) => set({ splitLines: e.target.checked })}
-            className="mt-0.5 accent-[#e8540a]"
+            className="mt-0.5 accent-black"
           />
           <span>
             Treat each line of the first field as a separate item
@@ -598,7 +598,7 @@ export default function Builder({
               onChange={(e) =>
                 set({ schedule: e.target.checked ? { freq: "weekly", day: 1 } : null })
               }
-              className="mt-0.5 accent-[#e8540a]"
+              className="mt-0.5 accent-black"
             />
             <span>
               Also run on a schedule
@@ -1017,7 +1017,7 @@ export default function Builder({
               }}
               className={`flex w-full items-start gap-3 rounded-2xl border bg-paper p-4 text-left shadow-sm transition ${
                 sel === -1 && drawer === "step"
-                  ? "border-accent/60 shadow-[0_12px_28px_-14px_rgba(232,84,10,0.4)]"
+                  ? "border-accent/60 shadow-[0_12px_28px_-14px_rgba(0,0,0,0.4)]"
                   : "border-line hover:border-accent/35"
               }`}
             >
@@ -1049,7 +1049,7 @@ export default function Builder({
                   }}
                   className={`flex w-full items-start gap-3 rounded-2xl border bg-paper p-4 text-left shadow-sm transition ${
                     sel === i && !sub && drawer === "step"
-                      ? "border-accent/60 shadow-[0_12px_28px_-14px_rgba(232,84,10,0.4)]"
+                      ? "border-accent/60 shadow-[0_12px_28px_-14px_rgba(0,0,0,0.4)]"
                       : "border-line hover:border-accent/35"
                   }`}
                 >
@@ -1097,7 +1097,7 @@ export default function Builder({
                                 }}
                                 className={`flex w-full items-center gap-2 rounded-lg border bg-paper p-2 text-left transition ${
                                   active
-                                    ? "border-accent/60 shadow-[0_8px_20px_-12px_rgba(232,84,10,0.4)]"
+                                    ? "border-accent/60 shadow-[0_8px_20px_-12px_rgba(0,0,0,0.4)]"
                                     : "border-line hover:border-accent/35"
                                 }`}
                               >

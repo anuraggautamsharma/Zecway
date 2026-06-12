@@ -1,37 +1,44 @@
 @import "tailwindcss";
 
-/* Design system: warm cream canvas, serif display, coral primary, dark navy
-   product surfaces. Tokens from DESIGNclaude.md — never inline hex in pages. */
+/* Design system: a monochrome editorial frame — white canvas, black ink,
+   pill CTAs, mono eyebrows — interrupted by oversized pastel color blocks.
+   Tokens from DESIGNfigma.md — never inline hex in pages. */
 @theme {
   /* surfaces */
-  --color-paper: #faf9f5; /* canvas */
-  --color-cream: #f5f0e8; /* surface-soft */
-  --color-card: #efe9de; /* surface-card */
-  --color-cream-strong: #e8e0d2;
-  --color-dark: #181715;
-  --color-dark-elevated: #252320;
-  --color-dark-soft: #1f1e1b;
+  --color-paper: #ffffff; /* canvas */
+  --color-cream: #f7f7f5; /* surface-soft */
+  --color-card: #f1f1f1; /* selected rows, soft chips */
+  --color-cream-strong: #e6e6e6;
+  --color-dark: #000000; /* inverse canvas — footer, marquee */
+  --color-dark-elevated: #1a1a1a;
+  --color-dark-soft: #111111;
 
-  /* text */
-  --color-ink: #141413;
-  --color-body: #3d3d3a;
-  --color-mist: #6c6a64; /* muted */
-  --color-mist-soft: #8e8b82;
-  --color-on-dark: #faf9f5;
-  --color-on-dark-soft: #a09d96;
+  /* text — hierarchy comes from weight; grays are for product chrome only */
+  --color-ink: #000000;
+  --color-body: #000000;
+  --color-mist: #4d4d4d;
+  --color-mist-soft: #8c8c8c;
+  --color-on-dark: #ffffff;
+  --color-on-dark-soft: #b3b3b3;
 
   /* lines */
-  --color-line: #e6dfd8; /* hairline */
-  --color-line-soft: #ebe6df;
+  --color-line: #e6e6e6; /* hairline */
+  --color-line-soft: #f1f1f1;
 
-  /* brand — ember: evolved from Zecway's original launch orange; the signal
-     of evidence (citations, highlights, caret, focus), scarce by design */
-  --color-accent: #e8540a;
-  --color-accent-deep: #c24508;
-  --color-accent-soft: #fbe7da;
-  --color-teal: #5db8a6;
-  --color-amber: #e8a55a;
-  --color-success: #5db872;
+  /* brand — black is the primary: every CTA is a black pill. Pastels are
+     section grounds, never accents; magenta is a single-shot promo color */
+  --color-accent: #000000;
+  --color-accent-deep: #2e2e2e; /* hover lift */
+  --color-accent-soft: #f1f1f1;
+  --color-magenta: #ff3d8b;
+  --color-lime: #dceeb1;
+  --color-lilac: #c5b0f4;
+  --color-blockcream: #f4ecd6;
+  --color-pink: #efd4d4;
+  --color-mint: #c8e6cd;
+  --color-coral: #f3c9b6;
+  --color-navy: #1f1d3d;
+  --color-success: #1ea64a;
   --color-error: #c64545;
 
   --animate-fade-up: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -73,7 +80,7 @@
    inlined into utilities rather than resolved at :root. */
 @theme inline {
   --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-display-serif), "Tiempos Headline", Garamond, "Times New Roman", serif;
+  --font-display: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -88,10 +95,21 @@ body {
   overflow-x: clip;
 }
 
-/* Display headlines: serif, regular weight, negative tracking — the voice */
+/* Display headlines: the same sans at light weight with tight negative
+   tracking — type as graphic, one voice that flexes */
 .font-display {
-  letter-spacing: -0.02em;
-  font-weight: 500;
+  letter-spacing: -0.025em;
+  font-weight: 340;
+}
+
+/* Every CTA is a pill; square buttons read as a different brand */
+button.bg-accent,
+a.bg-accent,
+button.bg-ink,
+a.bg-ink,
+button.bg-dark,
+a.bg-dark {
+  border-radius: 9999px;
 }
 
 /* Scroll-reveal: starts hidden, .revealed animates in (subtle) */
@@ -133,7 +151,7 @@ body {
 /* Frosted nav */
 .nav-blur {
   backdrop-filter: blur(14px);
-  background: rgba(250, 249, 245, 0.85);
+  background: rgba(255, 255, 255, 0.88);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -173,9 +191,9 @@ body {
   border-radius: 0.3em;
 }
 
-/* Product surfaces run white; the paper warmth steps back to secondary
-   roles (sidebar, inputs, tinted cards). The landing keeps its paper. */
+/* Product surfaces: same monochrome system; the soft gray steps back to
+   secondary roles (sidebar, inputs, tinted cards). */
 .app-surface {
   --color-paper: #ffffff;
-  --color-cream: #faf9f5;
+  --color-cream: #f7f7f5;
 }
