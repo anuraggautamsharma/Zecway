@@ -27,6 +27,12 @@ function respondSystem(name: string) {
 const thinkSystem =
   "You are a hidden reasoning step inside an agent pipeline. Follow the instructions and output ONLY the requested result — no preamble, no meta-commentary.";
 
+const autoSystem = `You are the planning core of an autonomous agent step. Reach the goal by calling tools, one per turn. Reply with ONLY a JSON object — no prose, no code fences. One of:
+{"tool":"company_search","query":"…"} — search the company's knowledge graph (permission-checked)
+{"tool":"web_search","query":"…"} — search the public web
+{"tool":"finish","summary":"…"} — when you have enough: summarize everything you learned, keep the [n] source markers intact, and mark web-derived facts as (from the web)
+Prefer company_search first. Never repeat a query you already tried. Finish as soon as the goal is met.`;
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const {
@@ -332,6 +338,51 @@ export async function POST(request: Request) {
             }
             ctx[varName] = last;
             return last;
+          } else if (sd.kind === "auto") {
+            const goal = template(sd.goal, ctx);
+            const max = Math.min(Math.max(sd.max_actions ?? 6, 1), 6);
+            const transcript: string[] = [];
+            let summary = "";
+            for (let ai = 0; ai < max; ai++) {
+              const raw = await provider.generateText(
+                `Goal: ${goal}\n\nActions so far:\n${transcript.join("\n\n") || "(none yet)"}\n\nActions left including this one: ${max - ai}.${max - ai === 1 ? " This is the last one — you must finish now." : ""}`,
+                autoSystem,
+              );
+              let act: { tool?: string; query?: string; summary?: string };
+              try {
+                act = JSON.parse(raw.replace(/^```(?:json)?\s*|```\s*$/gm, "").trim());
+              } catch {
+                act = { tool: "finish", summary: raw };
+              }
+              if (act.tool === "company_search" && act.query) {
+                const aIdx = await step("search", `Chose to search the graph: “${act.query.slice(0, 80)}”`);
+                const sources = await searchOnce(act.query, 4);
+                transcript.push(`company_search("${act.query}") →\n${(sources || "(nothing found)").slice(0, 4000)}`);
+                if (sources) sourceBlocks.push(sources);
+                await finishStep(aIdx, { hits: docNumbers.size });
+              } else if (act.tool === "web_search" && act.query) {
+                const aIdx = await step("search", `Chose to search the web: “${act.query.slice(0, 80)}”`, { web: true });
+                const sum = await provider.generateWithWebSearch(
+                  `Search the web and summarize what you find, with key facts, for: ${act.query}`,
+                );
+                transcript.push(`web_search("${act.query}") →\n${sum.slice(0, 4000)}`);
+                sourceBlocks.push(`(from the web — not a company source)\n${sum}`);
+                await finishStep(aIdx, { web: true });
+              } else {
+                summary = act.summary ?? "";
+                break;
+              }
+            }
+            if (!summary) {
+              const aIdx = await step("think", "Out of actions — summarizing findings");
+              summary = await provider.generateText(
+                `Goal: ${goal}\n\nFindings:\n${transcript.join("\n\n") || "(none)"}\n\nSummarize the findings concisely. Keep the [n] source markers intact and mark web-derived facts as (from the web).`,
+                thinkSystem,
+              );
+              await finishStep(aIdx);
+            }
+            ctx[varName] = summary;
+            return summary;
           }
           return "";
       };

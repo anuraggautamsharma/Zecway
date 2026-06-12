@@ -81,6 +81,12 @@ export function StepGlyph({ kind, active }: { kind: string; active?: boolean }) 
         <path d="M18 9a9 9 0 0 1-9 9" />
       </>
     ),
+    auto: (
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+      </>
+    ),
   };
   return (
     <span
@@ -115,12 +121,16 @@ function stepSummary(s: StepDef): string {
       return s.condition
         ? `Asks: “${s.condition.slice(0, 60)}${s.condition.length > 60 ? "…" : ""}”`
         : "Set the yes/no question that picks the lane";
+    case "auto":
+      return s.goal
+        ? `Goal: “${s.goal.slice(0, 60)}${s.goal.length > 60 ? "…" : ""}”`
+        : "Set the goal it should investigate on its own";
   }
 }
 
-const CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "branch", "respond"];
+const CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "auto", "branch", "respond"];
 // lanes hold simple steps only — no branches inside branches
-const LANE_CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "respond"];
+const LANE_CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "auto", "respond"];
 
 type BranchStep = Extract<StepDef, { kind: "branch" }>;
 type Lane = "if_true" | "if_false";
@@ -214,7 +224,9 @@ export default function Builder({
         ? "query"
         : s.kind === "branch"
           ? "condition"
-          : "instructions";
+          : s.kind === "auto"
+            ? "goal"
+            : "instructions";
     const cur = ((s as Record<string, unknown>)[key] as string) ?? "";
     if (el && document.activeElement === el) {
       const at = el.selectionStart ?? cur.length;
@@ -234,6 +246,8 @@ export default function Builder({
         return { kind, document_id: documents[0]?.id ?? "", title: documents[0]?.title };
       case "branch":
         return { kind, condition: "", if_true: [], if_false: [] };
+      case "auto":
+        return { kind, goal: "" };
       case "think":
         return { kind, instructions: "" };
       case "respond":
@@ -555,6 +569,24 @@ export default function Builder({
               At run time the agent answers this question with yes or no, then
               follows the matching lane on the canvas. Add steps to each lane
               there.
+            </p>
+          </div>
+        )}
+        {s.kind === "auto" && (
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-ink">Goal *</label>
+            <textarea
+              ref={areaRef}
+              value={s.goal}
+              onChange={(e) => patchSel({ goal: e.target.value })}
+              rows={4}
+              placeholder="e.g. Find out whether our [[topic]] policy matches what comparable startups offer, and where it falls short."
+              className={`${inputCls} rounded-xl leading-relaxed`}
+            />
+            <Chips />
+            <p className="mt-3 rounded-xl bg-cream px-3 py-2.5 text-xs leading-relaxed text-mist">
+              The agent plans its own company and web searches toward this goal
+              — up to 6 actions, each shown as a receipt while it runs.
             </p>
           </div>
         )}

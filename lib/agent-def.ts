@@ -15,7 +15,8 @@ export type StepDef =
   | { kind: "read_doc"; document_id: string; title?: string }
   | { kind: "think"; instructions: string }
   | { kind: "respond"; instructions: string }
-  | { kind: "branch"; condition: string; if_true: StepDef[]; if_false: StepDef[] };
+  | { kind: "branch"; condition: string; if_true: StepDef[]; if_false: StepDef[] }
+  | { kind: "auto"; goal: string; max_actions?: number };
 
 export type AgentDefV2 = {
   id: string | null;
@@ -116,5 +117,9 @@ export const STEP_META: Record<
   branch: {
     label: "Branch",
     blurb: "Decides which path to follow, with a fallback lane",
+  },
+  auto: {
+    label: "Plan & execute",
+    blurb: "Give it a goal — it picks its own searches, up to 6 actions",
   },
 };
