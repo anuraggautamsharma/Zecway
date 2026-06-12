@@ -16,7 +16,8 @@ export type StepDef =
   | { kind: "think"; instructions: string }
   | { kind: "respond"; instructions: string }
   | { kind: "branch"; condition: string; if_true: StepDef[]; if_false: StepDef[] }
-  | { kind: "auto"; goal: string; max_actions?: number };
+  | { kind: "auto"; goal: string; max_actions?: number }
+  | { kind: "send_slack"; message: string };
 
 export type AgentDefV2 = {
   id: string | null;
@@ -121,5 +122,9 @@ export const STEP_META: Record<
   auto: {
     label: "Plan & execute",
     blurb: "Give it a goal — it picks its own searches, up to 6 actions",
+  },
+  send_slack: {
+    label: "Post to Slack",
+    blurb: "Drafts a message — a teammate approves before it's sent",
   },
 };

@@ -32,6 +32,37 @@ export async function saveAiKey(formData: FormData) {
   redirect("/app/settings?saved=1");
 }
 
+export async function saveSlackWebhook(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const workspaceId = String(formData.get("workspace_id") ?? "");
+  const url = String(formData.get("webhook_url") ?? "").trim();
+  if (!workspaceId || !url) redirect("/app/settings?error=missing");
+  if (!/^https:\/\/hooks\.slack\.com\//.test(url)) {
+    redirect("/app/settings?error=slack-invalid");
+  }
+  if (!encryptionReady()) redirect("/app/settings?error=not-ready");
+
+  const { error } = await supabase.rpc("set_workspace_slack", {
+    ws: workspaceId,
+    cipher: encryptSecret(url),
+  });
+  if (error) redirect("/app/settings?error=denied");
+  redirect("/app/settings?slack=1");
+}
+
+export async function clearSlackWebhook(formData: FormData) {
+  const supabase = await createClient();
+  const workspaceId = String(formData.get("workspace_id") ?? "");
+  if (!workspaceId) redirect("/app/settings");
+  await supabase.rpc("clear_workspace_slack", { ws: workspaceId });
+  redirect("/app/settings?slack-cleared=1");
+}
+
 export async function clearAiKey(formData: FormData) {
   const supabase = await createClient();
   const workspaceId = String(formData.get("workspace_id") ?? "");

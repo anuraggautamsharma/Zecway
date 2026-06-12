@@ -4,8 +4,15 @@ import { useState } from "react";
 import Markdown from "react-markdown";
 import { StepGlyph } from "../new/builder";
 import { STEP_META, type FieldDef, type StepDef } from "@/lib/agent-def";
+import { resolveAgentAction } from "./actions";
 
 type Citation = { n: number; title: string; url: string | null };
+export type ActionView = {
+  id: string;
+  kind: string;
+  payload: { message?: string };
+  status: string;
+};
 export type AgentView = {
   id: string | null;
   slug: string;
@@ -29,6 +36,7 @@ export type RunDetail = {
   output: string | null;
   citations: Citation[];
   steps: { idx: number; kind: string; title: string; status: string }[];
+  actions: ActionView[];
 };
 
 type StepView = { idx: number; kind: string; title: string; status: string };
@@ -87,6 +95,7 @@ export default function RunClient({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [steps, setSteps] = useState<StepView[]>(initialRun?.steps ?? []);
+  const [actions, setActions] = useState<ActionView[]>(initialRun?.actions ?? []);
   const [output, setOutput] = useState(initialRun?.output ?? "");
   const [citations, setCitations] = useState<Citation[]>(initialRun?.citations ?? []);
   const [progress, setProgress] = useState("");
@@ -101,6 +110,7 @@ export default function RunClient({
     setBusy(true);
     setError("");
     setSteps([]);
+    setActions([]);
     setOutput("");
     setCitations([]);
 
@@ -136,6 +146,7 @@ export default function RunClient({
             status?: string; text?: string; done?: number; total?: number;
             run_id?: string; citations?: Citation[]; error?: string;
             detail?: { decision?: string };
+            id?: string; payload?: { message?: string };
           };
           try {
             m = JSON.parse(line);
@@ -167,6 +178,11 @@ export default function RunClient({
               }
               return next.sort((a, b) => a.idx - b.idx);
             });
+          } else if (m.type === "action" && m.id) {
+            setActions((a) => [
+              ...a,
+              { id: m.id!, kind: m.kind ?? "send_slack", payload: m.payload ?? {}, status: "pending" },
+            ]);
           } else if (m.type === "search_progress") {
             setProgress(`item ${m.done}/${m.total}`);
           } else if (m.type === "delta" && m.text) {
@@ -341,6 +357,54 @@ export default function RunClient({
               ))}
             </div>
           )}
+
+          {actions.map((a) => (
+            <div
+              key={a.id}
+              className="animate-pop mt-5 rounded-2xl border border-accent/40 bg-accent-soft/40 p-5"
+            >
+              <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-accent-deep">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
+                {a.status === "pending"
+                  ? "Waiting for your approval — post to Slack?"
+                  : a.status === "sent"
+                    ? "Posted to Slack ✓"
+                    : a.status === "dismissed"
+                      ? "Dismissed — nothing was sent"
+                      : "Sending failed — is Slack connected in Settings?"}
+              </div>
+              <p className="mt-3 whitespace-pre-wrap rounded-xl border border-line bg-paper p-4 text-sm leading-relaxed text-ink">
+                {a.payload.message || "(empty message)"}
+              </p>
+              {a.status === "pending" && (
+                <form
+                  action={async (fd) => {
+                    const status = (await resolveAgentAction(fd)) ?? "dismissed";
+                    setActions((xs) =>
+                      xs.map((x) => (x.id === a.id ? { ...x, status } : x)),
+                    );
+                  }}
+                  className="mt-3 flex items-center gap-2"
+                >
+                  <input type="hidden" name="action_id" value={a.id} />
+                  <button
+                    name="decision"
+                    value="approve"
+                    className="rounded-lg bg-accent px-4 py-2 text-xs font-medium text-white transition hover:bg-accent-deep active:scale-[0.97]"
+                  >
+                    Approve & send
+                  </button>
+                  <button
+                    name="decision"
+                    value="dismiss"
+                    className="rounded-lg border border-line px-4 py-2 text-xs font-medium text-mist transition hover:text-ink"
+                  >
+                    Dismiss
+                  </button>
+                </form>
+              )}
+            </div>
+          ))}
 
           {output && (
             <div className="animate-pop mt-5 rounded-2xl border border-line bg-paper p-6 shadow-[0_1px_1px_rgba(20,20,19,0.03),0_12px_24px_-16px_rgba(20,20,19,0.25)]">

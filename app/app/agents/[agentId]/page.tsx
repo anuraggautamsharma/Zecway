@@ -79,7 +79,7 @@ export default async function AgentDetailPage({
 
   let initialRun: RunDetail | null = null;
   if (run) {
-    const [{ data: r }, { data: steps }] = await Promise.all([
+    const [{ data: r }, { data: steps }, { data: actions }] = await Promise.all([
       supabase
         .from("agent_runs")
         .select("id, status, output, citations")
@@ -90,6 +90,11 @@ export default async function AgentDetailPage({
         .select("idx, kind, title, status")
         .eq("run_id", run)
         .order("idx", { ascending: true }),
+      supabase
+        .from("agent_run_actions")
+        .select("id, kind, payload, status")
+        .eq("run_id", run)
+        .order("created_at", { ascending: true }),
     ]);
     if (r) {
       initialRun = {
@@ -98,6 +103,7 @@ export default async function AgentDetailPage({
         output: r.output,
         citations: (r.citations ?? []) as RunDetail["citations"],
         steps: (steps ?? []) as RunDetail["steps"],
+        actions: (actions ?? []) as RunDetail["actions"],
       };
     }
   }
