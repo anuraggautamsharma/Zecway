@@ -10,6 +10,7 @@ import {
   fieldKey,
 } from "@/lib/agent-def";
 import { type Schedule, DAY_NAMES, describeSchedule } from "@/lib/schedule";
+import { TEMPLATES } from "./templates";
 
 type Citation = { n: number; title: string; url: string | null };
 export type DocOption = { id: string; title: string };
@@ -167,6 +168,11 @@ export default function Builder({
   initial?: AgentDraft;
 }) {
   const [d, setD] = useState<AgentDraft>(initial ?? EMPTY);
+  // new agents open on a launchpad (templates / describe / blank) first
+  const [launched, setLaunched] = useState(Boolean(initial));
+  const [desc, setDesc] = useState("");
+  const [scaffolding, setScaffolding] = useState(false);
+  const [scaffoldErr, setScaffoldErr] = useState("");
   const [sel, setSel] = useState<number>(-1); // -1 = trigger
   const [sub, setSub] = useState<SubRef | null>(null); // step inside a branch lane
   const [drawer, setDrawer] = useState<"step" | "catalog" | "preview" | null>("step");
@@ -459,6 +465,30 @@ export default function Builder({
     setSub(null);
     setDrawer(null);
   };
+  async function scaffold() {
+    if (scaffolding || desc.trim().length < 8) return;
+    setScaffolding(true);
+    setScaffoldErr("");
+    try {
+      const res = await fetch("/api/agents/scaffold", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspace_id: workspaceId, description: desc }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setScaffoldErr(data.error ?? "Couldn't draft that — try again.");
+        return;
+      }
+      setD({ ...(data.draft as AgentDraft) });
+      setLaunched(true);
+    } catch {
+      setScaffoldErr("Something went wrong — try again.");
+    } finally {
+      setScaffolding(false);
+    }
+  }
+
   async function save() {
     if (!canSave || saving) return;
     setSaving(true);
@@ -974,6 +1004,88 @@ export default function Builder({
       <span className="h-3 w-px bg-line" />
     </div>
   );
+
+  if (!launched) {
+    return (
+      <div className="h-[calc(100svh-3.5rem)] overflow-y-auto md:h-svh">
+        <div className="mx-auto max-w-3xl px-5 py-10 sm:py-14">
+          <a
+            href="/app/agents"
+            className="font-mono text-[11px] uppercase tracking-wider text-mist transition hover:text-ink"
+          >
+            ← agents
+          </a>
+          <h1 className="mt-6 text-3xl font-[540] tracking-[-0.01em] text-ink sm:text-4xl">
+            Create an agent
+          </h1>
+
+          {/* build by describing */}
+          <div className="mt-7 rounded-2xl border border-line bg-paper p-5">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-accent">
+              ● describe it — we build the recipe
+            </p>
+            <textarea
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") scaffold();
+              }}
+              rows={3}
+              placeholder="e.g. Every Monday, check our security docs against the latest CVEs and draft a summary to Slack."
+              className="mt-3 w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm leading-relaxed text-ink placeholder:text-mist-soft focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/15"
+            />
+            <div className="mt-3 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={scaffold}
+                disabled={scaffolding || desc.trim().length < 8}
+                className="rounded-full bg-accent px-5 py-2 text-sm font-[480] text-white transition hover:bg-accent-deep active:scale-[0.97] disabled:opacity-40"
+              >
+                {scaffolding ? "Drafting…" : "Generate agent"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setD(EMPTY);
+                  setLaunched(true);
+                }}
+                className="text-sm font-[480] text-mist transition hover:text-ink"
+              >
+                or start blank
+              </button>
+              {scaffoldErr && <span className="text-xs text-red-500">{scaffoldErr}</span>}
+            </div>
+          </div>
+
+          {/* templates */}
+          <p className="mb-3 mt-9 font-mono text-[10px] uppercase tracking-wider text-mist">
+            or start from a template
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {TEMPLATES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => {
+                  setD(structuredClone(t.draft));
+                  setLaunched(true);
+                }}
+                className="group flex items-start gap-3 rounded-2xl border border-line bg-paper p-4 text-left transition hover:border-accent/40 hover:shadow-[0_12px_28px_-18px_rgba(0,0,0,0.35)]"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cream text-xl">
+                  {t.emoji}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-ink">{t.name}</span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-mist">{t.blurb}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100svh-3.5rem)] flex-col md:h-svh">
