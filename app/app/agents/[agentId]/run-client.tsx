@@ -261,6 +261,7 @@ export default function RunClient({
               >
                 {r.status === "failed" ? "✕ " : ""}
                 {r.triggered_by === "schedule" ? "⏱ " : ""}
+                {r.triggered_by === "webhook" ? "🔗 " : ""}
                 {new Date(r.created_at).toLocaleString("en-IN", {
                   day: "numeric",
                   month: "short",

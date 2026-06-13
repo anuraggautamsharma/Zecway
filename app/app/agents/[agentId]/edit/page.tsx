@@ -21,7 +21,7 @@ export default async function EditAgentPage({
     supabase
       .from("agents")
       .select(
-        "id, name, description, emoji, input_label, input_placeholder, split_lines, search_hint, respond_instructions, fields, steps, schedule, schedule_inputs",
+        "id, name, description, emoji, input_label, input_placeholder, split_lines, search_hint, respond_instructions, fields, steps, schedule, schedule_inputs, webhook_token",
       )
       .eq("id", agentId)
       .eq("workspace_id", workspace.id)
@@ -52,6 +52,7 @@ export default async function EditAgentPage({
         steps: v2 ? (a.steps as StepDef[]) : synth!.steps,
         schedule: (a.schedule as { freq: "daily" | "weekly"; day?: number } | null) ?? null,
         scheduleInputs: (a.schedule_inputs as Record<string, string>) ?? {},
+        webhookToken: (a.webhook_token as string | null) ?? null,
       }}
     />
   );

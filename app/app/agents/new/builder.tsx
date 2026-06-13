@@ -24,6 +24,7 @@ export type AgentDraft = {
   steps: StepDef[];
   schedule: Schedule | null;
   scheduleInputs: Record<string, string>;
+  webhookToken: string | null;
 };
 
 const EMPTY: AgentDraft = {
@@ -38,6 +39,7 @@ const EMPTY: AgentDraft = {
   ],
   schedule: null,
   scheduleInputs: {},
+  webhookToken: null,
 };
 
 export function StepGlyph({ kind, active }: { kind: string; active?: boolean }) {
@@ -189,6 +191,8 @@ export default function Builder({
   const [desc, setDesc] = useState("");
   const [scaffolding, setScaffolding] = useState(false);
   const [scaffoldErr, setScaffoldErr] = useState("");
+  const [copiedHook, setCopiedHook] = useState(false);
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://zecway.com";
   const [sel, setSel] = useState<number>(-1); // -1 = trigger
   const [sub, setSub] = useState<SubRef | null>(null); // step inside a branch lane
   const [drawer, setDrawer] = useState<"step" | "catalog" | "preview" | null>("step");
@@ -526,6 +530,7 @@ export default function Builder({
     fd.set("steps", JSON.stringify(d.steps));
     fd.set("schedule", d.schedule ? JSON.stringify(d.schedule) : "");
     fd.set("schedule_inputs", JSON.stringify(d.scheduleInputs));
+    fd.set("webhook_token", d.webhookToken ?? "");
     // legacy columns mirror the first field for older surfaces
     fd.set("input_label", fields[0]?.label ?? "Input");
     fd.set("input_placeholder", fields[0]?.placeholder ?? "");
@@ -785,6 +790,61 @@ export default function Builder({
                   Scheduled runs use these values since nobody is there to type.
                 </p>
               </div>
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-line p-3">
+          <label className="flex items-start gap-2.5 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={Boolean(d.webhookToken)}
+              onChange={(e) =>
+                set({
+                  webhookToken: e.target.checked
+                    ? d.webhookToken ||
+                      (typeof crypto !== "undefined" && crypto.randomUUID
+                        ? crypto.randomUUID().replace(/-/g, "")
+                        : Math.random().toString(36).slice(2) + Date.now().toString(36))
+                    : null,
+                })
+              }
+              className="mt-0.5 accent-black"
+            />
+            <span>
+              Trigger by webhook
+              <span className="block text-xs text-mist">
+                any service can run this agent by POSTing to a secret URL
+              </span>
+            </span>
+          </label>
+          {d.webhookToken && (
+            <div className="mt-3 space-y-2 border-t border-line pt-3">
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={`${origin}/api/agents/hook/${d.webhookToken}`}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className={`${inputCls} font-mono text-[11px]`}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(`${origin}/api/agents/hook/${d.webhookToken}`);
+                    setCopiedHook(true);
+                    setTimeout(() => setCopiedHook(false), 1600);
+                  }}
+                  className="shrink-0 rounded-lg border border-line px-2.5 py-2 text-xs text-mist transition hover:text-ink"
+                >
+                  {copiedHook ? "✓" : "Copy"}
+                </button>
+              </div>
+              <p className="text-[11px] leading-relaxed text-mist">
+                POST JSON like{" "}
+                <span className="font-mono text-accent-deep">{`{"text":"…"}`}</span> or{" "}
+                <span className="font-mono text-accent-deep">{`{"inputs":{…}}`}</span>. Save the
+                agent to activate the URL. Keep it secret — anyone with it can run this agent.
+              </p>
             </div>
           )}
         </div>
@@ -1296,6 +1356,7 @@ export default function Builder({
                   {d.fields.map((f) => `“${f.label || "…"}”`).join(", ")}
                   {d.splitLines ? " · first field one item per line" : ""}
                   {d.schedule ? ` · also ${describeSchedule(d.schedule)}` : ""}
+                  {d.webhookToken ? " · webhook" : ""}
                 </span>
               </span>
             </button>
