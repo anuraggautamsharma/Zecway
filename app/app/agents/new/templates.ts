@@ -13,6 +13,7 @@ export type Template = {
 const base = {
   schedule: null,
   scheduleInputs: {},
+  webhookToken: null,
 } as const;
 
 export const TEMPLATES: Template[] = [
@@ -110,6 +111,7 @@ export const TEMPLATES: Template[] = [
       splitLines: false,
       schedule: { freq: "weekly", day: 1 },
       scheduleInputs: { topic: "industry news relevant to us" },
+      webhookToken: null,
       fields: [{ key: "topic", label: "Topic", placeholder: "industry news relevant to us", long: false }],
       steps: [
         {

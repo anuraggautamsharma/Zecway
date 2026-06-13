@@ -30,9 +30,11 @@ export async function saveAgent(formData: FormData) {
     throw new Error("invalid recipe");
   }
 
+  const webhookToken = get("webhook_token") || null;
   const values = {
     schedule,
     schedule_inputs: scheduleInputs,
+    webhook_token: webhookToken,
     name,
     description: get("description"),
     emoji: get("emoji") || "🤖",
