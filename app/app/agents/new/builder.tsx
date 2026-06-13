@@ -237,12 +237,70 @@ export default function Builder({
   const [pvCitations, setPvCitations] = useState<Citation[]>([]);
   const [pvStatus, setPvStatus] = useState("");
 
-  const set = (patch: Partial<AgentDraft>) => setD((x) => ({ ...x, ...patch }));
-  const setStep = (i: number, patch: Partial<StepDef>) =>
+  // ── undo / redo: snapshots of the whole draft, text edits coalesced ──
+  const past = useRef<AgentDraft[]>([]);
+  const future = useRef<AgentDraft[]>([]);
+  const [, bumpHist] = useState(0);
+  const editTick = useRef(0);
+  const snapshot = (coalesceMs = 0) => {
+    const now = Date.now();
+    if (coalesceMs && now - editTick.current < coalesceMs) {
+      editTick.current = now;
+      return;
+    }
+    editTick.current = now;
+    past.current.push(structuredClone(d));
+    if (past.current.length > 60) past.current.shift();
+    future.current = [];
+    bumpHist((n) => n + 1);
+  };
+  const undo = () => {
+    if (!past.current.length) return;
+    future.current.push(structuredClone(d));
+    setD(past.current.pop()!);
+    setSel(-1);
+    setSub(null);
+    bumpHist((n) => n + 1);
+  };
+  const redo = () => {
+    if (!future.current.length) return;
+    past.current.push(structuredClone(d));
+    setD(future.current.pop()!);
+    setSel(-1);
+    setSub(null);
+    bumpHist((n) => n + 1);
+  };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      if (e.key === "z" || e.key === "Z") {
+        e.preventDefault();
+        e.shiftKey ? redo() : undo();
+      } else if (e.key === "y") {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [d]);
+
+  // drag-to-reorder state for top-level steps
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
+
+  const set = (patch: Partial<AgentDraft>) => {
+    snapshot(600);
+    setD((x) => ({ ...x, ...patch }));
+  };
+  const setStep = (i: number, patch: Partial<StepDef>) => {
+    snapshot(600);
     setD((x) => ({
       ...x,
       steps: x.steps.map((s, j) => (j === i ? ({ ...s, ...patch } as StepDef) : s)),
     }));
+  };
 
   // the step the drawer is editing — possibly inside a branch lane
   const selStep: StepDef | null =
@@ -253,6 +311,7 @@ export default function Builder({
       : null;
   const patchSel = (patch: Partial<StepDef>) => {
     if (sel < 0) return;
+    snapshot(600);
     if (sub) {
       setD((x) => ({
         ...x,
@@ -335,6 +394,7 @@ export default function Builder({
   };
 
   function addStep(kind: StepDef["kind"], at: number) {
+    snapshot();
     const steps = [...d.steps];
     steps.splice(at, 0, blankStep(kind));
     set({ steps });
@@ -342,8 +402,27 @@ export default function Builder({
     setSub(null);
     setDrawer("step");
   }
+  const duplicateStep = (i: number) => {
+    snapshot();
+    const steps = [...d.steps];
+    steps.splice(i + 1, 0, structuredClone(d.steps[i]));
+    setD((x) => ({ ...x, steps }));
+    setSel(i + 1);
+    setSub(null);
+  };
+  const reorderSteps = (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0) return;
+    snapshot();
+    const steps = [...d.steps];
+    const [moved] = steps.splice(from, 1);
+    steps.splice(to, 0, moved);
+    setD((x) => ({ ...x, steps }));
+    setSel(to);
+    setSub(null);
+  };
   function addLaneStep(kind: StepDef["kind"]) {
     if (!catalogLane) return;
+    snapshot();
     const { stepIdx, lane } = catalogLane;
     const at = (d.steps[stepIdx] as BranchStep | undefined)?.[lane].length ?? 0;
     setD((x) => ({
@@ -360,6 +439,7 @@ export default function Builder({
     setDrawer("step");
   }
   const removeStep = (i: number) => {
+    snapshot();
     set({ steps: d.steps.filter((_, j) => j !== i) });
     setSel(-1);
     setSub(null);
@@ -367,6 +447,7 @@ export default function Builder({
   };
   const removeSub = () => {
     if (sel < 0 || !sub) return;
+    snapshot();
     setD((x) => ({
       ...x,
       steps: x.steps.map((s, j) =>
@@ -378,15 +459,6 @@ export default function Builder({
     setSub(null);
     setDrawer(null);
   };
-  const moveStep = (i: number, dir: -1 | 1) => {
-    const j = i + dir;
-    if (j < 0 || j >= d.steps.length) return;
-    const steps = [...d.steps];
-    [steps[i], steps[j]] = [steps[j], steps[i]];
-    set({ steps });
-    setSel(j);
-  };
-
   async function save() {
     if (!canSave || saving) return;
     setSaving(true);
@@ -788,10 +860,10 @@ export default function Builder({
         )}
         <div className="flex items-center gap-2 border-t border-line pt-3">
           {!sub && (
-            <>
-              <button type="button" onClick={() => moveStep(sel, -1)} className="rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:text-ink">↑ up</button>
-              <button type="button" onClick={() => moveStep(sel, 1)} className="rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:text-ink">↓ down</button>
-            </>
+            <button type="button" onClick={() => duplicateStep(sel)} className="rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:text-ink">⧉ duplicate</button>
+          )}
+          {!sub && (
+            <span className="font-mono text-[10px] uppercase tracking-wide text-mist/60">drag cards to reorder</span>
           )}
           <button type="button" onClick={() => (sub ? removeSub() : removeStep(sel))} className="ml-auto rounded-lg border border-line px-2.5 py-1.5 text-xs text-mist hover:border-red-300 hover:text-red-500">delete step</button>
         </div>
@@ -936,6 +1008,34 @@ export default function Builder({
           />
         </div>
         {error && <span className="hidden text-xs text-red-500 sm:block">{error}</span>}
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={undo}
+            disabled={past.current.length === 0}
+            aria-label="Undo"
+            title="Undo (⌘Z)"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-mist transition hover:bg-cream hover:text-ink disabled:opacity-30"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 7v6h6" />
+              <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={redo}
+            disabled={future.current.length === 0}
+            aria-label="Redo"
+            title="Redo (⌘⇧Z)"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-mist transition hover:bg-cream hover:text-ink disabled:opacity-30"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 7v6h-6" />
+              <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13" />
+            </svg>
+          </button>
+        </div>
         <button
           type="button"
           onClick={() => setDrawer(drawer === "preview" ? null : "preview")}
@@ -1042,17 +1142,47 @@ export default function Builder({
               <div key={i}>
                 <button
                   type="button"
+                  draggable
+                  onDragStart={(e) => {
+                    setDragIdx(i);
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragEnd={() => {
+                    setDragIdx(null);
+                    setOverIdx(null);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (dragIdx !== null && overIdx !== i) setOverIdx(i);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragIdx !== null) reorderSteps(dragIdx, i);
+                    setDragIdx(null);
+                    setOverIdx(null);
+                  }}
                   onClick={() => {
                     setSel(i);
                     setSub(null);
                     setDrawer("step");
                   }}
-                  className={`flex w-full items-start gap-3 rounded-2xl border bg-paper p-4 text-left shadow-sm transition ${
-                    sel === i && !sub && drawer === "step"
-                      ? "border-accent/60 shadow-[0_12px_28px_-14px_rgba(0,0,0,0.4)]"
-                      : "border-line hover:border-accent/35"
+                  className={`flex w-full cursor-grab items-start gap-3 rounded-2xl border bg-paper p-4 text-left shadow-sm transition active:cursor-grabbing ${
+                    dragIdx === i ? "opacity-40 " : ""
+                  }${
+                    overIdx === i && dragIdx !== null && dragIdx !== i
+                      ? "border-accent ring-2 ring-accent/25"
+                      : sel === i && !sub && drawer === "step"
+                        ? "border-accent/60 shadow-[0_12px_28px_-14px_rgba(0,0,0,0.4)]"
+                        : "border-line hover:border-accent/35"
                   }`}
                 >
+                  <span className="mt-1 shrink-0 select-none text-mist/40" aria-hidden>
+                    <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor">
+                      <circle cx="2" cy="3" r="1.3" /><circle cx="8" cy="3" r="1.3" />
+                      <circle cx="2" cy="8" r="1.3" /><circle cx="8" cy="8" r="1.3" />
+                      <circle cx="2" cy="13" r="1.3" /><circle cx="8" cy="13" r="1.3" />
+                    </svg>
+                  </span>
                   <StepGlyph kind={s.kind} active={sel === i && !sub && drawer === "step"} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline gap-2">
