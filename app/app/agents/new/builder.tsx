@@ -87,6 +87,14 @@ export function StepGlyph({ kind, active }: { kind: string; active?: boolean }) 
         <path d="M18 9a9 9 0 0 1-9 9" />
       </>
     ),
+    loop: (
+      <>
+        <path d="m17 2 4 4-4 4" />
+        <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+        <path d="m7 22-4-4 4-4" />
+        <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+      </>
+    ),
     auto: (
       <>
         <circle cx="12" cy="12" r="10" />
@@ -139,6 +147,10 @@ function stepSummary(s: StepDef): string {
       return s.condition
         ? `Asks: “${s.condition.slice(0, 60)}${s.condition.length > 60 ? "…" : ""}”`
         : "Set the yes/no question that picks the lane";
+    case "loop":
+      return s.source
+        ? `For each item in “${s.source.slice(0, 50)}${s.source.length > 50 ? "…" : ""}”`
+        : "Set the list to repeat over";
     case "auto":
       return s.goal
         ? `Goal: “${s.goal.slice(0, 60)}${s.goal.length > 60 ? "…" : ""}”`
@@ -150,13 +162,17 @@ function stepSummary(s: StepDef): string {
   }
 }
 
-const CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "auto", "branch", "respond", "send_slack"];
+const CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "auto", "branch", "loop", "respond", "send_slack"];
 // lanes hold simple steps only — no branches inside branches
 const LANE_CATALOG: StepDef["kind"][] = ["search", "web_search", "read_doc", "think", "auto", "respond", "send_slack"];
 
 type BranchStep = Extract<StepDef, { kind: "branch" }>;
-type Lane = "if_true" | "if_false";
+type LoopStep = Extract<StepDef, { kind: "loop" }>;
+type Lane = "if_true" | "if_false" | "body";
 type SubRef = { lane: Lane; idx: number };
+const laneOf = (s: StepDef, lane: Lane): StepDef[] =>
+  (s as unknown as Record<string, StepDef[]>)[lane] ?? [];
+const hasLanes = (s: StepDef) => s.kind === "branch" || s.kind === "loop";
 
 export default function Builder({
   workspaceId,
@@ -311,8 +327,8 @@ export default function Builder({
   // the step the drawer is editing — possibly inside a branch lane
   const selStep: StepDef | null =
     sel >= 0 && d.steps[sel]
-      ? sub && d.steps[sel].kind === "branch"
-        ? ((d.steps[sel] as BranchStep)[sub.lane][sub.idx] ?? null)
+      ? sub && hasLanes(d.steps[sel])
+        ? (laneOf(d.steps[sel], sub.lane)[sub.idx] ?? null)
         : d.steps[sel]
       : null;
   const patchSel = (patch: Partial<StepDef>) => {
@@ -322,13 +338,13 @@ export default function Builder({
       setD((x) => ({
         ...x,
         steps: x.steps.map((s, j) =>
-          j === sel && s.kind === "branch"
-            ? {
+          j === sel && hasLanes(s)
+            ? ({
                 ...s,
-                [sub.lane]: s[sub.lane].map((t, k) =>
+                [sub.lane]: laneOf(s, sub.lane).map((t, k) =>
                   k === sub.idx ? ({ ...t, ...patch } as StepDef) : t,
                 ),
-              }
+              } as StepDef)
             : s,
         ),
       }));
@@ -350,6 +366,7 @@ export default function Builder({
   const varsFor = (stepIndex: number, subRef: SubRef | null) => [
     ...d.fields.map((f) => f.key),
     ...d.steps.slice(0, Math.max(stepIndex, 0)).map((_, i) => `step_${i + 1}`),
+    ...(subRef && d.steps[stepIndex]?.kind === "loop" ? ["item"] : []),
     ...(subRef
       ? Array.from({ length: subRef.idx }, (_, k) => `step_${stepIndex + 1}_${k + 1}`)
       : []),
@@ -364,11 +381,13 @@ export default function Builder({
         ? "query"
         : s.kind === "branch"
           ? "condition"
-          : s.kind === "auto"
-            ? "goal"
-            : s.kind === "send_slack"
-              ? "message"
-              : "instructions";
+          : s.kind === "loop"
+            ? "source"
+            : s.kind === "auto"
+              ? "goal"
+              : s.kind === "send_slack"
+                ? "message"
+                : "instructions";
     const cur = ((s as Record<string, unknown>)[key] as string) ?? "";
     if (el && document.activeElement === el) {
       const at = el.selectionStart ?? cur.length;
@@ -388,6 +407,8 @@ export default function Builder({
         return { kind, document_id: documents[0]?.id ?? "", title: documents[0]?.title };
       case "branch":
         return { kind, condition: "", if_true: [], if_false: [] };
+      case "loop":
+        return { kind, source: d.fields[0] ? `[[${d.fields[0].key}]]` : "", body: [] };
       case "auto":
         return { kind, goal: "" };
       case "send_slack":
@@ -430,12 +451,12 @@ export default function Builder({
     if (!catalogLane) return;
     snapshot();
     const { stepIdx, lane } = catalogLane;
-    const at = (d.steps[stepIdx] as BranchStep | undefined)?.[lane].length ?? 0;
+    const at = d.steps[stepIdx] ? laneOf(d.steps[stepIdx], lane).length : 0;
     setD((x) => ({
       ...x,
       steps: x.steps.map((s, j) =>
-        j === stepIdx && s.kind === "branch"
-          ? { ...s, [lane]: [...s[lane], blankStep(kind)] }
+        j === stepIdx && hasLanes(s)
+          ? ({ ...s, [lane]: [...laneOf(s, lane), blankStep(kind)] } as StepDef)
           : s,
       ),
     }));
@@ -457,8 +478,8 @@ export default function Builder({
     setD((x) => ({
       ...x,
       steps: x.steps.map((s, j) =>
-        j === sel && s.kind === "branch"
-          ? { ...s, [sub.lane]: s[sub.lane].filter((_, k) => k !== sub.idx) }
+        j === sel && hasLanes(s)
+          ? ({ ...s, [sub.lane]: laneOf(s, sub.lane).filter((_, k) => k !== sub.idx) } as StepDef)
           : s,
       ),
     }));
@@ -772,7 +793,9 @@ export default function Builder({
   } else if (drawer === "step" && selStep) {
     const s = selStep;
     drawerTitle = `configure · ${STEP_META[s.kind].label}${
-      sub ? ` · ${sub.lane === "if_true" ? "yes" : "no"} lane` : ""
+      sub
+        ? ` · ${sub.lane === "if_true" ? "yes" : sub.lane === "if_false" ? "no" : "per-item"} lane`
+        : ""
     }`;
     drawerBody = (
       <div className="space-y-4">
@@ -828,6 +851,28 @@ export default function Builder({
               At run time the agent answers this question with yes or no, then
               follows the matching lane on the canvas. Add steps to each lane
               there.
+            </p>
+          </div>
+        )}
+        {s.kind === "loop" && (
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-ink">
+              List to repeat over *
+            </label>
+            <textarea
+              ref={areaRef}
+              value={s.source}
+              onChange={(e) => patchSel({ source: e.target.value })}
+              rows={3}
+              placeholder="e.g. [[competitors]] — one item per line"
+              className={inputCls}
+            />
+            <Chips />
+            <p className="mt-3 rounded-xl bg-cream px-3 py-2.5 text-xs leading-relaxed text-mist">
+              The list is split one item per line (up to 10). The steps in this
+              loop&apos;s lane run once per item, where{" "}
+              <span className="font-mono text-[11px] text-accent-deep">[[item]]</span>{" "}
+              is the current one. Results are gathered for later steps.
             </p>
           </div>
         )}
@@ -900,14 +945,21 @@ export default function Builder({
       </div>
     );
   } else if (drawer === "catalog") {
-    drawerTitle = catalogLane
-      ? `add to the ${catalogLane.lane === "if_true" ? "yes" : "no"} lane`
-      : "select step";
+    const laneLabel = !catalogLane
+      ? ""
+      : catalogLane.lane === "if_true"
+        ? "yes"
+        : catalogLane.lane === "if_false"
+          ? "no"
+          : "per-item";
+    drawerTitle = catalogLane ? `add to the ${laneLabel} lane` : "select step";
     drawerBody = (
       <div className="space-y-2">
         <p className="text-xs leading-relaxed text-mist">
           {catalogLane
-            ? "This step only runs when the branch picks this lane."
+            ? catalogLane.lane === "body"
+              ? "This step runs once for each item in the loop."
+              : "This step only runs when the branch picks this lane."
             : "Define what the agent does at this point."}
         </p>
         {(catalogLane ? LANE_CATALOG : CATALOG).map((kind) => (
@@ -1372,6 +1424,60 @@ export default function Builder({
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {s.kind === "loop" && (
+                  <div className="mt-2 rounded-xl border border-dashed border-line bg-paper/60 p-2">
+                    <span className="mb-1.5 block px-1 font-mono text-[10px] font-semibold uppercase tracking-widest text-accent-deep">
+                      for each item ↻
+                    </span>
+                    <div className="space-y-1.5">
+                      {(s as LoopStep).body.map((t, k) => {
+                        const active =
+                          sel === i && sub?.lane === "body" && sub?.idx === k && drawer === "step";
+                        return (
+                          <button
+                            key={k}
+                            type="button"
+                            onClick={() => {
+                              setSel(i);
+                              setSub({ lane: "body", idx: k });
+                              setDrawer("step");
+                            }}
+                            className={`flex w-full items-center gap-2 rounded-lg border bg-paper p-2 text-left transition ${
+                              active
+                                ? "border-accent/60 shadow-[0_8px_20px_-12px_rgba(0,0,0,0.4)]"
+                                : "border-line hover:border-accent/35"
+                            }`}
+                          >
+                            <StepGlyph kind={t.kind} active={active} />
+                            <span className="min-w-0">
+                              <span className="block truncate text-xs font-medium text-ink">
+                                {STEP_META[t.kind].label}
+                              </span>
+                              <span className="block font-mono text-[9px] uppercase tracking-wide text-mist/70">
+                                [[step_{i + 1}_{k + 1}]]
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                      {(s as LoopStep).body.length < 3 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSel(i);
+                            setSub(null);
+                            setCatalogLane({ stepIdx: i, lane: "body" });
+                            setDrawer("catalog");
+                          }}
+                          className="w-full rounded-lg border border-dashed border-line px-2 py-1.5 text-[11px] text-mist transition hover:border-accent/50 hover:text-accent"
+                        >
+                          + add a step that runs per item
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
 
