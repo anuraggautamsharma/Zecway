@@ -16,6 +16,7 @@ export type StepDef =
   | { kind: "think"; instructions: string }
   | { kind: "respond"; instructions: string }
   | { kind: "branch"; condition: string; if_true: StepDef[]; if_false: StepDef[] }
+  | { kind: "loop"; source: string; body: StepDef[] }
   | { kind: "auto"; goal: string; max_actions?: number }
   | { kind: "send_slack"; message: string };
 
@@ -118,6 +119,10 @@ export const STEP_META: Record<
   branch: {
     label: "Branch",
     blurb: "Decides which path to follow, with a fallback lane",
+  },
+  loop: {
+    label: "Loop",
+    blurb: "Repeats its steps once per item in a list",
   },
   auto: {
     label: "Plan & execute",

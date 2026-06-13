@@ -223,6 +223,34 @@ export async function executeAgentRun(opts: {
         }
         ctx[varName] = last;
         return last;
+      } else if (sd.kind === "loop") {
+        const list = template(sd.source, ctx)
+          .split("\n")
+          .map((l) => l.replace(/^\s*(?:\d+[).:]|[-*•])\s*/, "").trim())
+          .filter((l) => l.length > 0)
+          .slice(0, MAX_ITEMS);
+        const lIdx = await step(
+          "loop",
+          `Looping over ${list.length} item${list.length === 1 ? "" : "s"}`,
+        );
+        await finishStep(lIdx, { count: list.length });
+        const body = sd.body.slice(0, 3);
+        const prevItem = ctx.item;
+        const blocks: string[] = [];
+        for (let it = 0; it < list.length; it++) {
+          ctx.item = list[it];
+          let last = "";
+          for (let bi = 0; bi < body.length; bi++) {
+            last = await execStep(body[bi], `${varName}_${bi + 1}`);
+          }
+          blocks.push(`Item ${it + 1} — ${list[it]}:\n${last}`);
+          send({ type: "loop_progress", done: it + 1, total: list.length });
+        }
+        if (prevItem === undefined) delete ctx.item;
+        else ctx.item = prevItem;
+        const out = blocks.join("\n\n=====\n\n");
+        ctx[varName] = out;
+        return out;
       } else if (sd.kind === "auto") {
         const goal = template(sd.goal, ctx);
         const max = Math.min(Math.max(sd.max_actions ?? 6, 1), 6);
