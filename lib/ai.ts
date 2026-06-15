@@ -302,6 +302,11 @@ export function ai(): AiProvider {
     if (!key) throw new Error("GEMINI_API_KEY is not configured");
     const gemini = new GeminiProvider(key);
     const cerebrasKey = process.env.CEREBRAS_API_KEY;
+    // One-line marker so logs show which engine is live (generation can be
+    // swapped; embeddings + web always stay on Gemini — the graph's foundation).
+    console.log(
+      `[ai] generation: ${cerebrasKey ? "cerebras (gpt-oss-120b -> zai-glm-4.7)" : "gemini"}; embeddings+web: gemini`,
+    );
     provider = cerebrasKey
       ? new HybridProvider(new CerebrasProvider(cerebrasKey), gemini)
       : gemini;
